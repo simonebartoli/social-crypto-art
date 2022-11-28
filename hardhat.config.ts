@@ -3,14 +3,16 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-gas-reporter"
 import "solidity-coverage"
 import "hardhat-deploy"
+import "hardhat-contract-sizer"
+import {COIN_MARKET_CAP_API_KEY, ETHERSCAN_API_KEY, GOERLI_PRIVATE_KEY, GOERLI_RPC_PROVIDER} from "./settings";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     goerli: {
-      url: "GOERLI_RPC_PROVIDER",
+      url: GOERLI_RPC_PROVIDER,
       accounts: [
-        "GOERLI_PRIVATE_KEY"
+        GOERLI_PRIVATE_KEY
       ],
       chainId: 5
     },
@@ -20,18 +22,21 @@ const config: HardhatUserConfig = {
     }
   },
   etherscan: {
-    apiKey: "ETHERSCAN_API_KEY"
+    apiKey: ETHERSCAN_API_KEY
   },
   gasReporter: {
     enabled: true,
     outputFile: "gas-report.txt",
     noColors: true,
     currency: "USD",
-    coinmarketcap: "COIN_MARKET_CAP_API_KEY"
+    coinmarketcap: COIN_MARKET_CAP_API_KEY
   },
   namedAccounts: {
     deployer: {
       default: 0
+    },
+    account_1: {
+      default: 1
     }
   },
   mocha: {
