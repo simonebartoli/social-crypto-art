@@ -64,7 +64,7 @@ contract SocialNFT is ERC721URIStorage {
         address currency;
     }
     struct Selling_Auction {
-        uint256 index;
+        uint256 id;
         uint256 initialPrice;
         address currency;
         uint256 deadline;
@@ -239,7 +239,7 @@ contract SocialNFT is ERC721URIStorage {
         address currencyAddress = getTokenAddress(currency);
         s_nftIdStatus[nftId].sellingType = SellingType.SELLING_AUCTION;
         s_nftIdToSellingAuction[nftId] = Selling_Auction({
-            index: s_auctionId,
+            id: s_auctionId,
             initialPrice: initialPrice,
             currency: currencyAddress,
             deadline: deadline
