@@ -20,6 +20,12 @@ contract Erc20Payments {
         return erc20.balanceOf(msg.sender);
     }
 
+    /*
+        @notice get the allowance for this contract from a specific sender
+        @param erc20Address the ERC20 address
+        @param owner the person trying to do a tx
+        @return uint256 the allowance granted
+    */
     function getAllowance(address erc20Address, address owner) public view returns(uint256) {
         IERC20 erc20 = IERC20(erc20Address);
         return erc20.allowance(owner, address(this));

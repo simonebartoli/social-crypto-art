@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Erc20Payments.sol";
+import "./PaymentHolder.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
@@ -11,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 //  - KEEP TRACK OF ROYALTIES
 //  - TRANSACTION ON ERC20
 
-contract SocialNFT is ERC721URIStorage {
+contract SocialNFT is ERC721URIStorage, PaymentHolder {
 
     error ERR_TOKEN_NOT_ACCEPTED();
 
@@ -29,6 +30,7 @@ contract SocialNFT is ERC721URIStorage {
     error ERR_ROYALTIES_ALREADY_SET();
 
     error ERR_AUCTION_DEADLINE_NOT_IN_RANGE();
+    error ERR_AUCTION_DEADLINE_NOT_PASSED();
 
 
     enum SellingType {
@@ -55,7 +57,7 @@ contract SocialNFT is ERC721URIStorage {
         uint256 end_date;
         address owner;
     }
-    struct Royalties {
+    struct Royalty {
         address owner;
         uint8 percentage;
     }
@@ -86,10 +88,11 @@ contract SocialNFT is ERC721URIStorage {
 
     // STORAGE VARIABLES - SELLING STATUS NFT
     // ----------------------------------------------------------------------------------------
-    mapping(uint256 => Royalties) public s_nftIdToRoyalties;
+    mapping(uint256 => Royalty) public s_nftIdToRoyalties;
     mapping(uint256 => Selling_FixedPrice) public s_nftIdToSellingFixedPrice;
     mapping(uint256 => Selling_Auction) public s_nftIdToSellingAuction;
     mapping(uint256 => Selling_AuctionOffers[]) public s_nftIdToSellingAuctionOffers;
+    uint256 private s_auctionId = 1;
     // ----------------------------------------------------------------------------------------
 
 
@@ -99,14 +102,10 @@ contract SocialNFT is ERC721URIStorage {
     // ----------------------------------------------------------------------------------------
 
 
-    uint256 private s_auctionId = 1;
-
-
     // CONSTANT VARIABLES
     // ----------------------------------------------------------------------------------------
     string public constant NAME = "SocialNFT";
     string public constant SYMBOL = "SFT";
-    address public constant ZERO_ADDRESS = 0x0000000000000000000000000000000000000000;
     // ----------------------------------------------------------------------------------------
 
 
@@ -114,6 +113,7 @@ contract SocialNFT is ERC721URIStorage {
     // ----------------------------------------------------------------------------------------
     address public immutable i_contractOwner;
     Erc20Payments public immutable i_erc20Payments;
+    address public immutable i_paymentHolder;
 
     // address public immutable WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     // address public immutable DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -167,7 +167,11 @@ contract SocialNFT is ERC721URIStorage {
         address usdtAddress
     ) ERC721(NAME, SYMBOL) {
         i_contractOwner = msg.sender;
+
         i_erc20Payments = new Erc20Payments(address(this));
+        PaymentHolder paymentHolder = new PaymentHolder();
+        i_paymentHolder = address(paymentHolder);
+
         // SET ERC20 TOKEN - THEY CHANGE DEPENDING THE BLOCKCHAIN THEY ARE
         // REMEMBER THEY ARE ADDRESSES
 
@@ -177,7 +181,10 @@ contract SocialNFT is ERC721URIStorage {
         i_usdt = usdtAddress;
     }
 
-    
+    /*
+        @notice create an NFT with a resource linked
+        @param uri the link of the resource
+    */
     function createNft(string memory uri) public {
         _safeMint(msg.sender, s_nftUniqueId);
         _setTokenURI(s_nftUniqueId, uri);
@@ -192,6 +199,11 @@ contract SocialNFT is ERC721URIStorage {
         incrementNftUniqueId();
     }
 
+    /*
+        @notice set royalties to the creator of the NFT | ONLY BETWEEN 1 AND 25, ONLY CREATOR, ONLY BEFORE THE FIRST PURCHASE
+        @param nftId
+        @param percentage integer from 1 to 25 (included)
+    */
     function setRoyalties(uint256 nftId, uint8 percentage) public onlyNftOwner(nftId){
         PastNftOwner[] memory pastOwners = s_nftIdToPastOwners[nftId];
 
@@ -205,7 +217,7 @@ contract SocialNFT is ERC721URIStorage {
             revert ERR_ROYALTIES_PERCENTAGE_NOT_IN_RANGE();
         }
 
-        s_nftIdToRoyalties[nftId] = Royalties({
+        s_nftIdToRoyalties[nftId] = Royalty({
             owner: msg.sender,
             percentage: percentage
         });
@@ -213,12 +225,11 @@ contract SocialNFT is ERC721URIStorage {
     }
 
     /*
-    function removeFromSelling(uint256 nftId) public onlyNftOwner(nftId){
-        s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
-        delete s_nftIdToSellingFixedPrice[nftId];
-    }
+        @notice set a NFT in an fixed price selling | ONLY NFT OWNER, ONLY IF NOT ALREADY IN ANOTHER SELLING METHOD
+        @param nftId
+        @param amount the amount requested
+        @param currency native currency or ERC20
     */
-
     function setSellingFixedPrice(uint256 nftId, uint256 amount, CurrecyAddress currency) public onlyExistingNft(nftId) onlyNftOwner(nftId) onlySpecificSellingType(nftId, SellingType.NO_SELLING){
         address currencyAddress = getTokenAddress(currency);
         s_nftIdStatus[nftId].sellingType = SellingType.SELLING_FIXED_PRICE;
@@ -228,6 +239,13 @@ contract SocialNFT is ERC721URIStorage {
         });
     }
 
+    /*
+        @notice set a NFT in an auction | ONLY NFT OWNER, ONLY IF NOT ALREADY IN ANOTHER SELLING METHOD
+        @param nftId
+        @param initialPrice the initial price of the auction
+        @param currency native currency or ERC20
+        @param deadline timestamp when the auction will be terminated | MINIMUM 5 DAYS, MAXIMUM 30 DAYS (included)
+    */
     function setSellingAuction(uint256 nftId, uint256 initialPrice, CurrecyAddress currency, uint256 deadline) public onlyExistingNft(nftId) onlyNftOwner(nftId) onlySpecificSellingType(nftId, SellingType.NO_SELLING){
         uint256 currentTimestamp = block.timestamp;
         uint256 minTime = 60*60*24*5;
@@ -247,26 +265,94 @@ contract SocialNFT is ERC721URIStorage {
         s_auctionId += 1;
     }
 
+    /*
+        @notice make an offer for an auction | ONLY IF HIGHEST OFFER, ENOUGH FUNDS, NOT NFT OWNER AND NFT SOLD IN AN AUCTION
+        @dev amount is the value sent in this specific tx | CAN BE ADDED TO PREVIOUS OFFERS IF ANY
+        @param nftId
+        @param amount the amount proposed | IF ZERO ADDRESS CURRENCY msg.value = amount ELSE ERC20 ALLOWANCE >= amount
+    */
     function makeOfferAuction(uint256 nftId, uint256 amount) public payable onlyExistingNft(nftId) onlyNotNftOwner(nftId) onlySpecificSellingType(nftId, SellingType.SELLING_AUCTION){
-        uint256 lastOffer = getLastOffer(nftId);
+        (uint256 lastOffer, ) = getLastOffer(nftId);
         Selling_Auction memory auction = s_nftIdToSellingAuction[nftId];
-        uint256 currentTimestamp = block.timestamp;
-        if(currentTimestamp > auction.deadline){
+
+        if(block.timestamp > auction.deadline){
             revert ERR_AUCTION_DEADLINE_NOT_IN_RANGE();
         }
-        if(amount <= lastOffer){
+
+        (uint256 amountAlreadyOffered, ) = getLastOfferSender(nftId, msg.sender);
+        uint256 finalAmount = amount + amountAlreadyOffered;
+
+        if(finalAmount <= lastOffer){
             revert ERR_NFT_BUYING_WRONG_AMOUNT();
         }
         if(auction.currency == ZERO_ADDRESS){
             if(msg.value != amount){
                 revert ERR_NFT_BUYING_WRONG_AMOUNT();
             }
-
+            s_nftIdToSellingAuctionOffers[nftId].push(Selling_AuctionOffers({
+                amount: finalAmount,
+                owner: msg.sender,
+                refunded: false
+            }));
+            addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
+            (bool success, ) = payable(i_paymentHolder).call{value: msg.value}("");
+            if(!success){
+                revert ERR_PAYMENT_NOT_SENT();
+            }
         }else{
-
+            uint256 allowance = i_erc20Payments.getAllowance(auction.currency, msg.sender);
+            if(allowance < amount){
+                revert ERR_NFT_BUYING_ERC20_NEEDS_TO_BE_ALLOWED();
+            }
+            s_nftIdToSellingAuctionOffers[nftId].push(Selling_AuctionOffers({
+                amount: finalAmount,
+                owner: msg.sender,
+                refunded: false
+            }));
+            addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
+            i_erc20Payments.transferTokens(auction.currency, msg.sender, i_paymentHolder, amount);
         }
     }
 
+    /*
+        @notice terminate a current auction | ONLY IF DEADLINE IS PASSED, CALLABLE BY ANYONE
+        @param nftId
+    */
+    function terminateAuction(uint256 nftId) public payable onlyExistingNft(nftId) onlySpecificSellingType(nftId, SellingType.SELLING_AUCTION) {
+        NftStatus memory nftInfo = s_nftIdStatus[nftId];
+        Selling_Auction memory auction = s_nftIdToSellingAuction[nftId];
+        Selling_AuctionOffers[] memory offers = s_nftIdToSellingAuctionOffers[nftId];
+        if(block.timestamp < auction.deadline){
+            revert ERR_AUCTION_DEADLINE_NOT_PASSED();
+        }
+        delete s_nftIdToSellingAuction[nftId];
+        delete s_nftIdToSellingAuctionOffers[nftId];
+        if(offers.length == 0){
+            s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
+        }else{
+            bool offerFound = false;
+            for(uint256 index = 0; index < offers.length && !offerFound; index++){
+                if(offers[index].owner != ZERO_ADDRESS && !offers[index].refunded){
+                    offerFound = true;
+                }
+            }
+            if(offerFound){
+                Royalty memory royalty = s_nftIdToRoyalties[nftId];
+                (, address winner) = getLastOffer(nftId);
+                address oldOwner = ownerOf(nftId);
+                transferNft(nftId, winner);
+                postTransferNft(nftId, oldOwner, nftInfo.ownedSince);
+                executePayment(winner, oldOwner, auction.id, royalty.owner, royalty.percentage);
+            }else{
+                s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
+            }
+        }
+    }
+
+    /*
+        @notice buy process for an NFT | CALLABLE ONLY BY NOT NFT OWNER, NFT SELLING TYPE SHOULD BE FIXED
+        @param nftId
+    */
     function buyNftSellingFixedPrice(uint256 nftId) public payable onlyExistingNft(nftId) onlyNotNftOwner(nftId) onlySpecificSellingType(nftId, SellingType.SELLING_FIXED_PRICE){
         NftStatus memory nftStatus = s_nftIdStatus[nftId];
         Selling_FixedPrice memory nftOptions = s_nftIdToSellingFixedPrice[nftId];
@@ -296,15 +382,25 @@ contract SocialNFT is ERC721URIStorage {
                 revert ERR_NFT_BUYING_ERC20_NEEDS_TO_BE_ALLOWED();
             }
         }
-        
-        transferNft(nftId);
+        delete s_nftIdToSellingFixedPrice[nftId];
+        transferNft(nftId, msg.sender);
         postTransferNft(nftId, oldOwner, ownedSince);
     }
 
 
-    function transferNft(uint256 nftId) private {
-        _transfer(ownerOf(nftId), msg.sender, nftId);
+    /*
+        @dev CHANGE THE FUNCTION | REQUIRE APPROVAL FIRST
+    */
+    function transferNft(uint256 nftId, address receiver) private {
+        _safeTransfer(ownerOf(nftId), receiver, nftId, "");
     }
+
+    /*
+        @dev update the owner status of an NFT
+        @param nftId
+        @param oldOwner address of the previous owner
+        @param ownedSince timestamp of the previous owner when it created/acquired the NFT
+    */
     function postTransferNft(uint256 nftId, address oldOwner, uint256 ownedSince) private {
         s_nftIdToPastOwners[nftId].push(PastNftOwner({
             start_date: ownedSince,
@@ -328,25 +424,53 @@ contract SocialNFT is ERC721URIStorage {
     }
 
 
-    function getLastOffer(uint256 nftId) internal view returns(uint256){
+    /*
+        @notice get the highest - not refunded - offer for an auction
+        @param nftId
+        @return (uint256, address) the amount offered and the bidder
+    */
+    function getLastOffer(uint256 nftId) public view returns(uint256, address){
         Selling_AuctionOffers[] memory offers = s_nftIdToSellingAuctionOffers[nftId];
         if(offers.length == 0){
-            return s_nftIdToSellingAuction[nftId].initialPrice;
+            return (s_nftIdToSellingAuction[nftId].initialPrice, ZERO_ADDRESS);
         }else{
             uint256 maxOffer = 0;
+            address bidder = ZERO_ADDRESS;
             for(uint256 index = offers.length - 1; index >= 0; index--){
-                if(!offers[index].refunded){
+                if(!offers[index].refunded && offers[index].owner != ZERO_ADDRESS){
                     maxOffer = offers[index].amount;
+                    bidder = offers[index].owner;
                     break;
                 }
             }
             if(maxOffer == 0){
-                return s_nftIdToSellingAuction[nftId].initialPrice;
+                return (s_nftIdToSellingAuction[nftId].initialPrice, ZERO_ADDRESS);
             }else{
-                return maxOffer;
+                return (maxOffer, bidder);
             }
         }
     }
+
+    /*
+        @notice get the offer of a specific sender for a specific auction
+        @param nftId
+        @param owner sender to check
+        @return (uint256, uint256) amount offered and index where to found
+    */
+    function getLastOfferSender(uint256 nftId, address owner) public view returns(uint256, uint256){
+        Selling_AuctionOffers[] memory offers = s_nftIdToSellingAuctionOffers[nftId];
+        if(offers.length == 0){
+            return (0, 0);
+        }else{
+            for(uint256 index = 0; index < offers.length; index++){
+                if(offers[index].owner == owner && !offers[index].refunded){
+                    return (offers[index].amount, index);
+                }
+            }
+            return (0, 0);
+        }
+    }
+
     function getRoyalties(uint256 nftId) internal view returns(uint256){
         uint8 percentage = s_nftIdToRoyalties[nftId].percentage;
         if(percentage == 0){
