@@ -16,7 +16,7 @@ const socialNft = async (hre: HardhatRuntimeEnvironment) => {
     const erc20: Erc20 = await ethers.getContract("Erc20")
 
 
-    const args: any = [ZERO_ADDRESS, erc20.address, ZERO_ADDRESS, ZERO_ADDRESS]
+    const args: any = [erc20.address, erc20.address, erc20.address, erc20.address]
     const tx = await deploy("SocialNFT", {
         log: true,
         args: args,
@@ -26,4 +26,4 @@ const socialNft = async (hre: HardhatRuntimeEnvironment) => {
 }
 
 export default socialNft
-socialNft.tags = ["all"]
+socialNft.tags = ["all", "main"]

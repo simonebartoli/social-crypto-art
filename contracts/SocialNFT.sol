@@ -7,14 +7,12 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 // TODO
-// FINISH SELLING FIXED PRICE
-//  - KEEP TRACK OF TX 
-//  - KEEP TRACK OF ROYALTIES
-//  - TRANSACTION ON ERC20
+// SWAP NFT
+// TEST GAS USED
 
 contract SocialNFT is ERC721URIStorage, PaymentHolder {
 
-    error ERR_TOKEN_NOT_ACCEPTED();
+//    error ERR_TOKEN_NOT_ACCEPTED();
 
     error ERR_NFT_ALREADY_OWNED();
     error ERR_NFT_NOT_OWNED();
@@ -95,10 +93,11 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
     uint256 private s_auctionId = 1;
     // ----------------------------------------------------------------------------------------
 
+    //TODO make auction more flexible
 
     // STORAGE VARIABLES - NFT ATTRIBUTES
     // ----------------------------------------------------------------------------------------
-    uint256 private s_nftUniqueId = 1;
+    uint256 public s_nftUniqueId = 1; // TODO CHANGE TO PRIVATE - JUST TESTING
     // ----------------------------------------------------------------------------------------
 
 
@@ -142,8 +141,8 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         _;
     }
     modifier onlyExistingNft(uint256 nftId){
-        if(_exists(nftId)){
-            revert ERR_NFT_BUYING_WRONG_MODE();
+        if(!_exists(nftId)){
+            revert ERR_NFT_NOT_EXISTING();
         }
         _;
     }
@@ -185,7 +184,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         @notice create an NFT with a resource linked
         @param uri the link of the resource
     */
-    function createNft(string memory uri) public {
+    function createNft(string calldata uri) public {
         _safeMint(msg.sender, s_nftUniqueId);
         _setTokenURI(s_nftUniqueId, uri);
 
@@ -196,11 +195,12 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
             ownedSince: block.timestamp
         });
 
-        incrementNftUniqueId();
+        _incrementNftUniqueId();
     }
 
     /*
         @notice set royalties to the creator of the NFT | ONLY BETWEEN 1 AND 25, ONLY CREATOR, ONLY BEFORE THE FIRST PURCHASE
+        @dev FILTER WHEN USER TRANSFER WITHOUT SELLING IT
         @param nftId
         @param percentage integer from 1 to 25 (included)
     */
@@ -210,10 +210,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         if(pastOwners.length > 0){
             revert ERR_ROYALTIES_NOT_APPLICABLE();
         }
-        if(s_nftIdToRoyalties[nftId].owner != ZERO_ADDRESS){
-            revert ERR_ROYALTIES_ALREADY_SET();
-        }
-        if(percentage <= 0 || percentage > 25){
+        if(percentage < 1 || percentage > 25){
             revert ERR_ROYALTIES_PERCENTAGE_NOT_IN_RANGE();
         }
 
@@ -340,8 +337,8 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
                 Royalty memory royalty = s_nftIdToRoyalties[nftId];
                 (, address winner) = getLastOffer(nftId);
                 address oldOwner = ownerOf(nftId);
-                transferNft(nftId, winner);
-                postTransferNft(nftId, oldOwner, nftInfo.ownedSince);
+                _transferNft(nftId, winner);
+                _postTransferNft(nftId, oldOwner, nftInfo.ownedSince);
                 executePayment(winner, oldOwner, auction.id, royalty.owner, royalty.percentage);
             }else{
                 s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
@@ -358,7 +355,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         Selling_FixedPrice memory nftOptions = s_nftIdToSellingFixedPrice[nftId];
         address oldOwner = ownerOf(nftId);
         uint256 ownedSince = nftStatus.ownedSince;
-        uint256 amountRoyalties = (getRoyalties(nftId) / 100) * nftOptions.amount;
+        uint256 amountRoyalties = (s_nftIdToRoyalties[nftId].percentage / 100) * nftOptions.amount;
         uint256 amountSeller = nftOptions.amount - amountRoyalties;
 
         if(nftOptions.currency == ZERO_ADDRESS){
@@ -383,15 +380,33 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
             }
         }
         delete s_nftIdToSellingFixedPrice[nftId];
-        transferNft(nftId, msg.sender);
-        postTransferNft(nftId, oldOwner, ownedSince);
+        _transferNft(nftId, msg.sender);
+        _postTransferNft(nftId, oldOwner, ownedSince);
     }
 
+
+    function transferFrom(address from, address to, uint256 tokenId) public override {
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
+        address oldOwner = ownerOf(tokenId);
+        uint256 ownedSince = s_nftIdStatus[tokenId].ownedSince;
+        _transfer(from, to, tokenId);
+        _postTransferNft(tokenId, oldOwner, ownedSince);
+    }
+    function safeTransferFrom(address from, address to, uint256 tokenId) public override {
+        safeTransferFrom(from, to, tokenId, "");
+    }
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public override {
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
+        address oldOwner = ownerOf(tokenId);
+        uint256 ownedSince = s_nftIdStatus[tokenId].ownedSince;
+        _safeTransfer(from, to, tokenId, data);
+        _postTransferNft(tokenId, oldOwner, ownedSince);
+    }
 
     /*
         @dev CHANGE THE FUNCTION | REQUIRE APPROVAL FIRST
     */
-    function transferNft(uint256 nftId, address receiver) private {
+    function _transferNft(uint256 nftId, address receiver) public { // TODO CHANGE TO PRIVATE - JUST TESTING
         _safeTransfer(ownerOf(nftId), receiver, nftId, "");
     }
 
@@ -401,7 +416,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         @param oldOwner address of the previous owner
         @param ownedSince timestamp of the previous owner when it created/acquired the NFT
     */
-    function postTransferNft(uint256 nftId, address oldOwner, uint256 ownedSince) private {
+    function _postTransferNft(uint256 nftId, address oldOwner, uint256 ownedSince) public { // TODO CHANGE TO PRIVATE - JUST TESTING
         s_nftIdToPastOwners[nftId].push(PastNftOwner({
             start_date: ownedSince,
             end_date: block.timestamp,
@@ -419,7 +434,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
             }
         }
     }
-    function incrementNftUniqueId() internal{
+    function _incrementNftUniqueId() internal{
         s_nftUniqueId += 1;
     }
 
@@ -471,6 +486,8 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         }
     }
 
+/*
+    @dev UNNECESSARY - REMOVE
     function getRoyalties(uint256 nftId) internal view returns(uint256){
         uint8 percentage = s_nftIdToRoyalties[nftId].percentage;
         if(percentage == 0){
@@ -483,6 +500,8 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
             }
         }
     }
+*/
+
     function getTokenAddress(CurrecyAddress currency) public view returns(address){
         if(currency == CurrecyAddress.ETH){
             return ZERO_ADDRESS;
@@ -494,8 +513,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
             return i_usdc;
         }else if(currency == CurrecyAddress.USDT){
             return i_usdc;
-        }else{
-            revert ERR_TOKEN_NOT_ACCEPTED();
         }
+        revert();
     }
 }

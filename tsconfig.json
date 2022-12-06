@@ -6,5 +6,7 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["./src", "./test", "./deploy", "./scripts"],
+  "files": ["./hardhat.config.ts"]
 }

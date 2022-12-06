@@ -53,15 +53,20 @@ contract PaymentHolder {
             revert ERR_PAYMENT_HOLD_NOT_FOUND();
         }
         delete s_address_to_payment_hold[sender][auction_id];
+        uint256 amountCreator = payment.amount * royaltyPercentage / 100;
+        uint256 amountReceiver = payment.amount - amountCreator;
 
         if(payment.currency == ZERO_ADDRESS){
-            (bool success, ) = payable(receiver).call{value: payment.amount}("");
-            if(!success){
+            (bool successReceiver, ) = payable(receiver).call{value: amountReceiver}("");
+            (bool successCreator, ) = payable(creator).call{value: amountCreator}("");
+
+            if(!successReceiver || !successCreator){
                 revert ERR_PAYMENT_NOT_SENT();
             }
         }else{
             IERC20 erc20 = IERC20(payment.currency);
-            erc20.transfer(receiver, payment.amount);
+            erc20.transfer(receiver, amountReceiver);
+            erc20.transfer(creator, amountCreator);
         }
         cancelPayments(auction_id);
     }
