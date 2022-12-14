@@ -19,8 +19,8 @@ contract PaymentHolder {
         address currency;
         uint256 date;
     }
-    mapping(uint256 => address[]) private s_auction_to_addresses;
-    mapping(address => mapping(uint256 => Value)) private s_address_to_payment_hold;
+    mapping(uint256 => address[]) public s_auction_to_addresses; // TODO CHANGE TO PRIVATE - JUST TESTING
+    mapping(address => mapping(uint256 => Value)) public s_address_to_payment_hold; // TODO CHANGE TO PRIVATE - JUST TESTING
 
     /*
         @dev add a new user to an auction
@@ -29,7 +29,7 @@ contract PaymentHolder {
         @param amount the value proposed
         @param currency the currency used (native or ERC20)
     */
-    function addNewHoldPayment_Auction(uint256 auction_id, address owner, uint256 amount, address currency) internal {
+    function addNewHoldPayment_Auction(uint256 auction_id, address owner, uint256 amount, address currency) public { // TODO CHANGE TO INTERNAL - JUST TESTING
         if(!checkIfExist(owner, auction_id)){
             s_auction_to_addresses[auction_id].push(owner);
         }
@@ -95,13 +95,25 @@ contract PaymentHolder {
         }
     }
 
+    function withdrawPayment(uint256 amount, address to, address currency) internal {
+        if(currency == ZERO_ADDRESS){
+            (bool success, ) = payable(to).call{value: amount}("");
+            if(!success){
+                revert ERR_PAYMENT_NOT_SENT();
+            }
+        }else{
+            IERC20 erc20 = IERC20(currency);
+            erc20.transfer(to, amount);
+        }
+    }
+
     /*
         @dev check if a specific address is in a specific auction
         @param owner the address to check
         @param auction_id the id of the auction to check
         @return bool true if found | false if not found
     */
-    function checkIfExist(address owner, uint256 auction_id) private view returns(bool) {
+    function checkIfExist(address owner, uint256 auction_id) public view returns(bool) {
         address[] memory auction_to_addresses = s_auction_to_addresses[auction_id];
         for(uint256 i = 0; i < auction_to_addresses.length; i++){
             if(auction_to_addresses[i] == owner){
@@ -110,4 +122,6 @@ contract PaymentHolder {
         }
         return false;
     }
+
+    receive() external payable {}
 }

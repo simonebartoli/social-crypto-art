@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/*
+    @dev THIS CONTRACT IS NOT USED ANYMORE
+*/
 contract Erc20Payments {
     address immutable socialNftAddress;
 
@@ -10,9 +13,9 @@ contract Erc20Payments {
         socialNftAddress = _socialNftAddress;
     }
 
-    function transferTokens(address erc20Address, address oldOwner, address newOwner, uint256 amount) public {
+    function transferTokens(address erc20Address, address from, address to, uint256 amount) public {
         IERC20 erc20 = IERC20(erc20Address);
-        erc20.transferFrom(newOwner, oldOwner, amount);
+        erc20.transferFrom(from, to, amount);
     }
 
     function getTokens(address erc20Address) public view returns(uint256) {

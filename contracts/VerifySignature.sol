@@ -24,3 +24,4 @@ contract VerifySignature {
         return ethMessageHashed.recover(sig) == _signer;
     }
 }
+

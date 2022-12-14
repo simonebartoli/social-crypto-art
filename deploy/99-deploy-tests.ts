@@ -1,17 +1,17 @@
 import {HardhatRuntimeEnvironment} from "hardhat/types";
 import {network} from "hardhat";
-import {developmentChain, networkConfig} from "../hardhat-config-helper";
-import exp from "constants";
+import {developmentChain} from "../hardhat-config-helper";
 
 const tests = async (hre: HardhatRuntimeEnvironment) => {
     const {getNamedAccounts, deployments, ethers, network} = hre
     const deployer = (await getNamedAccounts()).deployer
-    const {log, deploy} = deployments
+    const {deploy} = deployments
+    const erc20 = await ethers.getContract("Erc20")
 
     if(developmentChain.includes(network.name)){
         await deploy("Test", {
             log: true,
-            args: [],
+            args: [erc20.address],
             from: deployer,
             waitConfirmations: 1
         })
