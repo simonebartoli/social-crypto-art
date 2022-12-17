@@ -2,10 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "../SocialNFT.sol";
+import "../PaymentHolder.sol";
 
-contract Test is SocialNFT{
+contract Test is SocialNFT, PaymentHolder{
 
-    constructor(address mockERC20Address) SocialNFT(mockERC20Address, mockERC20Address, mockERC20Address, mockERC20Address){}
+    constructor(address mockERC20Address) SocialNFT(mockERC20Address, mockERC20Address, mockERC20Address, mockERC20Address) PaymentHolder(address(this)){}
 
     // SOCIAL NFT CONTRACT
 
@@ -59,5 +60,9 @@ contract Test is SocialNFT{
 
     function test_getAuctionToAddressesLength(uint256 auctionId) public view returns(uint256){
         return s_auction_to_addresses[auctionId].length;
+    }
+
+    function test_modifier_onlySocialNftContract() public onlySocialNftContract view returns(string memory) {
+        return "FUNCTION_REACHED";
     }
 }

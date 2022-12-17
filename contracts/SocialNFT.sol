@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./Erc20Payments.sol";
 import "./PaymentHolder.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "./Utils.sol";
 
 // TODO
 // SWAP NFT
 // TEST GAS USED
 
-contract SocialNFT is ERC721URIStorage, PaymentHolder {
+contract SocialNFT is ERC721URIStorage, Utils {
 
-//    error ERR_TOKEN_NOT_ACCEPTED();
 
     error ERR_NFT_ALREADY_OWNED();
     error ERR_NFT_NOT_OWNED();
@@ -49,6 +48,10 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         USDC,
         USDT
     }
+    enum GasStage {
+        INITIAL,
+        END
+    }
 
     struct NftStatus {
         bool exist;
@@ -82,12 +85,21 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         bool refunded;
     }
 
+    struct GasAuction {
+        address payer;
+        address debtor;
+        uint256 gasInitial;
+        uint256 gasEnd;
+        uint256 cost;
+    }
+
 
     // STORAGE VARIABLES - STATUS NFT
     // ----------------------------------------------------------------------------------------
     mapping(address => uint256[]) public s_ownerToNftId;
     mapping(uint256 => NftStatus) public s_nftIdStatus;
     mapping(uint256 => PastNftOwner[]) public s_nftIdToPastOwners;
+    mapping(uint256 => GasAuction) public s_auctionIdToGasAuction;
     // ----------------------------------------------------------------------------------------
 
 
@@ -114,10 +126,10 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
     // ----------------------------------------------------------------------------------------
 
 
-    // CONSTANT VARIABLES
+    // IMMUTABLE VARIABLES
     // ----------------------------------------------------------------------------------------
     address public immutable i_contractOwner;
-    address public immutable i_paymentHolder;
+    PaymentHolder public immutable i_paymentHolder;
 
     // address public immutable WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     // address public immutable DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -171,9 +183,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         address usdtAddress
     ) ERC721(NAME, SYMBOL) {
         i_contractOwner = msg.sender;
-
-        PaymentHolder paymentHolder = new PaymentHolder();
-        i_paymentHolder = address(paymentHolder);
+        i_paymentHolder = new PaymentHolder(address(this));
 
         // SET ERC20 TOKEN - THEY CHANGE DEPENDING THE BLOCKCHAIN THEY ARE
         // REMEMBER THEY ARE ADDRESSES
@@ -284,7 +294,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         @param amount the amount proposed | IF ZERO ADDRESS CURRENCY msg.value = amount ELSE ERC20 ALLOWANCE >= amount
     */
     function makeOfferAuction(uint256 nftId, uint256 amount) public payable onlyExistingNft(nftId) onlyNotNftOwner(nftId) onlySpecificSellingType(nftId, SellingType.SELLING_AUCTION){
-        (uint256 lastOffer, ) = _getLastOffer(nftId);
+        (uint256 lastOffer, address bidder) = _getLastOffer(nftId);
         Selling_Auction memory auction = s_nftIdToSellingAuction[nftId];
 
         if(block.timestamp > auction.deadline){
@@ -294,14 +304,16 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         (uint256 amountAlreadyOffered, uint256 index) = getLastOfferFromSender(nftId, msg.sender);
         uint256 finalAmount = amount + amountAlreadyOffered;
 
-        if(finalAmount < (lastOffer * (100 + auction.minIncrement)) / 100){
+        if(bidder != msg.sender && finalAmount < (lastOffer * (100 + auction.minIncrement)) / 100){
             revert ERR_AUCTION_OFFER_TOO_LOW();
         }
 
         if(amountAlreadyOffered > 0){
             delete s_nftIdToSellingAuctionOffers[nftId][index];
         }
-
+        _transferOfferAuction(nftId, auction, amount, finalAmount);
+    }
+    function _transferOfferAuction(uint256 nftId, Selling_Auction memory auction, uint256 amount, uint256 finalAmount) private {
         if(auction.currency == ZERO_ADDRESS){
             if(msg.value != amount){
                 revert ERR_NFT_BUYING_WRONG_AMOUNT();
@@ -311,7 +323,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
                 owner: msg.sender,
                 refunded: false
             }));
-            addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
+            i_paymentHolder.addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
             (bool success, ) = payable(i_paymentHolder).call{value: msg.value}("");
             if(!success){
                 revert ERR_PAYMENT_NOT_SENT();
@@ -327,8 +339,8 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
                 owner: msg.sender,
                 refunded: false
             }));
-            addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
-            erc20.transferFrom(msg.sender, i_paymentHolder, amount);
+            i_paymentHolder.addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
+            erc20.transferFrom(msg.sender, address(i_paymentHolder), amount);
         }
     }
 
@@ -348,7 +360,7 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         for(uint256 i = 0; i < offers.length; i++){
             if(offers[i].owner == msg.sender && !offers[i].refunded){
                 s_nftIdToSellingAuctionOffers[nftId][i].refunded = true;
-                withdrawPayment(offers[i].amount, offers[i].owner, auction.currency);
+                i_paymentHolder.withdrawPayment(auction.id, offers[i].amount, offers[i].owner, auction.currency);
                 break;
             }
         }
@@ -359,21 +371,24 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
         @param nftId
     */
     function terminateAuction(uint256 nftId) public payable onlyExistingNft(nftId) onlySpecificSellingType(nftId, SellingType.SELLING_AUCTION) {
-        NftStatus memory nftInfo = s_nftIdStatus[nftId];
         Selling_Auction memory auction = s_nftIdToSellingAuction[nftId];
+        if(msg.sender != ownerOf(nftId)){
+            calcGasUsed(auction.id, ownerOf(nftId), GasStage.INITIAL);
+        }
+        NftStatus memory nftInfo = s_nftIdStatus[nftId];
         Selling_AuctionOffers[] memory offers = s_nftIdToSellingAuctionOffers[nftId];
         if(block.timestamp < auction.deadline){
             revert ERR_AUCTION_DEADLINE_NOT_PASSED();
         }
-        delete s_nftIdToSellingAuction[nftId];
-        delete s_nftIdToSellingAuctionOffers[nftId];
-        if(offers.length == 0){
-            s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
-        }else{
+
+        if(offers.length > 0){
             bool offerFound = false;
-            for(uint256 index = 0; index < offers.length && !offerFound; index++){
+            for(uint256 index = offers.length - 1 ; index >= 0 && !offerFound; index--){
                 if(offers[index].owner != ZERO_ADDRESS && !offers[index].refunded){
                     offerFound = true;
+                }
+                if(index == 0){
+                    break;
                 }
             }
             if(offerFound){
@@ -382,10 +397,29 @@ contract SocialNFT is ERC721URIStorage, PaymentHolder {
                 address oldOwner = ownerOf(nftId);
                 _transferNft(nftId, winner);
                 _postTransferNft(nftId, oldOwner, nftInfo.ownedSince);
-                executePayment(winner, oldOwner, auction.id, royalty.owner, royalty.percentage);
-            }else{
-                s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
+                i_paymentHolder.executePayment(winner, oldOwner, auction.id, royalty.owner, royalty.percentage);
             }
+        }
+
+        delete s_nftIdToSellingAuction[nftId];
+        delete s_nftIdToSellingAuctionOffers[nftId];
+
+        s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
+        if(msg.sender != ownerOf(nftId)){
+            calcGasUsed(auction.id, ownerOf(nftId), GasStage.END);
+        }
+    }
+    function calcGasUsed(uint256 auctionId, address debtor, GasStage stage) private {
+        if(stage == GasStage.INITIAL){
+            s_auctionIdToGasAuction[auctionId] = GasAuction({
+                payer: msg.sender,
+                debtor: debtor,
+                gasInitial: gasleft(),
+                gasEnd: 0,
+                cost: tx.gasprice
+            });
+        }else{
+            s_auctionIdToGasAuction[auctionId].gasEnd = gasleft();
         }
     }
 

@@ -2,25 +2,39 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./Utils.sol";
 
 // @title Payment Holder
 // @author Simone Bartoli
 // @notice A contract that store all the holding payments and keep tracks of the tx involving auctions and NFT swap
-contract PaymentHolder {
+contract PaymentHolder is Utils {
 
     error ERR_PAYMENT_HOLD_NOT_FOUND();
-    error ERR_PAYMENT_NOT_SENT();
-
-    address public constant ZERO_ADDRESS = 0x0000000000000000000000000000000000000000;
+    error ERR_ONLY_SOCIAL_NFT();
 
     struct Value {
         bool created;
         uint256 amount;
         address currency;
         uint256 date;
+        bool refunded;
     }
     mapping(uint256 => address[]) public s_auction_to_addresses; // TODO CHANGE TO PRIVATE - JUST TESTING
     mapping(address => mapping(uint256 => Value)) public s_address_to_payment_hold; // TODO CHANGE TO PRIVATE - JUST TESTING
+
+    address immutable i_socialNftAddress;
+
+    constructor(address socialNftContract) {
+        i_socialNftAddress = socialNftContract;
+    }
+
+
+    modifier onlySocialNftContract() {
+        if(msg.sender != i_socialNftAddress){
+//            revert ERR_ONLY_SOCIAL_NFT();
+        }
+        _;
+    }
 
     /*
         @dev add a new user to an auction
@@ -29,7 +43,7 @@ contract PaymentHolder {
         @param amount the value proposed
         @param currency the currency used (native or ERC20)
     */
-    function addNewHoldPayment_Auction(uint256 auction_id, address owner, uint256 amount, address currency) public { // TODO CHANGE TO INTERNAL - JUST TESTING
+    function addNewHoldPayment_Auction(uint256 auction_id, address owner, uint256 amount, address currency) public onlySocialNftContract {
         if(!checkIfExist(owner, auction_id)){
             s_auction_to_addresses[auction_id].push(owner);
         }
@@ -37,7 +51,8 @@ contract PaymentHolder {
             created: true,
             amount: amount,
             currency: currency,
-            date: block.timestamp
+            date: block.timestamp,
+            refunded: false
         });
     }
 
@@ -47,9 +62,9 @@ contract PaymentHolder {
         @param receiver the person that created the auction
         @param auction_id the id of the auction
     */
-    function executePayment(address sender, address receiver, uint256 auction_id, address creator, uint8 royaltyPercentage) internal {
+    function executePayment(address sender, address receiver, uint256 auction_id, address creator, uint8 royaltyPercentage) public onlySocialNftContract {
         Value memory payment = s_address_to_payment_hold[sender][auction_id];
-        if(!payment.created){
+        if(!payment.created || payment.refunded){
             revert ERR_PAYMENT_HOLD_NOT_FOUND();
         }
         delete s_address_to_payment_hold[sender][auction_id];
@@ -75,13 +90,15 @@ contract PaymentHolder {
         @dev refund all the people that made an offer for an auction - except the winner
         @param auction_id the id of the auction
     */
-    function cancelPayments(uint256 auction_id) private {
+    function cancelPayments(uint256 auction_id) public { // TODO CHANGE TO PRIVATE - JUST TESTING
         address[] memory refundAddresses = s_auction_to_addresses[auction_id];
+        delete s_auction_to_addresses[auction_id];
         for(uint256 i = 0; i < refundAddresses.length; i++){
             address refundAddress = refundAddresses[i];
             Value memory payment = s_address_to_payment_hold[refundAddress][auction_id];
-            if(payment.created){
-                delete s_address_to_payment_hold[refundAddress][auction_id];
+            delete s_address_to_payment_hold[refundAddress][auction_id];
+
+            if(payment.created && !payment.refunded){
                 if(payment.currency == ZERO_ADDRESS){
                     (bool success, ) = payable(refundAddress).call{value: payment.amount}("");
                     if(!success){
@@ -95,7 +112,8 @@ contract PaymentHolder {
         }
     }
 
-    function withdrawPayment(uint256 amount, address to, address currency) internal {
+    function withdrawPayment(uint256 auctionId, uint256 amount, address to, address currency) public onlySocialNftContract {
+        s_address_to_payment_hold[to][auctionId].refunded = true;
         if(currency == ZERO_ADDRESS){
             (bool success, ) = payable(to).call{value: amount}("");
             if(!success){
