@@ -1024,13 +1024,11 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 await helpers.time.increase(DAYS_10 + 1)
 
                 const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
-                const txResponse = await testPlayer_1.terminateAuction(nftUniqueId)
                 const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
 
                 const nftStatus = await testDeployer.s_nftIdStatus(nftUniqueId)
                 const auction = await testDeployer.s_nftIdToSellingAuction(nftUniqueId)
 
-                const gas = await testDeployer.s_auctionIdToGasAuction(1)
 
                 assert.equal(nftStatus.sellingType, SellingType.NO_SELLING)
                 assert.equal(auction.id.toString(), "0")
@@ -1057,6 +1055,9 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
             })
             it("Should Succeed - WINNER AND LOSERS", async () => {
                 const winner = player2
+                const owner = player4
+                const creator = deployer
+
                 const loser1 = player1
                 const loser2Refunded = player3
 
@@ -1073,7 +1074,8 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 const winnerBalanceBefore = await winner.getBalance()
                 const loser1BalanceBefore = await loser1.getBalance()
                 const loser2RefundedBalanceBefore = await loser2Refunded.getBalance()
-                const deployerBalanceBefore = await deployer.getBalance()
+                const creatorBalanceBefore = await creator.getBalance()
+                const ownerBalanceBefore = await owner.getBalance()
 
                 await helpers.time.increase(DAYS_10 + 1)
                 const txResponse = await testDeployer.terminateAuction(nftUniqueId)
@@ -1085,13 +1087,18 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 const winnerBalanceAfter = await winner.getBalance()
                 const loser1BalanceAfter = await loser1.getBalance()
                 const loser2RefundedBalanceAfter = await loser2Refunded.getBalance()
-                const deployerBalanceAfter = await deployer.getBalance()
+                const creatorBalanceAfter = await creator.getBalance()
+                const ownerBalanceAfter = await owner.getBalance()
 
                 const amountToOwner = winnerAmount.mul(100 - Number(royalties)).div(100)
                 const amountToCreator = winnerAmount.mul(royalties).div(100)
 
                 assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.sub(winnerAmount).sub(loserAmount1).toString())
-                assert.equal(winnerBalanceAfter.toString(), winnerBalanceBefore.add(amountToOwner).toString()) // TODO CHECK THIS
+                assert.equal(winnerBalanceAfter.toString(), winnerBalanceBefore.toString())
+                assert.equal(loser1BalanceAfter.toString(), loser1BalanceBefore.add(loserAmount1).toString())
+                assert.equal(loser2RefundedBalanceAfter.toString(), loser2RefundedBalanceBefore.toString())
+                assert.equal(creatorBalanceAfter.toString(), creatorBalanceBefore.add(amountToCreator).sub(gasCost).toString())
+                assert.equal(ownerBalanceAfter.toString(), ownerBalanceBefore.add(amountToOwner).toString())
             })
         })
     })

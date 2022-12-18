@@ -472,11 +472,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
 
 
     function transferFrom(address from, address to, uint256 tokenId) public override {
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
-        address oldOwner = ownerOf(tokenId);
-        uint256 ownedSince = s_nftIdStatus[tokenId].ownedSince;
-        _transfer(from, to, tokenId);
-        _postTransferNft(tokenId, oldOwner, ownedSince);
+        safeTransferFrom(from, to, tokenId, "");
     }
     function safeTransferFrom(address from, address to, uint256 tokenId) public override {
         safeTransferFrom(from, to, tokenId, "");

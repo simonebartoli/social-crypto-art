@@ -25,10 +25,10 @@ const config: HardhatUserConfig = {
     apiKey: ETHERSCAN_API_KEY
   },
   gasReporter: {
-    enabled: false,
+    enabled: true,
     outputFile: "gas-report.txt",
     noColors: true,
-    currency: "USD",
+    currency: "GBP",
     coinmarketcap: COIN_MARKET_CAP_API_KEY
   },
   namedAccounts: {
