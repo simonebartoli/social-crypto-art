@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model access_requests {
+  token     String   @id(map: "access_requests_pk") @db.VarChar(511)
+  socket    String   @db.VarChar(255)
+  expire_at DateTime @db.Timestamptz(6)
+  jwt_id    Int      @unique(map: "access_requests_jwtid_unique")
+  tokens    tokens   @relation(fields: [jwt_id], references: [token_id], onDelete: Cascade, map: "access_requests_tokens_null_fk")
+}
+
+model temp_users {
+  token    String @id(map: "temp_users_pk") @db.VarChar(511)
+  nickname String @unique(map: "temp_users_nickname_unique") @db.VarChar(127)
+  email    String @unique(map: "temp_users_email_unique") @db.VarChar(255)
+  socket   String @db.VarChar(255)
+
+  @@unique([socket, email], map: "temp_users_email_socket_unique")
+}
+
+model tokens {
+  token_id        Int              @id(map: "tokens_pk") @default(autoincrement())
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  enabled         Boolean?         @default(false)
+  access_requests access_requests?
+}
+
+model users {
+  nickname   String   @id(map: "users_pk") @db.VarChar(127)
+  email      String   @unique(map: "users_unique") @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+}
