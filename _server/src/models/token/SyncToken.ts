@@ -4,8 +4,8 @@ import * as jose from "jose";
 import {DateTime} from "luxon";
 import {KeyLike} from "jose";
 import {prisma} from "../../globals";
-import {AUTH_ERROR} from "../../schema/errors/AuthError";
-import ErrorCode from "../../schema/enums/ErrorCode";
+import {AUTH_ERROR} from "../../schema/errors";
+import ErrorCode from "../../enums/ErrorCode";
 
 export default abstract class SyncToken extends Token {
 

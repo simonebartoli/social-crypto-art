@@ -7,18 +7,23 @@ import {buildSchema} from "type-graphql";
 import path from "path";
 import fileUpload from "express-fileupload";
 import {expressMiddleware} from "@apollo/server/express4";
+import {Server} from "socket.io";
 
-import {Access} from "../schema/resolvers/Access";
 import formatError from "./FormatError";
 import setHttpPlugin from "./HttpPlugin";
+import {Context} from "../types";
+import {initSocket} from "../socket/InitSocket";
+import {Access, User} from "../schema/resolvers";
 
 
 async function startApolloServer() {
     const schema = await buildSchema({
-        resolvers: [Access]
+        resolvers: [Access, User]
     });
     const app = express();
     const httpServer = http.createServer(app);
+    const io = new Server(httpServer);
+    initSocket(io)
 
     app.use(fileUpload({
         abortOnLimit: true,
@@ -38,10 +43,11 @@ async function startApolloServer() {
     });
     await server.start()
     app.use("/graphql", expressMiddleware(server, {
-        context: async ({req, res}) => {
+        context: async ({req, res}): Promise<Context> => {
             return {
                 request: req,
-                response: res
+                response: res,
+                nickname: null
             }
         }
     }))

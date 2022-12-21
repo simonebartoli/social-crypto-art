@@ -1022,6 +1022,7 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 await testPlayer_2.withdrawOffer(nftUniqueId)
 
                 await helpers.time.increase(DAYS_10 + 1)
+                await testDeployer.terminateAuction(nftUniqueId)
 
                 const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
                 const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
@@ -1030,7 +1031,7 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 const auction = await testDeployer.s_nftIdToSellingAuction(nftUniqueId)
 
 
-                assert.equal(nftStatus.sellingType, SellingType.NO_SELLING)
+                assert.equal(nftStatus.sellingType, SellingType.NO_SELLING) // TODO DOUBLE CHECK
                 assert.equal(auction.id.toString(), "0")
 
                 assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.toString())

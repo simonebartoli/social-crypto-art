@@ -1,5 +1,5 @@
 import {GraphQLError} from "graphql";
-import ErrorCode from "../enums/ErrorCode";
+import ErrorCode from "../../enums/ErrorCode";
 import {DateTime} from "luxon";
 
 export class AUTH_ERROR extends GraphQLError{

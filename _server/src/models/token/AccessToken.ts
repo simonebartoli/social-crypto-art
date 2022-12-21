@@ -11,8 +11,8 @@ import {
     TokenHeader
 } from "./TokenInterfaces";
 import {prisma} from "../../globals";
-import {AUTH_ERROR} from "../../schema/errors/AuthError";
-import ErrorCode from "../../schema/enums/ErrorCode";
+import {AUTH_ERROR} from "../../schema/errors";
+import ErrorCode from "../../enums/ErrorCode";
 
 type CreateNewToken = {
     header: Omit<NewAccessTokenConstructor["header"], "tokenId" | "type">,
@@ -56,7 +56,8 @@ export default class AccessToken extends Token{
     public static async createNewAccessToken(data: CreateNewToken){
         const result = await prisma.tokens.create({
             data: {
-                enabled: true
+                enabled: true,
+                nickname: data.body.nickname
             }
         })
         return new AccessToken({
@@ -96,8 +97,9 @@ export default class AccessToken extends Token{
         if(header["securityPatch"] !== undefined && header["securityPatch"] === Token.SECURITY_PATCH){
             const castedHeader = header as AccessTokenType["header"]
             const type = castedHeader.type
-            const timeout = DateTime.fromSeconds(Number(castedHeader.timeout))
-            const exp = DateTime.fromSeconds(Number(castedHeader.exp))
+            const timeout = DateTime.fromISO(castedHeader.timeout.toString())
+            const exp = DateTime.fromISO(castedHeader.exp.toString())
+
             const ipToken = castedHeader.ip
             const uaToken = castedHeader.ua
 

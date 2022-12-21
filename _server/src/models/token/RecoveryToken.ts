@@ -12,14 +12,15 @@ import {
 import {prisma} from "../../globals";
 import Token from "./Token";
 import {v4 as uuidv4} from "uuid";
-import {AUTH_ERROR} from "../../schema/errors/AuthError";
-import ErrorCode from "../../schema/enums/ErrorCode";
+import {AUTH_ERROR} from "../../schema/errors";
+import ErrorCode from "../../enums/ErrorCode";
 
 type ConstructorType = "NEW_TOKEN" | "LOAD_TOKEN"
 type CreateNewToken = {
     header: Omit<NewSyncTokenConstructor["header"], "tokenId" | "type">,
     body: NewAccessTokenConstructor["body"],
-    socketId: string
+    socketId: string,
+    newUser: boolean
 }
 
 export default class RecoveryToken extends SyncToken{
@@ -49,7 +50,8 @@ export default class RecoveryToken extends SyncToken{
     public static async createNewRecoveryToken(data: CreateNewToken){
         const result = await prisma.tokens.create({
             data: {
-                enabled: true
+                enabled: false,
+                nickname: !data.newUser ? data.body.nickname : null
             }
         })
         await prisma.access_requests.create({
@@ -86,7 +88,7 @@ export default class RecoveryToken extends SyncToken{
         if(header["securityPatch"] !== undefined && header["securityPatch"] === Token.SECURITY_PATCH){
             const castedHeader = header as SyncTokenType["header"]
             const type = castedHeader.type
-            const exp = DateTime.fromSeconds(Number(castedHeader.exp))
+            const exp = DateTime.fromISO(castedHeader.exp.toString())
             const ipToken = castedHeader.ip
             const uaToken = castedHeader.ua
 
