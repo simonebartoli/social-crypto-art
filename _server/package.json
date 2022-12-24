@@ -1,5 +1,5 @@
 {
-    "name": "_server",
+    "name": "social-crypto-art-server",
     "version": "1.0.0",
     "author": "Simone Bartoli",
     "license": "MIT",
@@ -25,6 +25,7 @@
         "express": "^4.18.2",
         "express-fileupload": "^1.4.0",
         "graphql": "^16.6.0",
+        "graphql-query-complexity": "^0.12.0",
         "jose": "^4.11.1",
         "luxon": "^3.1.1",
         "prisma": "^4.7.1",

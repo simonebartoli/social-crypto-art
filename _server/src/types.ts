@@ -10,4 +10,4 @@ export type ContextAuth = {
     response: express.Response
     nickname: string
 }
-
+export type ArrayOneOrMore<T> = [T, ...Array<T>]

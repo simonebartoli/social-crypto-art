@@ -2,13 +2,19 @@ import * as fs from "fs";
 import * as Path from "path";
 
 const loadExternalTypes = () => {
+    removeFolders()
     createFolders()
     loadCommon()
     loadVerifySignature()
 }
+const removeFolders = () => {
+    const PATH_SOURCE = "src/external-types"
+    fs.rmSync(Path.join(process.cwd(), PATH_SOURCE), { recursive: true, force: true });
+}
 
 const createFolders = () => {
-    // fs.mkdirSync()
+    const PATH_SOURCE = "src/external-types/contracts"
+    fs.mkdirSync(Path.join(process.cwd(), PATH_SOURCE), {recursive: true})
 }
 
 const loadCommon = () => {

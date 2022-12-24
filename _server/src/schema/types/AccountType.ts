@@ -1,7 +1,7 @@
 import {Field, ObjectType} from "type-graphql";
 
 @ObjectType()
-export class Account {
+export class AccountType {
     @Field(() => String)
     address: string
 

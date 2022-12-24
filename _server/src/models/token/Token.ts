@@ -27,7 +27,7 @@ export default abstract class Token {
         }
     }
     private static async createEncryptionKey(): Promise<KeyLike | Uint8Array> {
-        const key = crypto.randomBytes(256)
+        const key = crypto.randomBytes(32)
         const keyString = Buffer.from(key).toString("hex")
         const keyObject: EncryptionKey = {
             key: keyString,

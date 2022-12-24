@@ -25,7 +25,7 @@ type AccessTokenHeader = {
 
 export default class AccessToken extends Token{
     private static readonly EXP_DEFAULT: number = 60*60*24*5
-    private static readonly TIMEOUT_DEFAULT: number = 60*30
+    private static readonly TIMEOUT_DEFAULT: number = 60*60*6
 
     private accessTokenHeader: AccessTokenHeader
 

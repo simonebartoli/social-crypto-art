@@ -1,2 +1,3 @@
-export {Access} from "./Access"
-export {User} from "./User"
+export {AccessResolver} from "./AccessResolver"
+export {UserResolver} from "./UserResolver"
+export {PostResolver} from "./PostResolver"

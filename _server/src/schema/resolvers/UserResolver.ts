@@ -1,16 +1,18 @@
-import {Arg, Ctx, Mutation, Resolver} from "type-graphql";
-import {prisma, VERIFY_SIGNATURE_ADDRESS, VerifySignatureAbi} from "../../globals";
+import {Arg, Ctx, Mutation, Query, Resolver} from "type-graphql";
+import {prisma} from "../../globals";
 import ErrorCode from "../../enums/ErrorCode";
 import RecoveryToken from "../../models/token/RecoveryToken";
 import {Context, ContextAuth} from "../../types";
 import CommunicationSocket from "../../models/CommunicationSocket";
 import {AUTH_ERROR, DATA_ERROR} from "../errors";
 import {RequireAccessToken} from "../decorators/RequireAccessToken";
-import {Input_NewUser} from "../args&inputs";
-import {ethers} from "ethers";
+import {Input_NewUser, Input_NewWeb3Account} from "../args&inputs";
+import Web3Account from "../../models/Web3Account";
+import {PostType} from "../types";
+import PostModel from "../../models/post/PostModel";
 
 @Resolver()
-export class User {
+export class UserResolver {
     @Mutation(() => Boolean)
     async createUser(@Ctx() ctx: Context, @Arg("data", () => Input_NewUser) {email, nickname, socket}: Input_NewUser): Promise<boolean>{
         const result = await prisma.users.findFirst({
@@ -62,9 +64,31 @@ export class User {
 
     @Mutation(() => Boolean)
     @RequireAccessToken()
-    async addNewWeb3Account(@Ctx() ctx: ContextAuth, @Arg("signature", () => String) signature: string): Promise<boolean> {
-        const ABI = VerifySignatureAbi()
-        const verifySignature = new ethers.Contract(VERIFY_SIGNATURE_ADDRESS, ABI)
+    async addNewWeb3Account(@Ctx() ctx: ContextAuth, @Arg("data", () => Input_NewWeb3Account) {signature, date, name, address, packet}: Input_NewWeb3Account): Promise<boolean> {
+        const ip = ctx.request.ip
+        await Web3Account.linkNewWeb3Account({
+            name: name,
+            nickname: ctx.nickname,
+            date: date,
+            signature: signature,
+            address: address,
+            ip: ip
+        })
+        if(packet !== undefined && packet !== null){
+            await prisma.account_packets.create({
+                data: {
+                    packet: packet,
+                    nickname: ctx.nickname
+                }
+            })
+        }
         return true
+    }
+
+    @Query(() => [PostType], {nullable: true})
+    async getPostFromUser(@Arg("nickname", () => String) nickname: string): Promise<PostType[] | null> {
+        const posts = await PostModel.loadPostByNickname(nickname)
+        if(posts.length === 0) return null
+        return posts.map((_) => _.getPost())
     }
 }

@@ -1,7 +1,7 @@
 import {GraphQLFormattedError} from "graphql/error";
 import {unwrapResolverError} from "@apollo/server/errors";
-import {AUTH_ERROR} from "../schema/errors/AuthError";
-import {DATA_ERROR} from "../schema/errors/DataError";
+import {AUTH_ERROR} from "../schema/errors";
+import {DATA_ERROR} from "../schema/errors";
 
 export default function formatError(
     formattedError: GraphQLFormattedError,

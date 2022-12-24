@@ -33,11 +33,17 @@ model tokens {
 }
 
 model users {
-  nickname   String     @id(map: "users_pk") @db.VarChar(127)
-  email      String     @unique(map: "users_unique") @db.VarChar(255)
-  created_at DateTime   @default(now()) @db.Timestamptz(6)
-  accounts   accounts[]
-  tokens     tokens[]
+  nickname        String            @id(map: "users_pk") @db.VarChar(127)
+  email           String            @unique(map: "users_unique") @db.VarChar(255)
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  account_packets account_packets[]
+  accounts        accounts[]
+  comments        comments[]
+  lists           lists[]
+  post_downvotes  post_downvotes[]
+  post_upvotes    post_upvotes[]
+  posts           posts[]
+  tokens          tokens[]
 }
 
 model accounts {
@@ -47,4 +53,88 @@ model accounts {
   users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "accounts_users_null_fk")
 
   @@unique([address, name], map: "accounts_address_name_unique")
+}
+
+model account_packets {
+  nickname String @db.VarChar(127)
+  packet   String @id(map: "account_packets_pk")
+  users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "account_packets_users_null_fk")
+}
+
+model lists {
+  list_id    Int          @id(map: "lists_pk") @default(autoincrement())
+  name       String       @db.VarChar(127)
+  nickname   String?      @db.VarChar(127)
+  users      users?       @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "lists_users_null_fk")
+  post_lists post_lists[]
+
+  @@unique([nickname, name], map: "lists_name_nickname_unique")
+}
+
+model post_contents {
+  content_id Int          @id(map: "post_contents_pk") @default(autoincrement())
+  type       content_type
+  content    String       @db.Text
+  position   Int
+  post_id    Int
+  posts      posts        @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "post_contents_posts_null_fk")
+
+  @@unique([post_id, position], map: "post_contents_position_id_unique")
+}
+
+model post_downvotes {
+  post_id  Int
+  nickname String @db.VarChar(127)
+  posts    posts  @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "post_downvotes_posts_null_fk")
+  users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "post_downvotes_users_null_fk")
+
+  @@id([post_id, nickname], map: "post_downvotes_pk")
+}
+
+model post_lists {
+  post_id Int
+  list_id Int
+  lists   lists @relation(fields: [list_id], references: [list_id], onDelete: Cascade, map: "post_lists_lists_null_fk")
+  posts   posts @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "post_lists_posts_null_fk")
+
+  @@id([post_id, list_id], map: "post_lists_pk")
+}
+
+model post_upvotes {
+  post_id  Int
+  nickname String @db.VarChar(127)
+  posts    posts  @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "post_upvotes_posts_null_fk")
+  users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "post_upvotes_users_null_fk")
+
+  @@id([post_id, nickname], map: "post_upvotes_pk")
+}
+
+model posts {
+  post_id        Int              @id(map: "posts_pk") @default(autoincrement())
+  visibility     String           @default("public") @db.VarChar(63)
+  created_at     DateTime         @default(now()) @db.Timestamptz(6)
+  nickname       String           @db.VarChar(127)
+  comments       comments[]
+  post_contents  post_contents[]
+  post_downvotes post_downvotes[]
+  post_lists     post_lists[]
+  post_upvotes   post_upvotes[]
+  users          users            @relation(fields: [nickname], references: [nickname], onDelete: SetNull, map: "posts_users_null_fk")
+}
+
+model comments {
+  comment_id Int          @id(map: "comments_pk") @default(autoincrement())
+  content    String
+  type       content_type
+  post_id    Int
+  nickname   String       @db.VarChar(127)
+  posts      posts        @relation(fields: [post_id], references: [post_id], onDelete: NoAction, onUpdate: NoAction, map: "comments_posts_null_fk")
+  users      users        @relation(fields: [nickname], references: [nickname], onDelete: NoAction, onUpdate: NoAction, map: "comments_users_null_fk")
+}
+
+enum content_type {
+  TEXT
+  VIDEO
+  PHOTO
+  GIF
 }

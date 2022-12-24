@@ -7,11 +7,14 @@ import {DateTime} from "luxon";
 import AccessToken from "../../models/token/AccessToken";
 import {RequireAccessToken} from "../decorators/RequireAccessToken";
 import CommunicationSocket from "../../models/CommunicationSocket";
-import {Input_EmailSocket, Input_RequestToken} from "../args&inputs";
+import {Input_EmailSocket, Input_RequestToken, Input_Web3Account} from "../args&inputs";
 import {AUTH_ERROR, DATA_ERROR} from "../errors";
+import Web3Account from "../../models/Web3Account";
+import {SecretType} from "../types";
+import SecretModel from "../../models/Secret"
 
 @Resolver()
-export class Access {
+export class AccessResolver {
     @Query(() => String)
     @RequireAccessToken()
     getTest(@Ctx() ctx: ContextAuth): string {return ctx.nickname}
@@ -156,5 +159,52 @@ export class Access {
         })
 
         return true
+    }
+
+    @Mutation(() => Boolean)
+    async getAccessToken_Web3Account(@Ctx() ctx: Context, @Arg("data", () => Input_Web3Account) data: Input_Web3Account): Promise<Boolean>{
+        const {address, date, signature} = data
+
+        const ip = ctx.request.ip
+        const ua = ctx.request.header("User-Agent") || "NOT_DEFINED"
+
+        const web3Account = await Web3Account.getWeb3Account(address)
+        await Web3Account.verifyAddress({
+            address: address,
+            date: date,
+            ip: ip,
+            signature: signature
+        })
+
+        const nickname = web3Account.nickname
+        const accessToken = await AccessToken.createNewAccessToken({
+            header: {
+                ip: ip,
+                ua: ua
+            },
+            body: {
+                nickname: nickname
+            }
+        })
+        const jwt = await accessToken.createJwt()
+
+        ctx.response.cookie("access_token", jwt)
+        return true
+    }
+
+    @Mutation(() => SecretType)
+    @RequireAccessToken()
+    getNewSecret(@Ctx() ctx: ContextAuth): SecretType {
+        const nickname = ctx.nickname
+        const secret = new SecretModel(nickname)
+        return secret.getToken()
+    }
+
+    @Query(() => SecretType)
+    @RequireAccessToken()
+    getExistingSecret(@Ctx() ctx: ContextAuth, @Arg("id", () => String) id: string): SecretType {
+        const nickname = ctx.nickname
+        const secret = SecretModel.getSecret(nickname, id)
+        return secret.getToken()
     }
 }
