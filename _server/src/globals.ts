@@ -11,6 +11,8 @@ export const VERIFY_SIGNATURE_ADDRESS = process.env["VERIFY_SIGNATURE_ADDRESS"] 
 export const JSON_RPC_PROVIDER = process.env["JSON_RPC_PROVIDER"]
 export const PROVIDER = new ethers.providers.JsonRpcProvider(JSON_RPC_PROVIDER)
 
+export const DOMAIN = process.env["DOMAIN"]!
+
 export const VerifySignatureAbi = () => {
     const PATH = "../artifacts/contracts/VerifySignature.sol/VerifySignature.json"
     const file = fs.readFileSync(Path.join(process.cwd(), PATH), "utf-8")

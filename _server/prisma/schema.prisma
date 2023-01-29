@@ -33,17 +33,18 @@ model tokens {
 }
 
 model users {
-  nickname        String            @id(map: "users_pk") @db.VarChar(127)
-  email           String            @unique(map: "users_unique") @db.VarChar(255)
-  created_at      DateTime          @default(now()) @db.Timestamptz(6)
-  account_packets account_packets[]
-  accounts        accounts[]
-  comments        comments[]
-  lists           lists[]
-  post_downvotes  post_downvotes[]
-  post_upvotes    post_upvotes[]
-  posts           posts[]
-  tokens          tokens[]
+  nickname         String             @id(map: "users_pk") @db.VarChar(127)
+  email            String             @unique(map: "users_unique") @db.VarChar(255)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  account_packets  account_packets[]
+  accounts         accounts[]
+  comments         comments[]
+  lists            lists[]
+  post_downvotes   post_downvotes[]
+  post_upvotes     post_upvotes[]
+  posts            posts[]
+  restricted_posts restricted_posts[]
+  tokens           tokens[]
 }
 
 model accounts {
@@ -73,10 +74,11 @@ model lists {
 
 model post_contents {
   content_id Int          @id(map: "post_contents_pk") @default(autoincrement())
-  type       content_type
-  content    String       @db.Text
   position   Int
   post_id    Int
+  type       content_type
+  content    String
+  nft_id     String?      @db.VarChar(255)
   posts      posts        @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "post_contents_posts_null_fk")
 
   @@unique([post_id, position], map: "post_contents_position_id_unique")
@@ -110,16 +112,17 @@ model post_upvotes {
 }
 
 model posts {
-  post_id        Int              @id(map: "posts_pk") @default(autoincrement())
-  visibility     String           @default("public") @db.VarChar(63)
-  created_at     DateTime         @default(now()) @db.Timestamptz(6)
-  nickname       String           @db.VarChar(127)
-  comments       comments[]
-  post_contents  post_contents[]
-  post_downvotes post_downvotes[]
-  post_lists     post_lists[]
-  post_upvotes   post_upvotes[]
-  users          users            @relation(fields: [nickname], references: [nickname], onDelete: SetNull, map: "posts_users_null_fk")
+  post_id          Int                @id(map: "posts_pk") @default(autoincrement())
+  visibility       String             @default("public") @db.VarChar(63)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  nickname         String             @db.VarChar(127)
+  comments         comments[]
+  post_contents    post_contents[]
+  post_downvotes   post_downvotes[]
+  post_lists       post_lists[]
+  post_upvotes     post_upvotes[]
+  users            users              @relation(fields: [nickname], references: [nickname], onDelete: SetNull, map: "posts_users_null_fk")
+  restricted_posts restricted_posts[]
 }
 
 model comments {
@@ -130,6 +133,15 @@ model comments {
   nickname   String       @db.VarChar(127)
   posts      posts        @relation(fields: [post_id], references: [post_id], onDelete: NoAction, onUpdate: NoAction, map: "comments_posts_null_fk")
   users      users        @relation(fields: [nickname], references: [nickname], onDelete: NoAction, onUpdate: NoAction, map: "comments_users_null_fk")
+}
+
+model restricted_posts {
+  post_id  Int
+  nickname String @db.VarChar(127)
+  posts    posts  @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "restricted_posts_posts_null_fk")
+  users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "restricted_posts_users_null_fk")
+
+  @@id([post_id, nickname], map: "restricted_posts_pk")
 }
 
 enum content_type {

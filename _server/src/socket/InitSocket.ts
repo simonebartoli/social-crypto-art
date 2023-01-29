@@ -1,5 +1,5 @@
 import {Server} from "socket.io";
-import CommunicationSocket from "../models/CommunicationSocket";
+import CommunicationSocket from "../_GRAPHQL/models/CommunicationSocket";
 
 export const initSocket = (io: Server) => {
     io.on("connection", (socket) => {

@@ -1,6 +1,6 @@
-import AccessToken from "../../src/models/token/AccessToken";
-import RecoveryToken from "../../src/models/token/RecoveryToken";
-import SpecialToken from "../../src/models/token/SpecialToken";
+import AccessToken from "../../src/_GRAPHQL/models/token/access/AccessToken";
+import RecoveryToken from "../../src/_GRAPHQL/models/token/access/RecoveryToken";
+import SpecialToken from "../../src/_GRAPHQL/models/token/access/SpecialToken";
 
 describe("Security Testing", () => {
     // NOT PROPER TESTING | JUST LOOKING IF WORKING
@@ -37,7 +37,8 @@ describe("Security Testing", () => {
                 body: {
                     nickname: "simo2001"
                 },
-                socketId: socket
+                socketId: socket,
+                newUser: false
             })
             jwt = await recoveryToken.createJwt()
             console.log(jwt)

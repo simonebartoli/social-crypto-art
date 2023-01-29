@@ -10,4 +10,17 @@ export type ContextAuth = {
     response: express.Response
     nickname: string
 }
+
+export type ContextCustom<T> = {
+    request: express.Request
+    response: express.Response
+    nickname: null
+} & {[x: string]: T}
+
+export type ContextAuthCustom<T> = {
+    request: express.Request
+    response: express.Response
+    nickname: string
+} & {[x: string]: T}
+
 export type ArrayOneOrMore<T> = [T, ...Array<T>]
