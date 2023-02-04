@@ -1,0 +1,162 @@
+# This file was generated based on ".graphqlconfig". Do not edit manually.
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type AccountType {
+    address: String!
+    name: String!
+}
+
+type CommentType {
+    comment_id: Int!
+    content: String!
+    post: PostType!
+    type: MediaType!
+}
+
+type Mutation {
+    addComment(data: Input_AddNewComment!): PostType!
+    addNewFriend(nickname: String!): Boolean!
+    addNewWeb3Account(data: Input_NewWeb3Account!): Boolean!
+    addPost(data: Input_AddNewPost!): PostType!
+    addUpvoteDownvote(data: Input_AddNewInteraction!): PostType!
+    createNewLoginInstance_Email(data: Input_EmailSocket!): Boolean!
+    createUser(data: Input_NewUser!): Boolean!
+    enableToken(data: Input_RequestToken!): Boolean!
+    getAccessToken_RecoveryToken: Boolean!
+    getAccessToken_Web3Account(data: Input_Web3Account!): Boolean!
+    getNewSecret: SecretType!
+    removeComment(comment_id: Int!, post_id: Int!): PostType!
+    removeUpvoteDownvote(data: Input_AddNewInteraction!): PostType!
+}
+
+type PostContentType {
+    nft_id: String
+    position: Int!
+    text: String!
+    type: MediaType!
+}
+
+type PostInteractionType {
+    comments: [CommentType!]!
+    downvote_total: Int!
+    downvote_users: [UserType!]!
+    upvote_total: Int!
+    upvote_users: [UserType!]!
+}
+
+type PostType {
+    content: [PostContentType!]!
+    created_at: DateTime!
+    interactions: PostInteractionType!
+    post_id: ID!
+    user: UserType!
+    visibility: Visibility!
+}
+
+type Query {
+    getExistingSecret(id: String!): SecretType!
+    getPostById(id: Int!): PostType
+    getPostFromUser(nickname: String!): [PostType!]
+    getPosts(data: Input_GetPosts): [PostType!]!
+    getTest: String!
+}
+
+type SecretType {
+    exp: DateTime!
+    id: String!
+    key: String!
+}
+
+type UserType {
+    accounts: [AccountType!]
+    created_at: DateTime!
+    email: String!
+    nickname: String!
+    posts: [PostType!]
+}
+
+enum Interaction {
+    DOWNVOTE
+    UPVOTE
+}
+
+enum MediaType {
+    GIF
+    PHOTO
+    TEXT
+    VIDEO
+}
+
+enum Visibility {
+    PRIVATE
+    PUBLIC
+    RESTRICTED
+}
+
+"The javascript `Date` as string. Type represents date and time as the ISO Date string."
+scalar DateTime
+
+input Input_AddNewComment {
+    post_id: Int!
+    text: String!
+    type: MediaType!
+}
+
+input Input_AddNewInteraction {
+    post_id: Int!
+    type: Interaction!
+}
+
+input Input_AddNewPost {
+    allowed: [String!]
+    content: [Input_Content!]!
+    visibility: Visibility!
+}
+
+input Input_Content {
+    nft_id: String
+    position: Int!
+    text: String!
+    type: MediaType!
+}
+
+input Input_EmailSocket {
+    email: String!
+    socket: String!
+}
+
+input Input_GetPosts {
+    dateMax: DateTime! = "2023-02-03T22:01:53.272Z"
+    dateMin: DateTime
+    exclude: [String!]
+    maxPosts: Int! = 10
+}
+
+input Input_NewUser {
+    email: String!
+    nickname: String!
+    socket: String!
+}
+
+input Input_NewWeb3Account {
+    address: String!
+    date: DateTime!
+    name: String!
+    packet: String
+    signature: String!
+}
+
+input Input_RequestToken {
+    isNewAccount: Boolean! = false
+    token: String!
+}
+
+input Input_Web3Account {
+    address: String!
+    date: DateTime!
+    signature: String!
+}
