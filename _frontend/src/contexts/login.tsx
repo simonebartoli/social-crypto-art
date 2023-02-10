@@ -7,7 +7,6 @@ import {Check_AuthorizationQuery, Exact} from "@/__generated__/graphql";
 type ContextType = {
     logged: boolean | null
     checkAuthorization: LazyQueryExecFunction<Check_AuthorizationQuery, Exact<{ [key: string]: never; }>>
-    loading: boolean
 }
 
 const loginContext = createContext<undefined | ContextType>(undefined)
@@ -18,7 +17,7 @@ type Props = {
 
 export const LoginContext: NextPage<Props> = ({children}) => {
     const [logged, setLogged] = useState<boolean | null>(null)
-    const [checkAuthorization, {loading}] = useLazyQuery(CHECK_AUTHORIZATION, {
+    const [checkAuthorization] = useLazyQuery(CHECK_AUTHORIZATION, {
         fetchPolicy: "no-cache",
         onCompleted: () => {
             setLogged(true)
@@ -28,7 +27,7 @@ export const LoginContext: NextPage<Props> = ({children}) => {
         }
     })
 
-    const value = {logged, checkAuthorization, loading}
+    const value = {logged, checkAuthorization}
     return (
         <loginContext.Provider value={value}>
             {children}

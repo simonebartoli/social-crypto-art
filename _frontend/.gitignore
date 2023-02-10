@@ -5,6 +5,8 @@
 /.pnp
 .pnp.js
 src/__generated__
+src/__abi
+src/__typechain
 
 # testing
 /coverage

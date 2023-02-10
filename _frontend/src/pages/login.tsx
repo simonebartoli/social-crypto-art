@@ -1,9 +1,10 @@
-import React, {useState} from 'react';
+import React, {ReactElement, useState} from 'react';
 import Main from "@/components/login/tabs/main";
 import {LoginEnum} from "@/enums/local/login-enum";
 import Register from "@/components/login/tabs/register";
 import Confirmation from "@/components/login/tabs/confirmation";
 import LoginWithEmail from "@/components/login/tabs/login-with-email";
+import RequireNotLogin from "@/components/library/require-not-login";
 
 const Login = () => {
     const [tabToShow, setTabToShow] = useState<LoginEnum>(LoginEnum.MAIN)
@@ -30,5 +31,13 @@ const Login = () => {
         </div>
     );
 };
+
+Login.getLayout = function getLayout(page: ReactElement) {
+    return (
+        <RequireNotLogin>
+            {page}
+        </RequireNotLogin>
+    )
+}
 
 export default Login;

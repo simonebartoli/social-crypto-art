@@ -12,6 +12,9 @@ import {ToastContainer} from "react-toastify";
 import {LoginContext} from "@/contexts/login";
 import {NextPage} from "next";
 import {ReactElement, ReactNode} from "react";
+import {Config, DAppProvider, Goerli, Hardhat, Mainnet, MetamaskConnector} from "@usedapp/core";
+import {LayoutContext} from "@/contexts/layout";
+import {ModalContext} from "@/contexts/modal";
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
     getLayout?: (page: ReactElement) => ReactNode
@@ -31,6 +34,23 @@ const client = new ApolloClient({
     link,
     cache: new InMemoryCache(),
 });
+
+const config: Config = {
+    networks: [Hardhat, Mainnet, Goerli],
+    readOnlyChainId: Hardhat.chainId,
+    multicallAddresses: {
+        [Hardhat.chainId]: "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707"
+    },
+    readOnlyUrls: {
+        [Hardhat.chainId]: "http://127.0.0.1:8545/"
+        // [Mainnet.chainId]: "https://mainnet.infura.io/v3/257845b2fe3e409a95d49b37958d8f74",
+        // [Goerli.chainId]: "https://goerli.infura.io/v3/257845b2fe3e409a95d49b37958d8f74",
+    },
+    connectors: {
+        metamask: new MetamaskConnector()
+    },
+    autoConnect: false
+}
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
     const getLayout = Component.getLayout ?? ((page) => page)
@@ -58,11 +78,17 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
                     pauseOnHover
                     theme="dark"
                 />
-                <LoaderContext>
-                    <LoginContext>
-                        {getLayout(<Component {...pageProps} />)}
-                    </LoginContext>
-                </LoaderContext>
+                <LayoutContext>
+                    <LoaderContext>
+                        <LoginContext>
+                            <DAppProvider config={config}>
+                                <ModalContext>
+                                    {getLayout(<Component {...pageProps} />)}
+                                </ModalContext>
+                            </DAppProvider>
+                        </LoginContext>
+                    </LoaderContext>
+                </LayoutContext>
             </ApolloProvider>
         </>
     )

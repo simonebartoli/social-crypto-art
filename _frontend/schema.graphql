@@ -8,6 +8,7 @@ schema {
 type AccountType {
     address: String!
     name: String!
+    packet: String
 }
 
 type CommentType {
@@ -58,11 +59,12 @@ type PostType {
 }
 
 type Query {
+    checkAuthorization: Boolean!
     getExistingSecret(id: String!): SecretType!
     getPostById(id: Int!): PostType
     getPostFromUser(nickname: String!): [PostType!]
     getPosts(data: Input_GetPosts): [PostType!]!
-    getTest: String!
+    getWeb3Accounts: [AccountType!]!
 }
 
 type SecretType {
@@ -130,7 +132,7 @@ input Input_EmailSocket {
 }
 
 input Input_GetPosts {
-    dateMax: DateTime! = "2023-02-03T22:01:53.272Z"
+    dateMax: DateTime! = "2023-02-07T20:04:15.294Z"
     dateMin: DateTime
     exclude: [String!]
     maxPosts: Int! = 10
