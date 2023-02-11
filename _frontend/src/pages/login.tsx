@@ -5,6 +5,7 @@ import Register from "@/components/login/tabs/register";
 import Confirmation from "@/components/login/tabs/confirmation";
 import LoginWithEmail from "@/components/login/tabs/login-with-email";
 import RequireNotLogin from "@/components/library/require-not-login";
+import LoginWithWeb3 from "@/components/login/tabs/login-with-web3";
 
 const Login = () => {
     const [tabToShow, setTabToShow] = useState<LoginEnum>(LoginEnum.MAIN)
@@ -13,8 +14,8 @@ const Login = () => {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center bg-custom-grey min-h-screen font-main">
-            <div className="border-2 border-white rounded-lg min-w-[35%] ">
+        <div className="flex flex-col items-center justify-center bg-custom-grey min-h-screen font-main p-4">
+            <div className="border-2 border-white rounded-lg min-w-[35%] max-w-[40%]">
                 <div className="flex flex-col gap-12 bg-white p-12 rounded-lg text-xl shadow-white border-4 border-black">
                     {
                         tabToShow === LoginEnum.MAIN ?
@@ -23,8 +24,10 @@ const Login = () => {
                         <Register changeTab={changeTab}/> :
                         tabToShow === LoginEnum.CONFIRMATION ?
                         <Confirmation changeTab={changeTab}/> :
-                        tabToShow === LoginEnum.EMAIL &&
-                        <LoginWithEmail changeTab={changeTab}/>
+                        tabToShow === LoginEnum.EMAIL ?
+                        <LoginWithEmail changeTab={changeTab}/> :
+                        tabToShow === LoginEnum.WEB3 &&
+                        <LoginWithWeb3 changeTab={changeTab}/>
                     }
                 </div>
             </div>

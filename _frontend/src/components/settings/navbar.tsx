@@ -5,6 +5,8 @@ import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalance
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import {SettingsEnum} from "@/enums/local/settings-enum";
 import {NextPage} from "next";
+import {useRouter} from "next/router";
+import Link from "next/link";
 
 type Props = {
     tabToShow: SettingsEnum
@@ -14,7 +16,6 @@ type Props = {
 
 const Navbar: NextPage<Props> = ({tabToShow, updateNavWidth, changeTab}) => {
     const navRef = useRef<HTMLDivElement>(null)
-
     useEffect(() => {
         if(navRef.current !== null){
             updateNavWidth(navRef.current.offsetWidth)
@@ -23,10 +24,10 @@ const Navbar: NextPage<Props> = ({tabToShow, updateNavWidth, changeTab}) => {
 
     return (
         <nav ref={navRef} className="fixed top-0 left-0 p-8 flex flex-col items-center justify-center w-1/4 bg-black h-screen text-white text-2xl">
-            <span className="w-full h-[10%] flex flex-row gap-2 text-base cursor-pointer">
+            <Link href="/home" className="w-full h-[10%] flex flex-row gap-2 text-base cursor-pointer">
                 <UndoOutlinedIcon/>
                 Go Back
-            </span>
+            </Link>
             <div className="flex flex-col items-center justify-around h-[90%]">
                 <div onClick={() => changeTab(SettingsEnum.PERSONAL)}
                      className={`${tabToShow === SettingsEnum.PERSONAL && "font-bold w-full rounded-lg bg-white text-black"} p-4 w-full flex flex-row gap-6 items-center justify-start cursor-pointer`}>

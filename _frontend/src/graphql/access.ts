@@ -15,6 +15,11 @@ export const ADD_NEW_WEB3_ACCOUNT = gql(`
         addNewWeb3Account(data: $data)
     }
 `)
+export const GET_ACCESS_TOKEN_WEB3_ACCOUNT = gql(`
+    mutation GET_ACCESS_TOKEN_WEB3_ACCOUNT($data: Input_Web3Account!) {
+        getAccessToken_Web3Account(data: $data)
+    }
+`)
 export const GET_ACCESS_TOKEN_RECOVERY_TOKEN = gql(`
     mutation GET_ACCESS_TOKEN_RECOVERY_TOKEN{
         getAccessToken_RecoveryToken
