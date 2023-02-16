@@ -5,6 +5,7 @@ type Props = {
     accounts: {
         address: string
         name: string
+        packet: string | null
     }[]
 }
 

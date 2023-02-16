@@ -30,11 +30,6 @@ export const CREATE_NEW_LOGIN_INSTANCE_EMAIL = gql(`
         createNewLoginInstance_Email(data: $data)
     }
 `)
-export const CHECK_AUTHORIZATION = gql(`
-    query CHECK_AUTHORIZATION{
-        checkAuthorization
-    }
-`)
 
 export const GET_IP_ADDRESS = gql(`
     query GET_IP_ADDRESS{

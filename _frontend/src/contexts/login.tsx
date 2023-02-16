@@ -1,33 +1,58 @@
 import React, {createContext, ReactNode, useState} from 'react';
 import {NextPage} from "next";
 import {LazyQueryExecFunction, useLazyQuery} from "@apollo/client";
-import {CHECK_AUTHORIZATION} from "@/graphql/access";
-import {Check_AuthorizationQuery, Exact} from "@/__generated__/graphql";
+import {Get_UserQuery, Exact} from "@/__generated__/graphql";
+import {GET_USER} from "@/graphql/account-info";
 
-type ContextType = {
+export type ContextType<LOGGED extends boolean> = {
     logged: boolean | null
-    checkAuthorization: LazyQueryExecFunction<Check_AuthorizationQuery, Exact<{ [key: string]: never; }>>
+    getUser: LazyQueryExecFunction<Get_UserQuery, Exact<{ [key: string]: never; }>>
+    loading: boolean
+    personalInfo:
+        LOGGED extends false ? null : PersonalInfoType
+}
+type PersonalInfoType = {
+    nickname: string
+    email: string
+    accounts: {
+       name: string
+       address: string
+       packet: string | null
+    }[]
 }
 
-const loginContext = createContext<undefined | ContextType>(undefined)
+const loginContext = createContext<undefined | ContextType<boolean>>(undefined)
 
 type Props = {
     children: ReactNode
 }
 
 export const LoginContext: NextPage<Props> = ({children}) => {
+    const [personalInfo, setPersonalInfo] = useState<PersonalInfoType | null>(null)
     const [logged, setLogged] = useState<boolean | null>(null)
-    const [checkAuthorization] = useLazyQuery(CHECK_AUTHORIZATION, {
+    const [getUser, {loading}] = useLazyQuery(GET_USER, {
         fetchPolicy: "no-cache",
-        onCompleted: () => {
+        onCompleted: (data) => {
             setLogged(true)
+            setPersonalInfo({
+                email: data.getUser.email,
+                nickname: data.getUser.nickname,
+                accounts: (data.getUser.accounts).map(_ => {
+                    return {
+                        name: _.name,
+                        address: _.address,
+                        packet: _.packet as string | null
+                    }
+                })
+            })
         },
         onError: () => {
             setLogged(false)
+            setPersonalInfo(null)
         }
     })
 
-    const value = {logged, checkAuthorization}
+    const value = {logged, getUser, loading, personalInfo}
     return (
         <loginContext.Provider value={value}>
             {children}

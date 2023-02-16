@@ -1,7 +1,9 @@
-import React, {createContext, ReactNode, useState} from 'react';
+import React, {createContext, ReactNode, useEffect, useState} from 'react';
 import {NextPage} from "next";
 import CloseIcon from '@mui/icons-material/Close';
+import {useRouter} from "next/router";
 type ContextType = {
+    open: boolean
     showModal: (e: JSX.Element) => void
     closeModal: () => void
 }
@@ -13,6 +15,7 @@ type Props = {
 }
 
 export const ModalContext: NextPage<Props> = ({children}) => {
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [element, setElement] = useState<JSX.Element | null>(null)
 
@@ -24,7 +27,9 @@ export const ModalContext: NextPage<Props> = ({children}) => {
         setOpen(false)
     }
 
-    const value = {showModal, closeModal}
+    useEffect(() => closeModal(), [router.asPath])
+
+    const value = {open, showModal, closeModal}
     return (
         <modalContext.Provider value={value}>
             {

@@ -1,5 +1,5 @@
 import React, {ReactElement, useState} from 'react';
-import RequireLogin from "@/components/library/require-login";
+import RequireLogin from "@/components/library/auth/require-login";
 import Navbar from "@/components/settings/navbar";
 import {SettingsEnum} from "@/enums/local/settings-enum";
 import Personal from "@/components/settings/tabs/personal";

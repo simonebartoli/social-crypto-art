@@ -10,10 +10,10 @@ type Props = {
 
 const RequireNotLogin: NextPage<Props> = ({children}) => {
     const router = useRouter()
-    const {logged, checkAuthorization} = useLogin()
+    const {logged, getUser} = useLogin()
 
     useEffect(() => {
-        checkAuthorization()
+        getUser()
     }, [])
     useEffect(() => {
         if(logged === true){

@@ -4,7 +4,7 @@ import {LoginEnum} from "@/enums/local/login-enum";
 import Register from "@/components/login/tabs/register";
 import Confirmation from "@/components/login/tabs/confirmation";
 import LoginWithEmail from "@/components/login/tabs/login-with-email";
-import RequireNotLogin from "@/components/library/require-not-login";
+import RequireNotLogin from "@/components/library/auth/require-not-login";
 import LoginWithWeb3 from "@/components/login/tabs/login-with-web3";
 
 const Login = () => {

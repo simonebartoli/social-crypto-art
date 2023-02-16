@@ -9,3 +9,17 @@ export const GET_WEB3_ACCOUNTS = gql(`
         }
     }
 `)
+
+export const GET_USER = gql(`
+    query GET_USER{
+        getUser {
+            nickname
+            email
+            accounts {
+                name
+                address
+                packet
+            }
+        }
+    }
+`)

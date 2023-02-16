@@ -1,20 +1,34 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Metamask from "@/components/settings/buttons/metamask";
 import WalletConnect from "@/components/settings/buttons/wallet-connect";
 import {useEthers} from "@usedapp/core";
 import {useModal} from "@/contexts/modal";
 import LinkToAccount from "@/components/settings/components/link-to-account";
-import {ApolloQueryResult} from "@apollo/client";
-import {Get_Web3_AccountsQuery} from "@/__generated__/graphql";
 import {NextPage} from "next";
 
 type Props = {
-    refetch: () => Promise<ApolloQueryResult<Get_Web3_AccountsQuery>>
+    accounts: {
+        address: string
+        name: string
+        packet: string | null
+    }[]
+    refetch: () => void
 }
 
-const Connect: NextPage<Props> = ({refetch}) => {
+const Connect: NextPage<Props> = ({accounts, refetch}) => {
     const {account, deactivate} = useEthers()
+    const [alreadySet, setAlreadySet] = useState(false)
     const {showModal} = useModal()
+
+    useEffect(() => {
+        if(account){
+            if(accounts.map(_ => _.address.toLowerCase()).includes(account.toLowerCase())){
+                setAlreadySet(true)
+            }else{
+                setAlreadySet(false)
+            }
+        }
+    }, [account])
 
     const refetchAccounts = () => {
         refetch()
@@ -29,14 +43,19 @@ const Connect: NextPage<Props> = ({refetch}) => {
                         <div className="text-center flex flex-col gap-2">
                             <span>Your address is the following: </span>
                             <span className="font-bold tracking-wider text-lg">{account}</span>
-                            <div className="mt-6 flex flex-col items-center justify-center gap-4 p-6 border-custom-red border-[3px] rounded-lg">
-                                <span>If you want to link it to your account for future access please press the button below</span>
-                                <button
-                                    onClick={() => showModal(<LinkToAccount callback={refetchAccounts}/>)}
-                                    className="shadow-lg py-2 px-6 rounded-lg bg-black text-white text-xl hover:bg-white hover:text-black transition">
-                                    Link It to Your Account
-                                </button>
-                            </div>
+                            {
+                                alreadySet ?
+                                <span className="text-xl">This account already exist in our system</span> :
+                                <div className="mt-6 flex flex-col items-center justify-center gap-4 p-6 border-custom-red border-[3px] rounded-lg">
+                                    <span>If you want to link it to your account for future access please press the button below</span>
+                                    <button
+                                        onClick={() => showModal(<LinkToAccount callback={refetchAccounts}/>)}
+                                        className="shadow-lg py-2 px-6 rounded-lg bg-black text-white text-xl hover:bg-white hover:text-black transition">
+                                        Link It to Your Account
+                                    </button>
+                                </div>
+                            }
+
                         </div>:
                         <span>You are currently not connected to any of your account.</span>
                 }

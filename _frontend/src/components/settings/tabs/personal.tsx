@@ -4,8 +4,11 @@ import Image from "next/image";
 import TEST from "/public/test.webp"
 import MailOutlineOutlinedIcon from "@mui/icons-material/MailOutlineOutlined";
 import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
+import {useLogin} from "@/contexts/login";
 
 const Personal = () => {
+    const {personalInfo} = useLogin()
+
     return (
         <div className="flex flex-col items-center justify-start gap-32">
             <div className="flex flex-row items-center justify-center w-3/4 gap-16">
@@ -22,14 +25,22 @@ const Personal = () => {
                         <PermIdentityOutlinedIcon className="!text-3xl"/>
                         Nickname
                     </span>
-                    <span className="p-4 w-full bg-black rounded-lg">micheal2000</span>
+                    <span className="p-4 w-full bg-black rounded-lg">
+                        {
+                            personalInfo !== null && personalInfo.nickname
+                        }
+                    </span>
                 </div>
                 <div className="flex flex-col text-3xl items-start justify-center gap-4 text-white w-full">
                     <span className="flex flex-row gap-4 text-2xl items-center justify-center">
                         <MailOutlineOutlinedIcon className="!text-3xl"/>
                         Email
                     </span>
-                    <span className="p-4 w-full bg-black rounded-lg">micheal@gmail.com</span>
+                    <span className="p-4 w-full bg-black rounded-lg">
+                        {
+                            personalInfo !== null && personalInfo.email
+                        }
+                    </span>
                 </div>
             </div>
         </div>

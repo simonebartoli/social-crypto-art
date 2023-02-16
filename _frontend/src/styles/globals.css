@@ -5,3 +5,23 @@
 body{
     overflow-x: hidden;
 }
+.ql-snow .ql-picker, .ql-snow .ql-stroke {
+    color: white !important;
+    stroke: white !important;
+}
+.ql-snow .ql-picker-options{
+    background-color: black !important;
+}
+.ql-container {
+    min-height: 200px !important;
+    border-radius: 0 0 0.5rem 0.5rem;
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+    letter-spacing: 0.10rem !important;
+}
+.ql-toolbar {
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+.ql-editor {
+    min-height: 200px !important;
+}
