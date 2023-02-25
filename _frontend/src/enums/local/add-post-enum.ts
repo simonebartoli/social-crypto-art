@@ -1,5 +1,5 @@
-export enum AddPostEnum {
-    "TEXT",
-    "PHOTO",
-    "GIF"
+export enum AddPostTypeEnum {
+    "POST",
+    "NFT",
+    "POST_NFT"
 }

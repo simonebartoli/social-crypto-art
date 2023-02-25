@@ -49,7 +49,7 @@ const config: Config = {
     connectors: {
         metamask: new MetamaskConnector()
     },
-    autoConnect: false
+    autoConnect: true
 }
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {

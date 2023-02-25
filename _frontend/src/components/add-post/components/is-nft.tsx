@@ -1,18 +1,36 @@
-import React, {useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
+import {NextPage} from "next";
 
-const IsNft = () => {
+type Props = {
+    callback: (nft: boolean) => void
+    nftEnabled?: boolean
+}
+
+const IsNft: NextPage<Props> = ({callback, nftEnabled}) => {
+    const [nft, setNft] = useState<boolean>(nftEnabled ?? false)
     const inputRef = useRef<HTMLInputElement>(null)
 
     const onClick = () => {
-        if(inputRef.current !== null){
+        if(inputRef.current !== null && nftEnabled === undefined){
             inputRef.current.click()
         }
     }
 
+    useEffect(() => {
+        setNft(nftEnabled ?? nft)
+    }, [nftEnabled])
+
+    useEffect(() => {
+        callback(nft)
+    }, [nft])
+
     return (
-        <div className="flex flex-row items-center justify-center gap-4 bg-white p-4 rounded-lg text-lg w-full text-black">
-            <input ref={inputRef} type="checkbox"/>
-            <span onClick={onClick} className="cursor-pointer select-none">is an NFT</span>
+        <div className={`${nftEnabled === undefined ? "bg-white" : "bg-custom-light-grey cursor-not-allowed"} z-30 cursor-default flex flex-row items-center justify-center gap-4 p-4 rounded-lg text-lg w-full text-black`}>
+            <input checked={nft}
+                   onChange={(e) => nftEnabled === undefined && setNft(e.target.checked)}
+                   ref={inputRef} type="checkbox" className={`${nftEnabled === undefined ? "cursor-pointer": "cursor-not-allowed"}`}
+            />
+            <span onClick={onClick} className={`${nftEnabled === undefined ? "cursor-pointer": "cursor-not-allowed"} select-none`}>is an NFT</span>
         </div>
     );
 };

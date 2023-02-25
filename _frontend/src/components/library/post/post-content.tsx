@@ -1,13 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react';
 import Image from "next/image";
-import TEST from "../../../../public/test.webp";
 import {NextPage} from "next";
+import {PostContentType} from "@/components/library/post/post.type";
 
 type Props = {
-    nft: boolean
+    post: PostContentType[]
+    allNft: boolean
 }
 
-const PostContent: NextPage<Props> = ({nft}) => {
+const PostContent: NextPage<Props> = ({post, allNft}) => {
     const contentDiv = useRef<HTMLDivElement>(null)
     const [overflowing, setOverflowing] = useState(false)
     const [openContent, setOpenContent] = useState(false)
@@ -20,36 +21,58 @@ const PostContent: NextPage<Props> = ({nft}) => {
                 setOverflowing(false)
             }
         }
-    }, [])
+    }, [post])
     return (
         <>
             <div ref={contentDiv}
                  className={`${openContent ? "max-h-auto": "max-h-[250px]"} flex flex-col items-center py-3 justify-start gap-6 overflow-hidden`}>
                 {
-                    nft ?
-                    <div className="p-2 mt-8 border-2 border-custom-green rounded-lg relative">
-                        <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
-                        <p>
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
-                        </p>
-                    </div> :
-
-                    <div>
-                        <p>
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
-                            Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.
-                        </p>
-                    </div>
+                    post.map((_, index) => {
+                        if(_.data){
+                            if(_.nft && !allNft){
+                                return (
+                                    <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
+                                        <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
+                                        <div dangerouslySetInnerHTML={{__html: _.data}}/>
+                                    </div>
+                                )
+                            }else{
+                                return (
+                                    <div className="w-full" key={index}>
+                                        <div dangerouslySetInnerHTML={{__html: _.data}}/>
+                                    </div>
+                                )
+                            }
+                        }else if(_.file){
+                            if(_.nft && !allNft){
+                                return (
+                                    <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
+                                        <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
+                                        <div className="w-full min-h-[200px] relative">
+                                            <Image
+                                                src={(URL.createObjectURL(_.file))}
+                                                alt={""}
+                                                fill={true}
+                                                style={{objectFit: "contain"}}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            }else{
+                                return (
+                                    <div key={index} className="w-full min-h-[200px] relative">
+                                        <Image
+                                            src={(URL.createObjectURL(_.file))}
+                                            alt={""}
+                                            fill={true}
+                                            style={{objectFit: "contain"}}
+                                        />
+                                    </div>
+                                )
+                            }
+                        }
+                    })
                 }
-                <div className="w-full min-h-[200px] relative">
-                    <Image
-                        src={TEST}
-                        alt={""}
-                        fill={true}
-                        style={{objectFit: "contain"}}
-                    />
-                </div>
             </div>
             {
                 (overflowing && !openContent) ?

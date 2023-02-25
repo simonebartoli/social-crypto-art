@@ -29,7 +29,7 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
         onCompleted: (data) => setIp(data.getIpAddress),
         onError: () => toast.error("There is an error, Please refresh the page")
     })
-    const [getAccessToken_Web3Account, {loading}] = useMutation(GET_ACCESS_TOKEN_WEB3_ACCOUNT, {
+    const [getAccessToken_Web3Account] = useMutation(GET_ACCESS_TOKEN_WEB3_ACCOUNT, {
         onError: (error) => {
             changeLoading(false)
             setDisabled(false)
@@ -79,6 +79,7 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
     }, [ip, account])
     useEffect(() => {
         if(signature !== null && account){
+            changeLoading(true)
             getAccessToken_Web3Account({
                 variables: {
                     data: {
@@ -91,9 +92,6 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
         }
     }, [signature])
 
-    if(loading){
-        changeLoading(true)
-    }
 
     return (
         <>

@@ -1,8 +1,13 @@
 import React, {useState} from 'react';
 import ArrowDropDownOutlinedIcon from "@mui/icons-material/ArrowDropDownOutlined";
 import ArrowDropUpOutlinedIcon from '@mui/icons-material/ArrowDropUpOutlined';
+import {NextPage} from "next";
 
-const NftInfo = () => {
+type Props = {
+    allNft: boolean
+}
+
+const NftInfo: NextPage<Props> = ({allNft}) => {
     const [showInfo, setShowInfo] = useState(false)
 
     return (
@@ -31,7 +36,10 @@ const NftInfo = () => {
                         <span className="p-2 bg-custom-red rounded-lg font-bold">NOT VERIFIED</span>
                     </div>
                     <span className="italic text-base">
-                            All the contents of this post are NFTs.
+                        {
+                            allNft ? "All the contents of this post are NFTs.":
+                                "Only the contents highlighted are NFTs"
+                        }
                     </span>
                 </div>
             }

@@ -4,6 +4,9 @@ import PostContent from "@/components/library/post/post-content";
 import PostInteractions from "@/components/library/post/post-interactions";
 import Comment from "@/components/library/comment/comment";
 import {NextPage} from "next";
+import {PostContentType} from "@/components/library/post/post.type";
+import {PostContentTypeEnum} from "@/enums/global/post-enum";
+import {__mock__post_content_paragraph} from "@/mock-data/mock-post";
 
 type Props = {
     nft: boolean
@@ -11,6 +14,15 @@ type Props = {
 
 const Post: NextPage<Props> = ({nft}) => {
     const postRef = useRef<HTMLDivElement>(null)
+    const [postMock] = useState<PostContentType[]>(
+        new Array(5).fill({
+            content_id: 1,
+            type: PostContentTypeEnum.TEXT,
+            data: __mock__post_content_paragraph,
+            nft: true
+        }).map(_ => {return {..._, nft: Math.random() < 0.25}})
+    )
+
     const [postHeight, setPostHeight] = useState<number | null>(null)
     const [showComments, setShowComments] = useState(false)
 
@@ -30,8 +42,16 @@ const Post: NextPage<Props> = ({nft}) => {
     return (
         <div className="flex flex-row gap-16 items-start justify-center">
             <div ref={postRef} className="flex flex-col w-1/2 p-8 bg-white text-black rounded-lg gap-4">
-                <PostHeader nft={nft}/>
-                <PostContent nft={nft}/>
+                <PostHeader data={{
+                    allNft: false,
+                    nft: true,
+                    date: new Date(),
+                    nickname: "simo2001"
+                }}/>
+                <PostContent
+                    allNft={false}
+                    post={postMock}
+                />
                 <PostInteractions nft={nft} comment={{
                     value: showComments,
                     set: setShowComments
