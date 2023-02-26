@@ -6,6 +6,7 @@ const loadExternalTypes = () => {
     createFolders()
     loadCommon()
     loadVerifySignature()
+    loadSocialNft()
 }
 const removeFolders = () => {
     const PATH_SOURCE = "src/external-types"
@@ -27,6 +28,12 @@ const loadCommon = () => {
 const loadVerifySignature = () => {
     const PATH_SOURCE = "../typechain-types/contracts/VerifySignature.ts"
     const PATH_DESTINATION = "src/external-types/contracts/VerifySignature.ts"
+    const file = fs.readFileSync(Path.join(process.cwd(), PATH_SOURCE), "utf-8")
+    fs.writeFileSync(Path.join(process.cwd(), PATH_DESTINATION), file)
+}
+const loadSocialNft = () => {
+    const PATH_SOURCE = "../typechain-types/contracts/SocialNFT.ts"
+    const PATH_DESTINATION = "src/external-types/contracts/SocialNFT.ts"
     const file = fs.readFileSync(Path.join(process.cwd(), PATH_SOURCE), "utf-8")
     fs.writeFileSync(Path.join(process.cwd(), PATH_DESTINATION), file)
 }

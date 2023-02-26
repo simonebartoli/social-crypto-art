@@ -24,6 +24,7 @@ export class PostFieldResolvers implements ResolverInterface<PostType>{
                 downvote_users: downvotes.users,
                 upvote_total: upvotes.total,
                 upvote_users: upvotes.users,
+                comment_total: comments.length,
                 comments: comments.map(_ => _.getComment())
             }
         }else{

@@ -12,9 +12,14 @@ export function RequireAccessToken() {
         }
         const ip = context.request.ip
         const ua = context.request.header("User-Agent") || "NOT_DEFINED"
-        const accessToken = await AccessToken.verifyAndLoadJwt(token, ip, ua)
-        const properties = accessToken.getProperties()
-        context.nickname = properties.nickname
-        return next()
+        try{
+            const accessToken = await AccessToken.verifyAndLoadJwt(token, ip, ua)
+            const properties = accessToken.getProperties()
+            context.nickname = properties.nickname
+            return next()
+        }catch (e) {
+            context.response.clearCookie("access_token")
+            throw e
+        }
     });
 }

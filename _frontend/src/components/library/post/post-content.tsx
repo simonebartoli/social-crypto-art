@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import Image from "next/image";
 import {NextPage} from "next";
 import {PostContentType} from "@/components/library/post/post.type";
+import {PostContentTypeEnum} from "@/enums/global/post-enum";
 
 type Props = {
     post: PostContentType[]
@@ -28,7 +29,7 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
                  className={`${openContent ? "max-h-auto": "max-h-[250px]"} flex flex-col items-center py-3 justify-start gap-6 overflow-hidden`}>
                 {
                     post.map((_, index) => {
-                        if(_.data){
+                        if(_.type === PostContentTypeEnum.TEXT){
                             if(_.nft && !allNft){
                                 return (
                                     <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
@@ -43,14 +44,14 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
                                     </div>
                                 )
                             }
-                        }else if(_.file){
+                        }else {
                             if(_.nft && !allNft){
                                 return (
                                     <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
                                         <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
                                         <div className="w-full min-h-[200px] relative">
                                             <Image
-                                                src={(URL.createObjectURL(_.file))}
+                                                src={_.data}
                                                 alt={""}
                                                 fill={true}
                                                 style={{objectFit: "contain"}}
@@ -62,7 +63,7 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
                                 return (
                                     <div key={index} className="w-full min-h-[200px] relative">
                                         <Image
-                                            src={(URL.createObjectURL(_.file))}
+                                            src={_.data}
                                             alt={""}
                                             fill={true}
                                             style={{objectFit: "contain"}}

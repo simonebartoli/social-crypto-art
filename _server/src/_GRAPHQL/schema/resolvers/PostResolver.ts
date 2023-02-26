@@ -2,10 +2,12 @@ import {Arg, Ctx, Int, Mutation, Query, Resolver} from "type-graphql";
 import {PostType} from "../types";
 import PostModel from "../../models/post/PostModel"
 import {RequireAccessToken} from "../decorators/RequireAccessToken";
-import {ContextAuthCustom, ContextCustom} from "../../../types";
+import {ContextAuth, ContextAuthCustom, ContextCustom} from "../../../types";
 import {OptionalAccessToken} from "../decorators/OptionalAccessToken";
 import {Input_AddNewComment, Input_AddNewInteraction, Input_AddNewPost, Input_GetPosts} from "../args&inputs";
 import {Interaction} from "../../enums/Interaction";
+import {Input_VerifyNft} from "../args&inputs/Input_Post";
+import Nft from "../../models/Nft";
 
 @Resolver()
 export class PostResolver {
@@ -43,14 +45,34 @@ export class PostResolver {
         @Arg("data", () => Input_AddNewPost) data: Input_AddNewPost
     ) : Promise<PostType>{
         const nickname = ctx.nickname
+        const isNft = PostModel.verifyNftBackup({
+            content: data.content,
+            nftInfo: data.nft_info
+        })
         const post = await PostModel.addNewPost({
             nickname: nickname,
             visibility: data.visibility,
             content: data.content,
-            allowed: data.allowed
+            allowed: data.allowed,
+            is_nft: isNft,
+            nftInfo: data.nft_info
         })
         ctx["post"] = new Map([[post.getPost().post_id, post]])
         return post.getPost()
+    }
+
+    @Mutation(() => Boolean)
+    @RequireAccessToken()
+    async validateNftCreation(
+        @Arg("data", () => Input_VerifyNft) data: Input_VerifyNft
+    ): Promise<boolean> {
+        const nft = await Nft.getNftByIpfs(data.ipfs)
+        if(nft.isVerified()){
+            await nft.removeNftBackupFromDb()
+        }else{
+            await nft.checkIfNftVerified(data.address)
+        }
+        return true
     }
 
     @Mutation(() => PostType)

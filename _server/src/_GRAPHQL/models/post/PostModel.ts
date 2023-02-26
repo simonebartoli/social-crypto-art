@@ -2,33 +2,44 @@ import {Visibility} from "../../enums/Visibility";
 import {DateTime} from "luxon";
 import {MediaType} from "../../enums/MediaType";
 import PostContentModel from "./PostContentModel";
-import {prisma} from "../../../globals";
-import {AUTH_ERROR, DATA_ERROR} from "../../errors";
+import {NFT_STORAGE_API_KEY, prisma} from "../../../globals";
+import {AUTH_ERROR, DATA_ERROR, INTERNAL_ERROR} from "../../errors";
 import ErrorCode from "../../enums/ErrorCode";
 import {PostContentType, PostType} from "../../schema/types";
-import {ArrayOneOrMore} from "../../../types";
+import {ArrayOneOrMore, MetadataNft} from "../../../types";
 import Interaction from "./interaction/Interaction";
 import {NewContent} from "./ContentModel";
 import CommentModel from "./interaction/CommentModel";
+import {Input_AddNewPost} from "../../schema/args&inputs";
+import {NftSellingType} from "../../enums/NftSellingType";
+import {File, NFTStorage} from "nft.storage";
+import * as Crypto from "crypto";
+import * as Path from "path";
 
 
+// ---------------- LOCAL TYPE DECLARATION ---------------- //
+type NftFilterNewPost = {
+    content: Input_AddNewPost["content"]
+    nftInfo: Input_AddNewPost["nft_info"] | null
+}
+type AddNewPostContent = Omit<Input_AddNewPost["content"][0], "is_nft"> & {
+    post_id: number
+    is_nft: boolean
+}
 type CreateNewPost = {
     visibility: Visibility
     nickname: string
     allowed?: string[] | null
-    content: ArrayOneOrMore<Content>
+    content: Input_AddNewPost["content"]
+    is_nft: boolean
+    nftInfo: Input_AddNewPost["nft_info"] | null
 }
 type CreateNewPostConstructor = {
     post_id: number
     visibility: Visibility
     nickname: string
     created_at: Date
-}
-type Content = {
-    text: string
-    type: MediaType
-    position: number
-    nft_id: string | null
+    ipfs?: string
 }
 type PostFilters = {
     exclude?: string[]
@@ -36,9 +47,11 @@ type PostFilters = {
     dateMax: Date
     dateMin?: Date
 }
+// -------------------------------------------------------- //
+
 
 class PostModel {
-
+    private nftStorage = new NFTStorage({token: NFT_STORAGE_API_KEY})
     public readonly post_id: number
     private readonly visibility: Visibility
     private readonly created_at: Date
@@ -46,12 +59,14 @@ class PostModel {
 
     private interaction: Interaction
     public contents: PostContentModel[] = []
+    public ipfs: string | undefined
 
     private constructor(data: CreateNewPostConstructor) {
         this.post_id = data.post_id
         this.visibility = data.visibility
         this.owner = data.nickname
         this.created_at = data.created_at
+        this.ipfs = data.ipfs
         this.interaction = new Interaction(this)
     }
 
@@ -63,6 +78,7 @@ class PostModel {
             post_id: String(this.post_id),
             created_at: this.created_at,
             visibility: this.visibility,
+            ipfs: this.ipfs,
             content: this.contents.map((_) => _.getPostContent()) as ArrayOneOrMore<PostContentType>
         }
     }
@@ -121,7 +137,11 @@ class PostModel {
                 post_contents: true,
                 restricted_posts: true,
                 post_downvotes: true,
-                post_upvotes: true
+                post_upvotes: true,
+                nft_backup: true
+            },
+            orderBy: {
+                created_at: "desc"
             }
         })
         const authFilteredPosts = []
@@ -158,7 +178,8 @@ class PostModel {
                 post_id: post.post_id,
                 nickname: post.nickname,
                 visibility: post.visibility as Visibility,
-                created_at: post.created_at
+                created_at: post.created_at,
+                ipfs: post.nft_backup?.ipfs
             })
             for(const media of post.post_contents){
                 newPost.contents.push(new PostContentModel({
@@ -168,6 +189,7 @@ class PostModel {
                     position: media.position,
                     post_id: newPost.post_id,
                     nickname: newPost.owner,
+                    is_nft: media.is_nft,
                     nft_id: media.nft_id
                 }))
             }
@@ -183,7 +205,8 @@ class PostModel {
             },
             include: {
                 post_contents: true,
-                restricted_posts: true
+                restricted_posts: true,
+                nft_backup: true
             }
         })
         if(result === null){
@@ -208,7 +231,8 @@ class PostModel {
             post_id: result.post_id,
             nickname: result.nickname,
             visibility: result.visibility as Visibility,
-            created_at: result.created_at
+            created_at: result.created_at,
+            ipfs: result.nft_backup?.ipfs
         })
         for(const media of result.post_contents){
             post.contents.push(new PostContentModel({
@@ -218,6 +242,7 @@ class PostModel {
                 position: media.position,
                 post_id: result.post_id,
                 nickname: post.owner,
+                is_nft: media.is_nft,
                 nft_id: media.nft_id
             }))
         }
@@ -230,7 +255,11 @@ class PostModel {
             },
             include: {
                 post_contents: true,
-                restricted_posts: true
+                restricted_posts: true,
+                nft_backup: true
+            },
+            orderBy: {
+                created_at: "desc"
             }
         })
         if(auth !== undefined){
@@ -260,7 +289,8 @@ class PostModel {
                 post_id: post.post_id,
                 nickname: post.nickname,
                 visibility: post.visibility as Visibility,
-                created_at: post.created_at
+                created_at: post.created_at,
+                ipfs: post.nft_backup?.ipfs
             })
             for(const media of post.post_contents){
                 newPost.contents.push(new PostContentModel({
@@ -270,6 +300,7 @@ class PostModel {
                     position: media.position,
                     post_id: post.post_id,
                     nickname: post.nickname,
+                    is_nft: media.is_nft,
                     nft_id: media.nft_id
                 }))
             }
@@ -283,6 +314,7 @@ class PostModel {
         await PostModel.checkRestrictedVisibility(data)
         data.content.forEach(_ => PostContentModel.checkMediaContent({..._, nickname: data.nickname}))
         await PostContentModel.checkPositions(data.content)
+
 
         const result = await prisma.posts.create({
             data: {
@@ -313,25 +345,77 @@ class PostModel {
                     text: media.text,
                     position: media.position,
                     post_id: post.post_id,
-                    nft_id: media.nft_id
+                    is_nft: media.is_nft
                 }, data.nickname)
             )
         }
+        if(data.is_nft){
+            const cid = await post.createIpfsLink()
+            const nftToAdd: number[] = []
+            for(const media of post.contents){
+                if(media.isNft()){
+                    nftToAdd.push(media.getContentId())
+                }
+            }
+            await prisma.nft_backup.create({
+                data: {
+                    post_id: post.post_id,
+                    nft: nftToAdd,
+                    ipfs: cid
+                }
+            })
+        }
         return post
     }
-
+    public static verifyNftBackup(data: NftFilterNewPost): boolean {
+        let isNft = false
+        for(const _ of data.content){
+            if(_.is_nft){
+                isNft = true
+                break
+            }
+        }
+        if(isNft){
+            if(data.nftInfo){
+                if(data.nftInfo.selling_type !== "NO_SELLING"){
+                    if(data.nftInfo.options){
+                        if(data.nftInfo.selling_type === "SELLING_FIXED_PRICE"){
+                            if(!data.nftInfo.options.offer){
+                                throw new DATA_ERROR("A desired amount needs to be provided", ErrorCode.ERR_404_007)
+                            }else if(!data.nftInfo.options.currency){
+                                throw new DATA_ERROR("A desired currency needs to be provided", ErrorCode.ERR_404_007)
+                            }
+                        }else{
+                            if(!data.nftInfo.options.offer){
+                                throw new DATA_ERROR("A desired amount needs to be provided", ErrorCode.ERR_404_007)
+                            }else if(!data.nftInfo.options.deadline){
+                                throw new DATA_ERROR("A deadline needs to be provided", ErrorCode.ERR_404_007)
+                            }else if(!data.nftInfo.options.min_increment){
+                                throw new DATA_ERROR("A deadline needs to be provided", ErrorCode.ERR_404_007)
+                            }else if(!data.nftInfo.options.currency){
+                                throw new DATA_ERROR("A desired currency needs to be provided", ErrorCode.ERR_404_007)
+                            }
+                        }
+                    }else{
+                        throw new DATA_ERROR("The NFT Options have not been provided", ErrorCode.ERR_404_007)
+                    }
+                }
+            }
+        }
+        return isNft
+    }
 
     // PRIVATE METHODS
 
-        // INSTANCE TYPE - POST CONTENT ADDER
-    private async addNewPostContent(data: Content & {post_id: number}, nickname: string): Promise<PostContentModel> {
+        // INSTANCE TYPE
+    private async addNewPostContent(data: AddNewPostContent, nickname: string): Promise<PostContentModel> {
         const result = await prisma.post_contents.create({
             data: {
                 type: data.type,
                 content: data.text,
                 position: data.position,
                 post_id: data.post_id,
-                nft_id: data.nft_id
+                is_nft: data.is_nft
             }
         })
         return new PostContentModel({
@@ -341,8 +425,49 @@ class PostModel {
             type: data.type,
             content_id: result.content_id,
             nickname: nickname,
-            nft_id: data.nft_id
+            is_nft: data.is_nft,
+            nft_id: null
         })
+    }
+    private async createIpfsLink(): Promise<string> {
+        const nftData: File[] = []
+        const names: string[] = []
+
+        for(const _ of this.contents){
+            if(_.isNft()){
+                const data = _.getPostContent()
+                if(data.type === MediaType.TEXT){
+                    const name = Crypto.randomUUID() + ".txt"
+                    names.push(name)
+                    nftData.push(new File([data.text], name))
+                }else{
+                    names.push(Path.basename(data.text))
+                    nftData.push(_.getFile())
+                }
+            }
+        }
+        if(nftData.length > 0){
+            const cid = await this.nftStorage.storeDirectory(nftData)
+            const metadataJSON: MetadataNft = {
+                properties: names.map(_ => {
+                    return {
+                        name: _,
+                        URI: `${cid}/${_}`
+                    }
+                }),
+                created_at: DateTime.now().toISO(),
+                issuer: "Social Crypto Art",
+                creator: this.owner
+            }
+            const finalCid = await this.nftStorage.storeDirectory([
+                new File([JSON.stringify(metadataJSON)], "metadata.json")
+            ])
+
+            const formattedFinalCid = `${finalCid}/metadata.json`
+            this.ipfs = formattedFinalCid
+            return formattedFinalCid
+        }
+        throw new INTERNAL_ERROR("No Nft has been found", ErrorCode.ERR_501_001)
     }
 
         // CLASS TYPE - FILTERS

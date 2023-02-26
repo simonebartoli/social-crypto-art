@@ -14,8 +14,9 @@ type NewPostContent = {
 class PostContentModel extends ContentModel{
     private readonly position: number
     private readonly nft_id: string | null
+    private readonly is_nft: boolean
 
-    constructor(data: NewPostContent & {content_id: number, nickname: string, nft_id: string | null}) {
+    constructor(data: NewPostContent & {content_id: number, nickname: string, nft_id: string | null, is_nft: boolean}) {
         super({
             type: data.type,
             text: data.text,
@@ -24,19 +25,20 @@ class PostContentModel extends ContentModel{
         });
         this.position = data.position
         this.nft_id = data.nft_id
+        this.is_nft = data.is_nft
     }
 
     public getPostContent(): PostContentType {
         let path = this.text
 
         if(this.type === MediaType.PHOTO){
-            path = `${ContentModel.PATH_IMAGES_NETWORK}/${this.nickname}/${this.text}`
+            path = `${ContentModel.PATH_IMAGES_NETWORK}${this.text}`
         }
         else if(this.type === MediaType.VIDEO){
-            path = `${ContentModel.PATH_VIDEOS_NETWORK}/${this.nickname}/${this.text}`
+            path = `${ContentModel.PATH_VIDEOS_NETWORK}${this.text}`
         }
         else if(this.type === MediaType.GIF){
-            path = `${ContentModel.PATH_GIF_LOCAL}/${this.nickname}/${this.text}`
+            path = `${ContentModel.PATH_GIF_LOCAL}${this.text}`
         }
 
         return {
@@ -45,6 +47,9 @@ class PostContentModel extends ContentModel{
             position: this.position,
             nft_id: this.nft_id
         }
+    }
+    public isNft(): boolean {
+        return this.is_nft
     }
     public static checkPositions(data: Omit<NewPostContent, "post_id">[]){
         const sortedArray = data.sort((a, b) => {

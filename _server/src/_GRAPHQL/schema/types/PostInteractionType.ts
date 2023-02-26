@@ -10,6 +10,9 @@ export class PostInteractionType {
     @Field(() => Int)
     downvote_total: number
 
+    @Field(() => Int)
+    comment_total: number
+
     @Field(() => [UserType])
     upvote_users: UserType[]
 

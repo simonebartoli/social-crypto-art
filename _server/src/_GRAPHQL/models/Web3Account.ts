@@ -40,7 +40,7 @@ class Web3Account {
         await prisma.accounts.create({
             data: {
                 name: data.name,
-                address: data.address,
+                address: data.address.toLowerCase(),
                 nickname: data.nickname
             }
         })
@@ -53,7 +53,7 @@ class Web3Account {
     public static async getWeb3Account(address: string){
         const result = await prisma.accounts.findFirst({
             where: {
-                address: address
+                address: address.toLowerCase()
             }
         })
         if(result === null){
@@ -77,7 +77,6 @@ class Web3Account {
         const formattedDate = DateTime.fromJSDate(data.date).toISO()
         try {
             result = await Web3Account.verifySignatureContract.verifySignature(data.address, Web3Account.verifySignatureContract.address, formattedDate, data.ip, data.signature)
-            console.log(result)
         }catch (e) {
             error = true
         }
@@ -88,7 +87,7 @@ class Web3Account {
     private static async checkDatabase(address: string, name: string, nickname: string) {
         const resultAccount = await prisma.accounts.findUnique({
             where: {
-                address: address
+                address: address.toLowerCase()
             }
         })
         if(resultAccount !== null){

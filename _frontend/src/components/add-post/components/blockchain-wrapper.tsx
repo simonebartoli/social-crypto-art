@@ -9,6 +9,10 @@ import {
     Contract_setSellingAuction,
     Contract_setSellingFixedPrice
 } from "@/contexts/contract";
+import {useMutation} from "@apollo/client";
+import {VALIDATE_NFT_CREATION} from "@/graphql/post";
+import {toast} from "react-toastify";
+import {useEthers} from "@usedapp/core";
 
 type Props = {
     createNft?: {
@@ -38,6 +42,18 @@ type Props = {
 }
 
 const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, setSelling}) => {
+    const {account} = useEthers()
+    const [validateNftCreation] = useMutation(VALIDATE_NFT_CREATION, {
+        onError: (error) => {
+            console.log("ERROR SERVER")
+            toast.error(error.message)
+        },
+        onCompleted: () => {
+            setFinishServerFunction(true)
+            console.log("VERIFIED ON THE SERVER")
+        }
+    })
+
     const [nftId, setNftId] = useState(nft_id)
 
     const [nftCreation, setNftCreation] = useState(!!createNft)
@@ -59,6 +75,8 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
     const [disabled_setSellingFixedPrice, setDisabled_setSellingFixedPrice] = useState(false)
     const [disabled_setSellingAuction, setDisabled_setSellingAuction] = useState(false)
 
+    const [finishServerFunction, setFinishServerFunction] = useState<boolean>(false)
+    const [finished, setFinished] = useState(false)
     const [operations, setOperations] = useState<BlockchainOperationType[]>([])
 
     const getEstimate_createNft = async (ipfs: string) => {
@@ -96,6 +114,10 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
 
     useEffect(() => {
         const newOps: BlockchainOperationType[] = []
+        if(createNft && createNft.onFinish && finishServerFunction){
+            createNft.onFinish()
+            setFinished(true)
+        }
         if(createNft && nftCreation){
             newOps.push({
                 name: "CREATE NFT",
@@ -115,14 +137,20 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
                     callback={(id) => {
                         setDisabled_createNft(true)
                         setNftId(id)
-
-                        if(createNft.onFinish){
-                            createNft.onFinish()
-                        }
+                        validateNftCreation({
+                            variables: {
+                                data: {
+                                    ipfs: createNft.ipfsURI,
+                                    address: account!
+                                }
+                            }
+                        })
                         setNftCreation(false)
                     }}
                     onError={(message) => {
                         console.log(message)
+                        setExecute_createNft(false)
+                        setDisabled_createNft(false)
                     }}
                     execute={execute_createNft}
                     URI={createNft.ipfsURI}
@@ -152,10 +180,13 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
                         setDisabled_setRoyalties(true)
                         if(setRoyalties.onFinish){
                             setRoyalties.onFinish()
+                            setFinished(true)
                         }
                         setNftRoyalties(false)
                     }}
                     onError={(message) => {
+                        setExecute_setRoyalties(false)
+                        setDisabled_setRoyalties(false)
                         console.log(message)
                     }}
                     execute={execute_setRoyalties}
@@ -188,10 +219,13 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
                             setDisabled_setSellingFixedPrice(true)
                             if(setSelling.setSellingFixedPrice?.onFinish){
                                 setSelling.setSellingFixedPrice.onFinish()
+                                setFinished(true)
                             }
                             setNftSelling(false)
                         }}
                         onError={(message) => {
+                            setExecute_setSellingFixedPrice(false)
+                            setDisabled_setSellingFixedPrice(false)
                             console.log(message)
                         }}
                         execute={execute_setSellingFixedPrice}
@@ -200,7 +234,7 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
                         currency={setSelling.setSellingFixedPrice.currency}
                     />,
                     estimateFunction: () => {
-                        getEstimate_setSellingFixedPrice(nftId, setSelling.setSellingFixedPrice!.amount, setSelling.setSellingFixedPrice!.amount)
+                        getEstimate_setSellingFixedPrice(nftId, setSelling.setSellingFixedPrice!.amount, setSelling.setSellingFixedPrice!.currency)
                     }
                 })
             }else if(setSelling.setSellingAuction){
@@ -224,13 +258,16 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
 
                             if(setSelling.setSellingAuction?.onFinish){
                                 setSelling.setSellingAuction.onFinish()
+                                setFinished(true)
                             }
                             setNftSelling(false)
                         }}
                         onError={(message) => {
+                            setExecute_setSellingAuction(false)
+                            setDisabled_setSellingAuction(false)
                             console.log(message)
                         }}
-                        execute={execute_setSellingFixedPrice}
+                        execute={execute_setSellingAuction}
                         nft_id={nftId}
                         currency={setSelling.setSellingAuction.currency}
                         deadline={setSelling.setSellingAuction.deadline}
@@ -250,12 +287,14 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
         estimate_setRoyalties, execute_setRoyalties, disabled_setRoyalties,
         estimate_setSellingFixedPrice, execute_setSellingFixedPrice, disabled_setSellingFixedPrice,
         estimate_setSellingAuction, execute_setSellingAuction, disabled_setSellingAuction,
-        nftCreation, nftRoyalties, nftSelling
+        nftCreation, nftRoyalties, nftSelling, finishServerFunction
     ])
+    useEffect(() => setNftId(nft_id), [nft_id])
 
     return (
         <>
             <BlockchainInteraction
+                finished={finished}
                 operations={operations}
             />
         </>

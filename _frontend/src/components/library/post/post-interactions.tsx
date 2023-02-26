@@ -5,16 +5,17 @@ import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlin
 import {NextPage} from "next";
 import {useModal} from "@/contexts/modal";
 import ActionRequireLogin from "@/components/library/auth/action-require-login";
+import {PostInteractionType} from "@/components/library/post/post.type";
 
 type Props = {
-    nft: boolean
+    interactions: PostInteractionType
     comment: {
         value: boolean
         set: React.Dispatch<React.SetStateAction<boolean>>
     }
 }
 
-const PostInteractions: NextPage<Props> = ({comment, nft}) => {
+const PostInteractions: NextPage<Props> = ({interactions, comment}) => {
     const {showModal, open} = useModal()
     const opened = useRef<boolean>(false)
 
@@ -36,7 +37,7 @@ const PostInteractions: NextPage<Props> = ({comment, nft}) => {
     return (
         <div className="mt-8 text-white w-full flex flex-col gap-3">
             {
-                nft &&
+                interactions.nft &&
                 <div onClick={() => setShowSections({...showSections, nft: true})}
                      className="cursor-pointer hover:bg-white hover:text-black transition border-black border-[1px] shadow-lg p-4 text-xl bg-black rounded-lg w-full flex flex-col items-center justify-center">
                     {
@@ -50,15 +51,15 @@ const PostInteractions: NextPage<Props> = ({comment, nft}) => {
             }
             <div className="flex flex-row items-center justify-around p-3 rounded-lg w-full bg-black">
                 <div className="flex flex-row items-center justify-center gap-2">
-                    <span>1510</span>
+                    <span>{interactions.upvoteTotal}</span>
                     <KeyboardDoubleArrowUpOutlinedIcon className="cursor-pointer hover:text-custom-blue transition !text-3xl"/>
                 </div>
                 <div className="flex flex-row items-center justify-center gap-2">
-                    <span>80</span>
+                    <span>{interactions.downvoteTotal}</span>
                     <KeyboardDoubleArrowDownOutlinedIcon className="cursor-pointer hover:text-custom-blue transition !text-3xl"/>
                 </div>
                 <div className="flex flex-row items-center justify-center gap-2">
-                    <span>20</span>
+                    <span>{interactions.commentTotal}</span>
                     <QuestionAnswerOutlinedIcon onClick={() => comment.set(!comment.value)}
                                                 className={`${comment.value && "text-custom-blue"} cursor-pointer hover:text-custom-blue transition !text-3xl`}/>
                 </div>

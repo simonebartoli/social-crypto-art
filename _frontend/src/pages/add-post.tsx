@@ -12,16 +12,19 @@ import {toast} from "react-toastify";
 import {PostContentTypeEnum, PostVisibilityEnum} from "@/enums/global/post-enum";
 import {Input_Content, Input_NftInfo, MediaType, NftSellingType, Visibility} from "@/__generated__/graphql";
 import {API_URL_REST} from "@/globals";
-import {NftSellingStatusEnum} from "@/enums/global/nft-enum";
+import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
 import {useModal} from "@/contexts/modal";
 import {useRouter} from "next/router";
 import BlockchainWrapper from "@/components/add-post/components/blockchain-wrapper";
 import {ethers} from "ethers";
+import {DateTime} from "luxon";
 
 const AddPost = () => {
     const router = useRouter()
-    const {showModal} = useModal()
-    const [postSubmitted, setPostSubmitted] = useState(true)
+    const {showModal, open} = useModal()
+    const [nftDialogueOpen, setNftDialogueOpen] = useState(false)
+
+    const [postSubmitted, setPostSubmitted] = useState(false)
     const [ipfsURI, setIpfsURI] = useState<string | undefined>(undefined)
     const {postType, postInfo, currency, amount, deadline, selling, visibility, royalties, minIncrement, disabled} = useAddPostInfo()
 
@@ -31,7 +34,11 @@ const AddPost = () => {
             disabled.set(false)
         },
         onCompleted: (data) => {
-            setIpfsURI(data.addPost.ipfs ?? undefined)
+            if(data.addPost.ipfs){
+                setIpfsURI(data.addPost.ipfs)
+            }else{
+                router.push("/home")
+            }
             setPostSubmitted(true)
             toast.success("Post Added 👍")
             disabled.set(false)
@@ -101,7 +108,6 @@ const AddPost = () => {
     }
 
     const submitForm = async () => {
-        setIpfsURI("bafybeiftvzdyjfvfib6uccg2fhm7qvqbbm3aajykbjgbasvkidzdl3yfta/metadata.json")
         if(!postSubmitted){
             disabled.set(true)
             try {
@@ -132,28 +138,66 @@ const AddPost = () => {
 
     useEffect(() => {
         if(ipfsURI){
-            showModal(
-                <BlockchainWrapper
-                    createNft={{
-                        ipfsURI: ipfsURI
-                    }}
-                    setRoyalties={{
-                        percentage: "15"
-                    }}
-                    setSelling={{
+            const sellingOptions =
+                selling.value === NftSellingStatusEnum[NftSellingStatusEnum.NO_SELLING] ? undefined :
+                selling.value === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_FIXED_PRICE] ?
+                    {
                         setSellingFixedPrice: {
-                            amount: ethers.utils.parseEther("0.5").toString(),
-                            currency: "0",
+                            amount: ethers.utils.parseEther(amount.value).toString(),
+                            currency: String(CurrencyEnum[currency.value as keyof typeof CurrencyEnum]),
                             onFinish: () => {
                                 toast.success("Good Job, Your NFT has been added")
                                 setTimeout(() => router.push("/home"), 5000)
                             }
                         }
-                    }}
+                    }:
+                    {
+                        setSellingAuction: {
+                            initialPrice: ethers.utils.parseEther(amount.value).toString(),
+                            refundable: false,
+                            minIncrement: minIncrement.value,
+                            currency: String(CurrencyEnum[currency.value as keyof typeof CurrencyEnum]),
+                            deadline: String(Number(DateTime.fromJSDate(deadline.value).toSeconds())),
+                            onFinish: () => {
+                                toast.success("Good Job, Your NFT has been added")
+                                setTimeout(() => router.push("/home"), 5000)
+                            }
+                        }
+                    }
+
+            const royaltiesOptions =
+                selling.value === NftSellingStatusEnum[NftSellingStatusEnum.NO_SELLING] ? undefined :
+                    {
+                        percentage: royalties.value,
+                        onFinish: sellingOptions === undefined ? () => {
+                            toast.success("Good Job, Your NFT has been added")
+                            setTimeout(() => router.push("/home"), 5000)
+                        } : undefined
+                    }
+
+            const createNftOptions = {
+                ipfsURI: ipfsURI,
+                onFinish: (sellingOptions === undefined && royaltiesOptions === undefined) ? () => {
+                    console.log("FUNCTION TRIGGER")
+                    toast.success("Good Job, Your NFT has been added")
+                    setTimeout(() => router.push("/home"), 5000)
+                } : undefined
+            }
+            setNftDialogueOpen(true)
+            showModal(
+                <BlockchainWrapper
+                    createNft={createNftOptions}
+                    setRoyalties={royaltiesOptions}
+                    setSelling={sellingOptions}
                 />
             )
         }
     }, [ipfsURI])
+    useEffect(() => {
+        if(!open && nftDialogueOpen){
+            router.push("/home")
+        }
+    }, [open, nftDialogueOpen])
 
     return (
         <div className="flex font-main flex-col gap-12 items-center justify-center w-full text-white">

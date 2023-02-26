@@ -13,7 +13,7 @@ export class UserType {
     @Field(() => Date)
     created_at: Date
 
-    @Field(() => [AccountType], {nullable: true})
+    @Field(() => [AccountType])
     accounts?: AccountType[]
 
     @Field(() => [PostType], {nullable: true})

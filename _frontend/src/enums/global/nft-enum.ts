@@ -6,6 +6,8 @@ export enum NftSellingStatusEnum {
 
 export enum CurrencyEnum {
     ETH,
+    WETH,
+    DAI,
     USDC,
-    DAI
+    USDT
 }

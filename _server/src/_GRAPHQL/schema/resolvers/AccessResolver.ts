@@ -12,16 +12,15 @@ import {AUTH_ERROR, DATA_ERROR} from "../../errors";
 import Web3Account from "../../models/Web3Account";
 import {SecretType} from "../types";
 import SecretModel from "../../models/token/encryption/Secret"
-import OneTimeToken from "../../models/token/access/OneTimeToken";
+import {sendEmail} from "../../../common/SendEmail";
 
 @Resolver()
 export class AccessResolver {
-    @Query(() => String)
-    @RequireAccessToken()
-    getTest(@Ctx() ctx: ContextAuth): string {return ctx.nickname}
-
     @Mutation(() => Boolean)
-    async createNewLoginInstance_Email(@Ctx() ctx: Context, @Arg("data") {email, socket} : Input_EmailSocket): Promise<Boolean> {
+    async createNewLoginInstance_Email(
+        @Ctx() ctx: Context,
+        @Arg("data") {email, socket} : Input_EmailSocket
+    ): Promise<Boolean> {
         const result = await prisma.users.findFirst({
             where: {
                 email: email
@@ -50,7 +49,14 @@ export class AccessResolver {
             newUser: false
         })
         const jwt = await recoveryToken.createJwt()
-        console.log(`TOKEN: ${(await recoveryToken.getRequestToken()).token}`)
+        const requestToken = (await recoveryToken.getRequestToken()).token
+        const url = `http://localhost:3000/verify?token=${requestToken}&new_account=false`
+        await sendEmail({
+            from: "noreply@socialcryptoart.com",
+            to: email,
+            subject: "Login in your account now",
+            text: `This is the url to click ${url}`
+        })
         ctx.response.cookie("recovery_token", jwt)
         return true
     }
@@ -163,7 +169,10 @@ export class AccessResolver {
     }
 
     @Mutation(() => Boolean)
-    async getAccessToken_Web3Account(@Ctx() ctx: Context, @Arg("data", () => Input_Web3Account) data: Input_Web3Account): Promise<Boolean>{
+    async getAccessToken_Web3Account(
+        @Ctx() ctx: Context,
+        @Arg("data", () => Input_Web3Account) data: Input_Web3Account
+    ): Promise<Boolean>{
         const {address, date, signature} = data
 
         const ip = ctx.request.ip
@@ -203,15 +212,17 @@ export class AccessResolver {
 
     @Query(() => SecretType)
     @RequireAccessToken()
-    getExistingSecret(@Ctx() ctx: ContextAuth, @Arg("id", () => String) id: string): SecretType {
+    getExistingSecret(
+        @Ctx() ctx: ContextAuth,
+        @Arg("id", () => String) id: string
+    ): SecretType {
         const nickname = ctx.nickname
         const secret = SecretModel.getSecret(nickname, id)
         return secret.getToken()
     }
 
-    @Mutation(() => String)
-    @RequireAccessToken()
-    getOneTimeToken(@Ctx() ctx: ContextAuth) : string {
-        return OneTimeToken.createNewToken(ctx.nickname).token
+    @Query(() => String)
+    getIpAddress(@Ctx() ctx: ContextAuth): string {
+        return ctx.request.ip
     }
 }

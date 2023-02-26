@@ -31,6 +31,8 @@ contract PaymentHolder is Utils {
 
     modifier onlySocialNftContract() {
         if(msg.sender != i_socialNftAddress){
+//            in testing needs to be commented out because this contract is inherited by the Test contract
+//            and the msg.sender is seen as the user making the call
 //            revert ERR_ONLY_SOCIAL_NFT();
         }
         _;

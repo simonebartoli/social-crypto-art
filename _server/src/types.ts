@@ -16,7 +16,6 @@ export type ContextCustom<T> = {
     response: express.Response
     nickname: null
 } & {[x: string]: T}
-
 export type ContextAuthCustom<T> = {
     request: express.Request
     response: express.Response
@@ -24,3 +23,13 @@ export type ContextAuthCustom<T> = {
 } & {[x: string]: T}
 
 export type ArrayOneOrMore<T> = [T, ...Array<T>]
+
+export type MetadataNft = {
+    properties: {
+        name: string
+        URI: string
+    }[],
+    created_at: string
+    issuer: string
+    creator: string
+}

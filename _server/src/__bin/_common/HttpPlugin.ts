@@ -8,13 +8,13 @@ export const setHttpPlugin = {
         return {
             async willSendResponse({ response }: any) {
                 if (response.body.singleResult.errors !== undefined) {
-                    response.http.status = response.body.singleResult.errors[0].extensions.status;
+                    // response.http.status = response.body.singleResult.errors[0].extensions.status;
+                    // TODO REVISE
                 }
             },
         };
     }
 };
-
 export const setComplexity = {
     requestDidStart: async () => ({
         async didResolveOperation({request, document}: any) {

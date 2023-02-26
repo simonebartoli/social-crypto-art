@@ -2,32 +2,64 @@ import express from "express";
 import * as Path from "path";
 import {UploadedFile} from "express-fileupload";
 import * as crypto from "crypto";
-import OneTimeToken from "../_GRAPHQL/models/token/access/OneTimeToken";
+import {requireAccessToken} from "./Auth";
+import {DATA_ERROR, INTERNAL_ERROR} from "../_GRAPHQL/errors";
+import ErrorCode from "../_GRAPHQL/enums/ErrorCode";
 
 export const router = express.Router()
-
 router.post("/upload-images", async (req, res) => {
-    const nickname = OneTimeToken.verifyToken(req.body["token"])
-    if(!nickname){
-        return res.status(401).json({error: "You Need to Be logged to upload"})
-    }
+    await requireAccessToken(req, res)
+    const supportedMimeTypes = ["image/apng", "image/avif", "image/jpeg", "image/png", "image/webp"]
+    const nickname = res.locals["nickname"]
     if (!req.files || Object.keys(req.files).length === 0 || Object.keys(req.files).length > 1) {
-        return res.status(400).json({error: "You Need to Upload 1 File"})
+        throw new DATA_ERROR("You need to upload 1 file", ErrorCode.ERR_403_008)
     }
     if (!req.files.image) {
-        return res.status(400).json({error: "Wrong Parameter Name"})
+        throw new DATA_ERROR("You need to upload 1 file", ErrorCode.ERR_403_008)
     }
 
     const uploadedFile = req.files.image as UploadedFile;
+    if(!supportedMimeTypes.includes(uploadedFile.mimetype)){
+        throw new DATA_ERROR("File Type Not Supported", ErrorCode.ERR_403_008)
+    }
+
     const extension = uploadedFile.mimetype.split("/")[1]
     const fileName = `${crypto.randomUUID()}.${extension}`
-    const uploadPath = Path.join(process.cwd(), `media/images/${nickname}/${fileName}`) ;
+    const uploadPath = Path.join(process.cwd(), `public/media/images/${nickname}/${fileName}`) ;
 
     try{
         await uploadedFile.mv(uploadPath)
     }catch (e) {
-        return res.status(500).json({error: "An error occurred, Please Try Again"})
+        throw new INTERNAL_ERROR("An error occurred", ErrorCode.ERR_501_001)
     }
 
-    return res.status(200).json({message: "UPLOADED", url: fileName})
+    return res.status(200).json({message: "UPLOADED", url: `/${nickname}/${fileName}`})
+})
+router.post("/upload-gif", async (req, res) => {
+    await requireAccessToken(req, res)
+    const supportedMimeTypes = ["image/gif"]
+    const nickname = res.locals["nickname"]
+    if (!req.files || Object.keys(req.files).length === 0 || Object.keys(req.files).length > 1) {
+        throw new DATA_ERROR("You need to upload 1 file", ErrorCode.ERR_403_008)
+    }
+    if (!req.files.image) {
+        throw new DATA_ERROR("You need to upload 1 file", ErrorCode.ERR_403_008)
+    }
+
+    const uploadedFile = req.files.image as UploadedFile;
+    if(!supportedMimeTypes.includes(uploadedFile.mimetype)){
+        throw new DATA_ERROR("File Type Not Supported", ErrorCode.ERR_403_008)
+    }
+
+    const extension = uploadedFile.mimetype.split("/")[1]
+    const fileName = `${crypto.randomUUID()}.${extension}`
+    const uploadPath = Path.join(process.cwd(), `public/media/gif/${nickname}/${fileName}`) ;
+
+    try{
+        await uploadedFile.mv(uploadPath)
+    }catch (e) {
+        throw new INTERNAL_ERROR("An error occurred", ErrorCode.ERR_501_001)
+    }
+
+    return res.status(200).json({message: "UPLOADED", url: `/${nickname}/${fileName}`})
 })

@@ -164,9 +164,8 @@ const AddContent: NextPage<Props> = ({onFormSubmit}) => {
                 }
             }
         }
-
         disabled.set(!OK)
-    }, [postInfo, selling, amount])
+    }, [postInfo.value, selling.value, amount.value])
 
     return (
         <div className="w-[calc(50%-1.5rem)] flex flex-col items-center justify-center gap-12">

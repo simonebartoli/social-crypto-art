@@ -18,9 +18,9 @@ const Navbar = () => {
             <div className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
                 <OndemandVideoOutlinedIcon className="!text-3xl"/>
             </div>
-            <div className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
+            <Link href="/account" className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
                 <PersonOutlineOutlinedIcon className="!text-3xl"/>
-            </div>
+            </Link>
             <Link href="/settings" className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
                 <SettingsOutlinedIcon className="!text-3xl"/>
             </Link>

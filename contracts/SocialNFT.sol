@@ -12,7 +12,6 @@ import "./Utils.sol";
 
 contract SocialNFT is ERC721URIStorage, Utils {
 
-
     error ERR_NFT_ALREADY_OWNED();
     error ERR_NFT_NOT_OWNED();
     error ERR_NFT_NOT_EXISTING();
@@ -34,6 +33,8 @@ contract SocialNFT is ERC721URIStorage, Utils {
     error ERR_AUCTION_NOT_REFUNDABLE();
     error ERR_AUCTION_OFFER_TOO_LOW();
 
+    event NewNftCreated(uint256 indexed _nft_id, address indexed _owner);
+    event RoyaltiesSet();
 
     enum SellingType {
         NO_SELLING,
@@ -208,7 +209,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
             sellingType: SellingType.NO_SELLING,
             ownedSince: block.timestamp
         });
-
+        emit NewNftCreated(s_nftUniqueId, msg.sender);
         _incrementNftUniqueId();
     }
 
@@ -232,7 +233,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
             owner: msg.sender,
             percentage: percentage
         });
-
+        emit RoyaltiesSet();
     }
 
     /*
@@ -589,6 +590,15 @@ contract SocialNFT is ERC721URIStorage, Utils {
         }
     }
 */
+    function getNftId(address owner, string memory ipfs) public view returns(uint256){
+        uint256[] memory listNft = s_ownerToNftId[owner];
+        for(uint256 index = 0; index < listNft.length; index++){
+            if(keccak256(bytes(tokenURI(listNft[index]))) == keccak256(bytes(ipfs))){
+                return listNft[index];
+            }
+        }
+        revert ERR_NFT_NOT_EXISTING();
+    }
 
     function getTokenAddress(CurrecyAddress currency) public view returns(address){
         if(currency == CurrecyAddress.ETH){

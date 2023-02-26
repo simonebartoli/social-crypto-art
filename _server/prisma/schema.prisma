@@ -33,33 +33,35 @@ model tokens {
 }
 
 model users {
-  nickname         String             @id(map: "users_pk") @db.VarChar(127)
-  email            String             @unique(map: "users_unique") @db.VarChar(255)
-  created_at       DateTime           @default(now()) @db.Timestamptz(6)
-  account_packets  account_packets[]
-  accounts         accounts[]
-  comments         comments[]
-  lists            lists[]
-  post_downvotes   post_downvotes[]
-  post_upvotes     post_upvotes[]
-  posts            posts[]
-  restricted_posts restricted_posts[]
-  tokens           tokens[]
+  nickname                          String             @id(map: "users_pk") @db.VarChar(127)
+  email                             String             @unique(map: "users_unique") @db.VarChar(255)
+  created_at                        DateTime           @default(now()) @db.Timestamptz(6)
+  accounts                          accounts[]
+  comments                          comments[]
+  follower_follower_followedTousers follower[]         @relation("follower_followedTousers")
+  follower_follower_followerTousers follower[]         @relation("follower_followerTousers")
+  lists                             lists[]
+  post_downvotes                    post_downvotes[]
+  post_upvotes                      post_upvotes[]
+  posts                             posts[]
+  restricted_posts                  restricted_posts[]
+  tokens                            tokens[]
 }
 
 model accounts {
-  address  String @id(map: "accounts_pk") @db.VarChar(63)
-  name     String @db.VarChar(63)
-  nickname String @db.VarChar(127)
-  users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "accounts_users_null_fk")
+  address         String           @id(map: "accounts_pk") @db.VarChar(63)
+  name            String           @db.VarChar(63)
+  nickname        String           @db.VarChar(127)
+  account_packets account_packets?
+  users           users            @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "accounts_users_null_fk")
 
   @@unique([address, name], map: "accounts_address_name_unique")
 }
 
 model account_packets {
-  nickname String @db.VarChar(127)
-  packet   String @id(map: "account_packets_pk")
-  users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "account_packets_users_null_fk")
+  address  String   @id(map: "account_packets_pk") @db.VarChar(63)
+  packet   String
+  accounts accounts @relation(fields: [address], references: [address], onDelete: Cascade, map: "account_packets_accounts_address_fk")
 }
 
 model lists {
@@ -79,6 +81,7 @@ model post_contents {
   type       content_type
   content    String
   nft_id     String?      @db.VarChar(255)
+  is_nft     Boolean      @default(false)
   posts      posts        @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "post_contents_posts_null_fk")
 
   @@unique([post_id, position], map: "post_contents_position_id_unique")
@@ -117,6 +120,7 @@ model posts {
   created_at       DateTime           @default(now()) @db.Timestamptz(6)
   nickname         String             @db.VarChar(127)
   comments         comments[]
+  nft_backup       nft_backup?
   post_contents    post_contents[]
   post_downvotes   post_downvotes[]
   post_lists       post_lists[]
@@ -142,6 +146,22 @@ model restricted_posts {
   users    users  @relation(fields: [nickname], references: [nickname], onDelete: Cascade, map: "restricted_posts_users_null_fk")
 
   @@id([post_id, nickname], map: "restricted_posts_pk")
+}
+
+model follower {
+  follower                       String @db.VarChar(127)
+  followed                       String @db.VarChar(127)
+  users_follower_followedTousers users  @relation("follower_followedTousers", fields: [followed], references: [nickname], onDelete: Cascade, map: "follower_users_null_followed_fk")
+  users_follower_followerTousers users  @relation("follower_followerTousers", fields: [follower], references: [nickname], onDelete: Cascade, map: "follower_users_null_follower_fk")
+
+  @@id([follower, followed], map: "follower_pk")
+}
+
+model nft_backup {
+  post_id Int    @id(map: "nft_backup_pk")
+  nft     Int[]
+  ipfs    String @unique(map: "nft_backup_uk") @db.VarChar(127)
+  posts   posts  @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "nft_backup_posts_fk")
 }
 
 enum content_type {

@@ -16,6 +16,9 @@ export class PostType {
     @Field(() => Date)
     created_at: Date
 
+    @Field(() => String, {nullable: true})
+    ipfs?: string
+
     @Field(() => [PostContentType])
     content: ArrayOneOrMore<PostContentType>
 

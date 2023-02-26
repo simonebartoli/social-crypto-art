@@ -7,4 +7,7 @@ export class AccountType {
 
     @Field(() => String)
     name: string
+
+    @Field(() => String, {nullable: true})
+    packet: string | null
 }
