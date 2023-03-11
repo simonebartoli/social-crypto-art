@@ -46,8 +46,6 @@ const BlockchainInteraction: NextPage<Props> =
         estimate()
     }, [operations])
 
-
-    // ADD NFT TO SERVER WHEN FINISHED
     return (
         <div className="flex flex-col gap-8 items-center justify-start w-3/4">
             {

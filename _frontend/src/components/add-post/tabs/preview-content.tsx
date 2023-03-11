@@ -32,10 +32,10 @@ const PreviewContent: NextPage<Props> = ({header}) => {
         <div className="bg-black rounded-lg p-8 border-white border-2 w-[calc(50%-1.5rem)] flex flex-col gap-8 items-center justify-center">
             <h2 className="text-3xl font-bold tracking-wider">Preview</h2>
             <div className="flex flex-col w-full p-8 bg-white text-black rounded-lg gap-4">
-                <PostHeader data={{
+                <PostHeader warningSync={false} header={{
                     allNft: allNft,
-                    nft: header.nft,
-                    date: new Date(),
+                    type: header.nft ? "NFT" : "POST",
+                    date: new Date().toISOString(),
                     nickname: personalInfo?.nickname ?? ""
                 }}/>
                 <PostContent
@@ -44,8 +44,7 @@ const PreviewContent: NextPage<Props> = ({header}) => {
                         postInfo.value.map(_ => {
                             return {
                                 type: _.type,
-                                data: _.data,
-                                file: _.file,
+                                data: _.data ? _.data : _.file ? URL.createObjectURL(_.file) : "",
                                 content_id: "1",
                                 nft: _.nft
                             }

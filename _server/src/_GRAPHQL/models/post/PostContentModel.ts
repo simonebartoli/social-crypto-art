@@ -42,6 +42,7 @@ class PostContentModel extends ContentModel{
         }
 
         return {
+            post_content_id: String(this.content_id),
             text: path,
             type: this.type,
             position: this.position,

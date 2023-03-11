@@ -1,10 +1,15 @@
 import {PostContentTypeEnum} from "@/enums/global/post-enum";
 
 export type PostType = {
+    post_id: string
     header: PostHeaderType
     body: PostContentType[]
     interaction: PostInteractionType
     warningSync: boolean
+    nft?: {
+        ipfs: string
+        nft_id?: string
+    }
 }
 
 export type PostHeaderType = {
@@ -23,7 +28,10 @@ export type PostContentType = {
 
 export type PostInteractionType = {
     nft: boolean
+    selling: boolean
     upvoteTotal: number
     downvoteTotal: number
     commentTotal: number
+    upvoteUsers: string[]
+    downvoteUsers: string[]
 }

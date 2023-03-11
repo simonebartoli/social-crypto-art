@@ -248,11 +248,17 @@ class PostModel {
         }
         return post
     }
-    public static async loadPostByNickname(nickname: string, auth?: string) : Promise<PostModel[]> {
+    public static async loadPostByNickname(nickname: string, auth?: string, filter?: PostFilters) : Promise<PostModel[]> {
+        const {dateMin, dateMax, maxPosts, exclude} = filter || {}
         let result = await prisma.posts.findMany({
             where: {
-                nickname: nickname
+                nickname: nickname,
+                created_at: {
+                    lte: dateMax ? dateMax : new Date(),
+                    gte: dateMin
+                }
             },
+            take: maxPosts ? maxPosts : 10,
             include: {
                 post_contents: true,
                 restricted_posts: true,

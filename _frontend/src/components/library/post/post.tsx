@@ -4,39 +4,21 @@ import PostContent from "@/components/library/post/post-content";
 import PostInteractions from "@/components/library/post/post-interactions";
 import Comment from "@/components/library/comment/comment";
 import {NextPage} from "next";
-import {PostContentType, PostHeaderType, PostInteractionType, PostType} from "@/components/library/post/post.type";
-import {PostContentTypeEnum} from "@/enums/global/post-enum";
-import {__mock__post_content_paragraph} from "@/mock-data/mock-post";
+import {usePostContext} from "@/contexts/post-info";
+
 
 type Props = {
-    nft: boolean
-    post?: PostType
+    refetch?: () => void
+    style?: {
+        width: React.CSSProperties
+    }
 }
 
-const Post: NextPage<Props> = ({nft, post}) => {
+const Post: NextPage<Props> = ({refetch, style}) => {
+    const {post, verified} = usePostContext() || {}
     const postRef = useRef<HTMLDivElement>(null)
-    const [showComments, setShowComments] = useState(false)
-    const [postHeaderMock] = useState<PostHeaderType>({
-        type: "POST",
-        allNft: true,
-        date: new Date().toISOString(),
-        nickname: "simo2001"
-    })
-    const [postContentMock] = useState<PostContentType[]>(
-        new Array(5).fill({
-            content_id: 1,
-            type: PostContentTypeEnum.TEXT,
-            data: __mock__post_content_paragraph,
-            nft: true
-        }).map(_ => {return {..._, nft: Math.random() < 0.25}})
-    )
-    const [postInteractionMock] = useState<PostInteractionType>({
-        nft: false,
-        upvoteTotal: 1200,
-        downvoteTotal: 50,
-        commentTotal: 20
-    })
 
+    const [showComments, setShowComments] = useState(false)
     const [postHeight, setPostHeight] = useState<number | null>(null)
 
     useEffect(() => {
@@ -51,19 +33,28 @@ const Post: NextPage<Props> = ({nft, post}) => {
         }
     }, [])
 
-
     return (
         <div className="flex flex-row gap-16 items-start justify-center w-full">
-            <div ref={postRef} className="flex flex-col w-1/2 p-8 bg-white text-black rounded-lg gap-4">
-                <PostHeader header={post ? post.header : postHeaderMock}/>
+            <div style={style?.width} ref={postRef} className="flex flex-col w-1/2 p-8 bg-white text-black rounded-lg gap-4">
+                <PostHeader
+                    refetch={refetch}
+                    ipfs={post!.nft?.ipfs}
+                    verified={verified}
+                    warningSync={verified === false ? true : post!.warningSync}
+                    header={post!.header}/>
                 <PostContent
-                    allNft={false}
-                    post={post ? post.body : postContentMock}
+                    allNft={verified === false ? true : (post!.body.filter(_ => _.nft)).length === post!.body.length}
+                    post={post!.body}
                 />
-                <PostInteractions interactions={post ? post.interaction : postInteractionMock} comment={{
-                    value: showComments,
-                    set: setShowComments
-                }}/>
+                <PostInteractions
+                    nft_id={post!.nft?.nft_id}
+                    post_id={post!.post_id}
+                    interactions={post!.interaction}
+                    comment={{
+                        value: showComments,
+                        set: setShowComments
+                    }}
+                />
             </div>
             {
                 showComments &&

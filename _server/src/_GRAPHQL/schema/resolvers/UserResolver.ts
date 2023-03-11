@@ -6,7 +6,7 @@ import {Context, ContextAuth, ContextAuthCustom, ContextCustom} from "../../../t
 import CommunicationSocket from "../../models/CommunicationSocket";
 import {AUTH_ERROR, DATA_ERROR, INTERNAL_ERROR} from "../../errors";
 import {RequireAccessToken} from "../decorators/RequireAccessToken";
-import {Input_NewUser, Input_NewWeb3Account} from "../args&inputs";
+import {Input_GetPosts, Input_NewUser, Input_NewWeb3Account} from "../args&inputs";
 import Web3Account from "../../models/Web3Account";
 import {AccountType, PostType, UserType} from "../types";
 import PostModel from "../../models/post/PostModel";
@@ -130,9 +130,10 @@ export class UserResolver {
     @OptionalAccessToken()
     async getPostFromUser(
         @Ctx() ctx: ContextAuthCustom<Map<string, PostModel>> | ContextCustom<Map<string, PostModel>>,
-        @Arg("nickname", () => String) nickname: string
+        @Arg("nickname", () => String) nickname: string,
+        @Arg("data", () => Input_GetPosts, {nullable: true}) data?: Input_GetPosts
     ): Promise<PostType[] | null> {
-        const posts = await PostModel.loadPostByNickname(nickname, ctx.nickname === null ? undefined : ctx.nickname)
+        const posts = await PostModel.loadPostByNickname(nickname, ctx.nickname === null ? undefined : ctx.nickname, data)
         if(posts.length === 0) return null
         ctx["post"] = new Map()
         return posts.map((_) => {

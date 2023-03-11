@@ -1,14 +1,33 @@
-import React, {ReactElement} from 'react';
+import React, {ReactElement, useEffect, useState} from 'react';
 import Layout from "@/components/library/layout";
 import Post from "@/components/library/post/post";
 import OptionalLogin from "@/components/library/auth/optional-login";
+import {useLogin} from "@/contexts/login";
+import Loader from "@/components/library/loader";
+import {FetchingPostsContext, useFetchingPostsContext} from "@/contexts/fetching-posts";
+import {PostContext} from "@/contexts/post-info";
 
 const Home = () => {
+    const {logged} = useLogin()
+    const [ready, setReady] = useState(false)
+    const {posts, getPosts, refetch_getPosts: refetch, loading_getPosts: loading} = useFetchingPostsContext()
+
+    useEffect(() => {
+        getPosts()
+        setReady(true)
+    }, [logged])
+
+    if((loading && posts.length === 0) || !ready){
+        return <Loader/>
+    }
+
     return (
         <div className="font-main flex flex-col gap-12 items-center justify-center w-full">
             {
-                new Array(2).fill([]).map((_, index) =>
-                    <Post nft={index % 2 === 0} key={index}/>
+                posts.map((_, index) =>
+                    <PostContext key={index} post={_}>
+                        <Post refetch={refetch}/>
+                    </PostContext>
                 )
             }
         </div>
@@ -19,7 +38,9 @@ Home.getLayout = function getLayout(page: ReactElement) {
     return (
         <OptionalLogin>
             <Layout left={true} top={true}>
-                {page}
+                <FetchingPostsContext>
+                    {page}
+                </FetchingPostsContext>
             </Layout>
         </OptionalLogin>
     )

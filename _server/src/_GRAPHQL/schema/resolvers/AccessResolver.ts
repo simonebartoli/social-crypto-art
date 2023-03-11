@@ -129,8 +129,8 @@ export class AccessResolver {
         return true
     }
 
-    @Mutation(() => Boolean)
-    async getAccessToken_RecoveryToken(@Ctx() ctx: Context): Promise<Boolean>{
+    @Mutation(() => Date)
+    async getAccessToken_RecoveryToken(@Ctx() ctx: Context): Promise<Date>{
         const {request, response} = ctx
         const token: string | undefined = request.cookies["recovery_token"]
         if(token === undefined){
@@ -162,17 +162,18 @@ export class AccessResolver {
         const jwt = await accessToken.createJwt()
         response.clearCookie("recovery_token")
         response.cookie("access_token", jwt, {
-            expires: accessToken.getProperties().exp
+            expires: accessToken.getProperties().exp,
+            httpOnly: true
         })
 
-        return true
+        return accessToken.getProperties().exp
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => Date)
     async getAccessToken_Web3Account(
         @Ctx() ctx: Context,
         @Arg("data", () => Input_Web3Account) data: Input_Web3Account
-    ): Promise<Boolean>{
+    ): Promise<Date>{
         const {address, date, signature} = data
 
         const ip = ctx.request.ip
@@ -198,8 +199,11 @@ export class AccessResolver {
         })
         const jwt = await accessToken.createJwt()
 
-        ctx.response.cookie("access_token", jwt)
-        return true
+        ctx.response.cookie("access_token", jwt, {
+            expires: accessToken.getProperties().exp,
+            httpOnly: true
+        })
+        return accessToken.getProperties().exp
     }
 
     @Mutation(() => SecretType)
@@ -208,6 +212,12 @@ export class AccessResolver {
         const nickname = ctx.nickname
         const secret = new SecretModel(nickname)
         return secret.getToken()
+    }
+
+    @Mutation(() => Boolean)
+    logout(@Ctx() ctx: Context): boolean {
+        ctx.response.clearCookie("access_token")
+        return true
     }
 
     @Query(() => SecretType)

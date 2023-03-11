@@ -12,7 +12,6 @@ import {
 import {useMutation} from "@apollo/client";
 import {VALIDATE_NFT_CREATION} from "@/graphql/post";
 import {toast} from "react-toastify";
-import {useEthers} from "@usedapp/core";
 
 type Props = {
     createNft?: {
@@ -42,7 +41,6 @@ type Props = {
 }
 
 const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, setSelling}) => {
-    const {account} = useEthers()
     const [validateNftCreation] = useMutation(VALIDATE_NFT_CREATION, {
         onError: (error) => {
             console.log("ERROR SERVER")
@@ -140,8 +138,7 @@ const BlockchainWrapper: NextPage<Props> = ({nft_id, createNft, setRoyalties, se
                         validateNftCreation({
                             variables: {
                                 data: {
-                                    ipfs: createNft.ipfsURI,
-                                    address: account!
+                                    ipfs: createNft.ipfsURI
                                 }
                             }
                         })

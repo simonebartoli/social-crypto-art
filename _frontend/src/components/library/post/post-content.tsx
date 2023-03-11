@@ -16,7 +16,7 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
 
     useEffect(() => {
         if(contentDiv.current !== null){
-            if(contentDiv.current.scrollHeight > contentDiv.current.clientHeight){
+            if(contentDiv.current.scrollHeight > contentDiv.current.clientHeight || (openContent && contentDiv.current.clientHeight > 250)){
                 setOverflowing(true)
             }else{
                 setOverflowing(false)
@@ -29,27 +29,40 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
                  className={`${openContent ? "max-h-auto": "max-h-[250px]"} flex flex-col items-center py-3 justify-start gap-6 overflow-hidden`}>
                 {
                     post.map((_, index) => {
-                        if(_.type === PostContentTypeEnum.TEXT){
-                            if(_.nft && !allNft){
-                                return (
-                                    <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
-                                        <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
-                                        <div dangerouslySetInnerHTML={{__html: _.data}}/>
-                                    </div>
-                                )
-                            }else{
-                                return (
-                                    <div className="w-full" key={index}>
-                                        <div dangerouslySetInnerHTML={{__html: _.data}}/>
-                                    </div>
-                                )
-                            }
-                        }else {
-                            if(_.nft && !allNft){
-                                return (
-                                    <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
-                                        <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
-                                        <div className="w-full min-h-[200px] relative">
+                        if(_.data !== "") {
+                            if(_.type === PostContentTypeEnum.TEXT){
+                                if(_.nft && !allNft){
+                                    return (
+                                        <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
+                                            <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
+                                            <div dangerouslySetInnerHTML={{__html: _.data}}/>
+                                        </div>
+                                    )
+                                }else{
+                                    return (
+                                        <div className="w-full" key={index}>
+                                            <div dangerouslySetInnerHTML={{__html: _.data}}/>
+                                        </div>
+                                    )
+                                }
+                            }else {
+                                if(_.nft && !allNft){
+                                    return (
+                                        <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
+                                            <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
+                                            <div className="w-full min-h-[200px] relative">
+                                                <Image
+                                                    src={_.data}
+                                                    alt={""}
+                                                    fill={true}
+                                                    style={{objectFit: "contain"}}
+                                                />
+                                            </div>
+                                        </div>
+                                    )
+                                }else{
+                                    return (
+                                        <div key={index} className="w-full min-h-[200px] relative">
                                             <Image
                                                 src={_.data}
                                                 alt={""}
@@ -57,19 +70,8 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
                                                 style={{objectFit: "contain"}}
                                             />
                                         </div>
-                                    </div>
-                                )
-                            }else{
-                                return (
-                                    <div key={index} className="w-full min-h-[200px] relative">
-                                        <Image
-                                            src={_.data}
-                                            alt={""}
-                                            fill={true}
-                                            style={{objectFit: "contain"}}
-                                        />
-                                    </div>
-                                )
+                                    )
+                                }
                             }
                         }
                     })

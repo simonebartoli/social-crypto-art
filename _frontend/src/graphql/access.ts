@@ -36,3 +36,9 @@ export const GET_IP_ADDRESS = gql(`
         getIpAddress
     }
 `)
+
+export const LOGOUT = gql(`
+    mutation LOGOUT{
+        logout
+    }
+`)

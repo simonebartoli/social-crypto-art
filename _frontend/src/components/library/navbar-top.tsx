@@ -1,12 +1,15 @@
 import React from 'react';
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import {useLogin} from "@/contexts/login";
 import Link from "next/link";
 import {useEthers} from "@usedapp/core";
 
 const NavbarTop = () => {
-    const {account} = useEthers()
-    const {personalInfo} = useLogin()
+    const {account, activateBrowserWallet} = useEthers()
+    const {personalInfo, logout} = useLogin()
+
+
     return (
         <div className="shadow-lg border-b-2 border-x-2 border-custom-grey flex z-50 flex-row font-main rounded-b-lg justify-between items-center gap-16 fixed top-0 left-[7.5%] bg-custom-light-grey w-[90%] py-3 px-8 h-[10vh]">
             <div className="flex flex-row gap-8 items-center justify-center">
@@ -22,7 +25,7 @@ const NavbarTop = () => {
                                 <span className="text-xl">
                                     Connected to <span className="text-xl p-2 rounded-lg bg-black text-white">{account}</span>
                                 </span>:
-                                <button className="hover:bg-white hover:text-black transition border-[1px] shadow-lg border-black rounded-lg p-2 bg-black text-white text-center">
+                                <button onClick={() => activateBrowserWallet({type: "metamask"})} className="hover:bg-white hover:text-black transition border-[1px] shadow-lg border-black rounded-lg p-2 bg-black text-white text-center">
                                     Connect Now
                                 </button>
                         }
@@ -45,6 +48,7 @@ const NavbarTop = () => {
                         Add Post
                     </Link>
                     <NotificationsNoneOutlinedIcon className="!text-3xl"/>
+                    <LogoutOutlinedIcon onClick={() => logout()} className="!text-3xl ml-8 cursor-pointer hover:text-custom-red transition"/>
                 </div>
             }
         </div>

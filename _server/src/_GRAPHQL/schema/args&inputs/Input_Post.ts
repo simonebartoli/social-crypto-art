@@ -1,7 +1,7 @@
 import {Field, Float, InputType, Int} from "type-graphql";
 import {Visibility} from "../../enums/Visibility";
 import {MediaType} from "../../enums/MediaType";
-import {ArrayMinSize, IsEthereumAddress, Min} from "class-validator";
+import {ArrayMinSize, IsEthereumAddress, IsInt, IsNotEmpty, Min} from "class-validator";
 import {ArrayOneOrMore} from "../../../types";
 import {Interaction} from "../../enums/Interaction";
 import {NftSellingType} from "../../enums/NftSellingType";
@@ -76,6 +76,7 @@ export class Input_GetPosts {
     exclude?: string[]
 
     @Field(() => Int, {defaultValue: 10})
+    @IsInt()
     maxPosts: number
 
     @Field(() => Date, {defaultValue: new Date()})
@@ -111,11 +112,8 @@ export class Input_AddNewComment {
 @InputType()
 export class Input_VerifyNft {
     @Field(() => String)
+    @IsNotEmpty()
     ipfs: string
-
-    @Field(() => String)
-    @IsEthereumAddress()
-    address: string
 }
 
 

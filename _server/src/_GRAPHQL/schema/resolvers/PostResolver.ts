@@ -64,14 +64,12 @@ export class PostResolver {
     @Mutation(() => Boolean)
     @RequireAccessToken()
     async validateNftCreation(
+        @Ctx() ctx: ContextAuth,
         @Arg("data", () => Input_VerifyNft) data: Input_VerifyNft
     ): Promise<boolean> {
-        const nft = await Nft.getNftByIpfs(data.ipfs)
-        if(nft.isVerified()){
-            await nft.removeNftBackupFromDb()
-        }else{
-            await nft.checkIfNftVerified(data.address)
-        }
+        const nft = await Nft.getNftByIpfs(data.ipfs, ctx.nickname)
+        await nft.checkIfNftVerified()
+
         return true
     }
 

@@ -14,7 +14,9 @@ const SellingFixedAuction: NextPage<Props> = ({type}) => {
     const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value
         if(!isNaN(Number(newValue.at(-1))) || newValue.at(-1) === "." || newValue.length === 0){
-            amount.set(newValue)
+            if(!isNaN(Number(newValue + "0"))){
+                amount.set(newValue)
+            }
         }
     }
     const onRoyaltiesChange = (e: ChangeEvent<HTMLInputElement>) => {
