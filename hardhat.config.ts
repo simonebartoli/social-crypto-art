@@ -16,16 +16,20 @@ const config: HardhatUserConfig = {
       ],
       chainId: 5
     },
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
     localhost: {
       url: "http://127.0.0.1:8545/",
-      chainId: 31337
+      chainId: 31337,
+      allowUnlimitedContractSize: true
     }
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY
   },
   gasReporter: {
-    enabled: true,
+    enabled: false,
     outputFile: "gas-report.txt",
     noColors: true,
     currency: "GBP",
@@ -43,14 +47,25 @@ const config: HardhatUserConfig = {
     timeout: 100000000
   },
   solidity: {
-    version: "0.8.9",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.9",
+        settings: {
+          optimizer: {
+            enabled: true
+          },
+        }
       },
-    },
-  },
+      {
+        version: "0.8.12",
+        settings: {
+          optimizer: {
+            enabled: true
+          },
+        }
+      }
+    ],
+  }
 };
 
 export default config;

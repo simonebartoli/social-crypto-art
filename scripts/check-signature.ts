@@ -1,7 +1,5 @@
-import {HardhatRuntimeEnvironment} from "hardhat/types";
-import {deployments, ethers, getNamedAccounts} from "hardhat";
+import {deployments, ethers} from "hardhat";
 import {VerifySignature} from "../typechain-types";
-import {Signer, Wallet} from "ethers";
 import {DateTime} from "luxon";
 
 const checkSignature = async () => {
@@ -38,7 +36,7 @@ const checkSignature = async () => {
     const sig = await signer.signMessage(ethers.utils.arrayify(messageHashed))
     console.log(sig)
 
-    console.log(await verifySignature.getAddressFromSignature(signer.address, verifySignatureAddress, date, ip, sig))
+    // console.log(await verifySignature.getAddressFromSignature(signer.address, verifySignatureAddress, date, ip, sig))
     console.log(await verifySignature.verifySignature(signer.address, verifySignatureAddress, date, ip, sig))
 }
 

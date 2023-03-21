@@ -25,15 +25,15 @@ contract VerifySignature {
         return ethMessageHashed.recover(sig) == _from;
     }
 
-    function getAddressFromSignature(
-        address _from,
-        address _to,
-        string memory _date,
-        string memory _ip,
-        bytes memory sig
-    ) external pure returns (address) {
-        bytes32 ethMessageHashed = getMessageHash(_from, _to, _date, _ip).toEthSignedMessageHash();
-        return ethMessageHashed.recover(sig);
-    }
+//    function getAddressFromSignature(
+//        address _from,
+//        address _to,
+//        string memory _date,
+//        string memory _ip,
+//        bytes memory sig
+//    ) external pure returns (address) {
+//        bytes32 ethMessageHashed = getMessageHash(_from, _to, _date, _ip).toEthSignedMessageHash();
+//        return ethMessageHashed.recover(sig);
+//    }
 }
 

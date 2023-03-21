@@ -95,15 +95,15 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
         }
         if(sellingMode !== originalValuesRef.current.sellingMode){
             if(originalValuesRef.current.sellingMode !== "AUCTION SELLING"){
+                if(originalValuesRef.current.sellingMode !== "NO SELLING"){
+                    newInteractions.push(
+                        <ResetSellingStatusBlockchainInteraction
+                            nft_id={nft_id}
+                            onFinish={() => onFinishBlockchainInteraction()}
+                        />
+                    )
+                }
                 if(sellingMode === "AUCTION SELLING"){
-                    if(originalValuesRef.current.sellingMode !== "NO SELLING"){
-                        newInteractions.push(
-                            <ResetSellingStatusBlockchainInteraction
-                                nft_id={nft_id}
-                                onFinish={() => onFinishBlockchainInteraction()}
-                            />
-                        )
-                    }
                     newInteractions.push(
                         <AuctionSellingBlockchainInteraction
                             nft_id={nft_id}
@@ -127,6 +127,24 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
                 }
             }
         }
+        else if(sellingMode === "FIXED PRICE SELLING"){
+            if(amount !== originalValuesRef.current.amount || currency !== originalValuesRef.current.currency){
+                newInteractions.push(
+                    <ResetSellingStatusBlockchainInteraction
+                        nft_id={nft_id}
+                        onFinish={() => onFinishBlockchainInteraction()}
+                    />
+                )
+                newInteractions.push(
+                    <FixedPriceSellingBlockchainInteraction
+                        nft_id={nft_id}
+                        currency={CurrencyEnum[currency as keyof typeof CurrencyEnum]}
+                        amount={ethers.utils.parseEther(amount).toString()}
+                        onFinish={() => onFinishBlockchainInteraction()}
+                    />
+                )
+            }
+        }
 
         setInteractions(newInteractions)
     }
@@ -141,26 +159,26 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
         setRoyalties(nftInfo.royalties)
         setSellingMode(mode)
         if(nftInfo.fixedPrice){
-            setAmount(ethers.utils.formatEther(nftInfo.fixedPrice.amount))
-            setCurrency(CurrencyEnum[nftInfo.fixedPrice.currency])
+            setAmount(ethers.utils.formatEther(nftInfo.fixedPrice["amount"]))
+            setCurrency(CurrencyEnum[nftInfo.fixedPrice["currency"]])
             originalValuesRef.current = {
                 ...originalValuesRef.current,
-                amount: ethers.utils.formatEther(nftInfo.fixedPrice.amount),
-                currency: CurrencyEnum[nftInfo.fixedPrice.currency]
+                amount: ethers.utils.formatEther(nftInfo.fixedPrice["amount"]),
+                currency: CurrencyEnum[nftInfo.fixedPrice["currency"]]
             }
         }else if(nftInfo.auction){
-            setAmount(ethers.utils.formatEther(nftInfo.auction.initialPrice))
-            setMinIncrement(nftInfo.auction.minIncrement)
-            setCurrency(CurrencyEnum[nftInfo.auction.currency])
-            setDeadline(DateTime.fromSeconds(Number(nftInfo.auction.deadline)).toISODate())
-            setRefundable(nftInfo.auction.refundable)
+            setAmount(ethers.utils.formatEther(nftInfo.auction["initialPrice"]))
+            setMinIncrement(nftInfo.auction["minIncrement"])
+            setCurrency(CurrencyEnum[nftInfo.auction["currency"]])
+            setDeadline(DateTime.fromSeconds(Number(nftInfo.auction["deadline"])).toISO({includeOffset: false}))
+            setRefundable(nftInfo.auction["refundable"])
             originalValuesRef.current = {
                 ...originalValuesRef.current,
-                amount: ethers.utils.formatEther(nftInfo.auction.initialPrice),
-                minIncrement: nftInfo.auction.initialPrice,
-                currency: CurrencyEnum[nftInfo.auction.currency],
-                deadline: nftInfo.auction.deadline,
-                refundable: nftInfo.auction.refundable
+                amount: ethers.utils.formatEther(nftInfo.auction["initialPrice"]),
+                minIncrement: nftInfo.auction["initialPrice"],
+                currency: CurrencyEnum[nftInfo.auction["currency"]],
+                deadline: nftInfo.auction["deadline"],
+                refundable: nftInfo.auction["refundable"]
             }
         }
 
@@ -264,11 +282,11 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
                         </select>
                         <span>DEADLINE:</span>
                         <input
-                            type={"date"}
+                            type={"datetime-local"}
                             value={deadline}
                             onChange={(e) => setDeadline(e.target.value)}
-                            min={DateTime.now().plus({day: 5, minute: 30}).toISODate()}
-                            max={DateTime.now().plus({day: 29, hour: 23, minute: 30}).toISODate()}
+                            min={DateTime.now().plus({day: 5, minute: 30}).toISO({includeOffset: false})}
+                            max={DateTime.now().plus({day: 29, hour: 23, minute: 30}).toISO({includeOffset: false})}
                             className="col-span-2 p-2 bg-custom-grey text-white rounded-lg border-2 border-white text-lg font-bold"/>
                         <span>MIN INCREMENT:</span>
                         <div className="col-span-2 flex flex-row gap-2 items-center">

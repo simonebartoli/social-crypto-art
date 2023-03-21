@@ -6,15 +6,18 @@ import {useEthers} from "@usedapp/core";
 
 type Props = {
     specificAccount?: string
+    specificNotAccount?: string
     children?: JSX.Element
     callback?: () => void
 }
 
-const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, children, callback}) => {
-    const {showModal} = useModal()
+const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccount, children, callback}) => {
+    const {showModal, closeModal} = useModal()
     const {account} = useEthers()
 
     useEffect(() => {
+        // TODO FIX BUG HERE - NOT UPDATING ACCOUNT
+        closeModal()
         if(specificAccount){
             if(account && account === specificAccount){
                 if (callback) {
@@ -23,7 +26,15 @@ const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, children, c
             }else{
                 showModal(<RequireWeb3Account specificAccount={specificAccount}/>)
             }
-        }else{
+        }else if(specificNotAccount) {
+            if(account && account !== specificNotAccount){
+                if(callback){
+                    callback()
+                }
+            }else{
+                showModal(<RequireWeb3Account specificNotAccount={specificNotAccount}/>)
+            }
+        } else{
             if(account){
                 if (callback) {
                     callback()
@@ -35,7 +46,7 @@ const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, children, c
     }, [account])
 
 
-    if(!account || (specificAccount && account !== specificAccount)){
+    if(!account || (specificAccount && account !== specificAccount) || (specificNotAccount && specificNotAccount === account)){
         return (
             <></>
         )

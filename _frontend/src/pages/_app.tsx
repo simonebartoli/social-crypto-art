@@ -39,7 +39,7 @@ const config: Config = {
     networks: [Hardhat, Mainnet, Goerli],
     readOnlyChainId: Hardhat.chainId,
     multicallAddresses: {
-        [Hardhat.chainId]: "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
+        [Hardhat.chainId]: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
     },
     readOnlyUrls: {
         [Hardhat.chainId]: "http://127.0.0.1:8545/"

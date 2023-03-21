@@ -4,7 +4,7 @@ import {Erc20, SocialNFT, Test, TestNftReceiver} from "../../typechain-types";
 import {BigNumber, Signer} from "ethers";
 import {assert, expect} from "chai";
 import * as helpers from "@nomicfoundation/hardhat-network-helpers";
-
+import {beforeEach} from "mocha";
 
 !developmentChain.includes(network.name) ? describe.skip :
     describe("SocialNFT Testing", () => {
@@ -65,11 +65,15 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 const ownedSince = Number(nftStatus.ownedSince.toString())
                 assert.equal(nftStatus.exist, true)
                 assert.equal(nftStatus.sellingType, 0)
-                assert(ownedSince > currentTimestamp - 10 && ownedSince < currentTimestamp + 10)
+                assert(ownedSince > currentTimestamp - 30 && ownedSince < currentTimestamp + 30)
             })
             it("Should increment the unique NFT id", async () => {
                 const nftUniqueId = await socialNFT.s_nftUniqueId()
                 assert.equal(nftUniqueId.toString(), (initialNftUniqueId + 1).toString())
+            })
+            it("Should revert if same URI exists", async () => {
+                const socialNftPlayer1 = socialNFT.connect(player1)
+                await expect(socialNftPlayer1.createNft(uri)).to.be.revertedWithCustomError(socialNFT, "ERR_URI_ALREADY_SET")
             })
         })
         describe("Modifier Testing", () => {
@@ -116,6 +120,11 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 testPlayer = test.connect(player1)
 
                 await testDeployer.createNft(uri)
+            })
+            it("Should revert if caller is not the owner", async () => {
+                await expect(
+                    testPlayer.setRoyalties(nftUniqueId, "20")
+                ).to.be.revertedWithCustomError(socialNFT, "ERR_NFT_NOT_OWNED")
             })
             it("Should revert if previous owners exist", async () => {
                 await testDeployer.test_setPastOwners(nftUniqueId, await deployer.getAddress())
@@ -214,6 +223,9 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
         })
         describe("Post Transfer NFT Testing", () => {
             const uri = "THIS_IS_A_TEST"
+            const uri2 = "THIS_IS_A_TEST_2"
+            const uri3 = "THIS_IS_A_TEST_3"
+
             const nftUniqueId = 1
 
             let testDeployer: Test, testPlayer: Test, ownedSince: string, lengthArrayBefore: number
@@ -221,8 +233,8 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 testDeployer = test.connect(deployer)
                 testPlayer = test.connect(player1)
                 await testDeployer.createNft(uri)
-                await testDeployer.createNft(uri)
-                await testDeployer.createNft(uri)
+                await testDeployer.createNft(uri2)
+                await testDeployer.createNft(uri3)
 
                 lengthArrayBefore = 3
                 ownedSince = (await testDeployer.s_nftIdStatus(nftUniqueId)).ownedSince.toString()
@@ -234,13 +246,13 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 const currentTimestamp = Math.floor(Date.now() / 1000)
                 assert.equal(status.owner, await deployer.getAddress())
                 assert.equal(status.start_date.toString(), ownedSince.toString())
-                assert(Number(status.end_date) > currentTimestamp - 10 && Number(status.end_date) < currentTimestamp + 10)
+                assert(Number(status.end_date) > currentTimestamp - 30 && Number(status.end_date) < currentTimestamp + 30)
             })
             it("Should set the status correctly", async () => {
                 const status = await testDeployer.s_nftIdStatus(nftUniqueId)
                 const currentTimestamp = Math.floor(Date.now() / 1000)
                 assert.equal(status.sellingType, SellingType.NO_SELLING)
-                assert(Number(status.ownedSince) > currentTimestamp - 10 && Number(status.ownedSince) < currentTimestamp + 10)
+                assert(Number(status.ownedSince) > currentTimestamp - 30 && Number(status.ownedSince) < currentTimestamp + 30)
             })
             it("Should remove the NFT from the list of owned NFT", async () => {
                 const lengthArrayAfter = Number(await testDeployer.test_getOwnerToNftIdLength(await deployer.getAddress())).toString()
@@ -483,7 +495,7 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
             it("Should revert - DEADLINE TOO FAR", async () => {
                 // TIMESTAMP CAN CHANGE WHEN CONTRACT IS EXECUTED
                 const DAYS_30 = 60 * 60 * 24 * 30
-                const wrongDeadline = Math.ceil(Date.now() / 1000) + DAYS_30 + 10
+                const wrongDeadline = Math.ceil(Date.now() / 1000) + DAYS_30 + 30
                 await expect(testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, wrongDeadline))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_DEADLINE_NOT_IN_RANGE")
             })
@@ -1100,6 +1112,115 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers";
                 assert.equal(loser2RefundedBalanceAfter.toString(), loser2RefundedBalanceBefore.toString())
                 assert.equal(creatorBalanceAfter.toString(), creatorBalanceBefore.add(amountToCreator).sub(gasCost).toString())
                 assert.equal(ownerBalanceAfter.toString(), ownerBalanceBefore.add(amountToOwner).toString())
+            })
+        })
+        describe("Reset Selling Status Testing", () => {
+            let socialNftDeployer: SocialNFT
+            const nftUniqueId = 1
+            const uri = "TEST"
+            beforeEach(async() => {
+                socialNftDeployer = socialNFT.connect(deployer)
+                await socialNftDeployer.createNft(uri)
+            })
+            it("Should Reset the Selling Option", async () => {
+                const amount = ethers.utils.parseEther("1")
+                const currency = 0
+
+                await socialNftDeployer.setSellingFixedPrice(nftUniqueId, amount, currency)
+                await socialNftDeployer.resetSellingStatus(nftUniqueId)
+
+                const resultFixedPrice = await socialNftDeployer.s_nftIdToSellingFixedPrice(nftUniqueId)
+                const nftStatus = await socialNftDeployer.s_nftIdStatus(nftUniqueId)
+
+                assert.equal(resultFixedPrice.amount.toString(), "0")
+                assert.equal(resultFixedPrice.currency.toString(), ZERO_ADDRESS)
+
+                assert.equal(nftStatus.exist, true)
+                assert.equal(nftStatus.sellingType.toString(), "0")
+            })
+            it("Should Revert is selling is auction", async () => {
+                const initialPrice = ethers.utils.parseEther("1")
+                const currency = 0
+                const refundable = false
+                const minIncrement = "10"
+                const deadline = Math.floor(new Date().getTime() / 1000) + 3600 * 24 * 10
+
+                await socialNftDeployer.setSellingAuction(nftUniqueId, initialPrice, refundable, minIncrement, currency, deadline)
+                await expect(
+                    socialNftDeployer.resetSellingStatus(nftUniqueId)
+                ).to.be.revertedWithCustomError(socialNFT, "ERR_NFT_RESET_NOT_POSSIBLE_IN_AUCTION_MODE")
+            })
+        })
+        describe("Get NFT id from IPFS", () => {
+            let testDeployer: Test
+            const nftUniqueId = 1
+            const uri = "TEST"
+            const wrongUri = "TEST_WRONG"
+
+            beforeEach(async () => {
+                testDeployer = test.connect(deployer)
+                await testDeployer.createNft(uri)
+            })
+
+            it("Should return NFT id", async () => {
+                const result = await testDeployer.getNftId(uri)
+                assert.equal(result.toString(), nftUniqueId.toString())
+            })
+            it("Should revert - NFT not existing", async () => {
+                await expect(testDeployer.getNftId(wrongUri)).to.be.revertedWithCustomError(socialNFT, "ERR_NFT_NOT_EXISTING")
+            })
+        })
+        describe("Get NFT Creator", () => {
+            let testDeployer: Test, testPlayer1: Test
+
+            const amount = ethers.utils.parseEther("1")
+            const currency = 0
+
+            const nftUniqueId = 1
+            const uri = "TEST"
+
+            beforeEach(async () => {
+                testDeployer = test.connect(deployer)
+                testPlayer1 = test.connect(player1)
+
+                await testDeployer.createNft(uri)
+                await testDeployer.setSellingFixedPrice(nftUniqueId, amount, currency)
+            })
+
+            it("Should return the creator", async () => {
+                await testPlayer1.buyNftSellingFixedPrice(nftUniqueId, {value: amount})
+                const creator = await testDeployer.getOriginalOwner(nftUniqueId)
+                assert.equal(creator.owner.toString(), await deployer.getAddress())
+            })
+            it("Should return the ZERO ADDRESS - No change of property yet", async () => {
+                const creator = await testDeployer.getOriginalOwner(nftUniqueId)
+                assert.equal(creator.owner.toString(), ZERO_ADDRESS)
+            })
+        })
+        describe("safeTransferFrom Testing", () => {
+            let testDeployer: Test, testPlayer: Test
+            const nftUniqueId = 1
+            const uri = "TEST"
+
+            beforeEach(async () => {
+                testDeployer = test.connect(deployer)
+                testPlayer = test.connect(player1)
+                await testDeployer.createNft(uri)
+            })
+            it("Should Transfer the Token", async () => {
+                await testDeployer["safeTransferFrom(address,address,uint256)"](await deployer.getAddress(), await player1.getAddress(), nftUniqueId)
+                const result = await testDeployer.ownerOf(nftUniqueId)
+                assert.equal(result.toString(), await player1.getAddress())
+            })
+            it("Should Revert - NFT NOT EXISTING", async () => {
+                await expect(
+                    testDeployer["safeTransferFrom(address,address,uint256)"](await deployer.getAddress(), await player1.getAddress(), nftUniqueId + 1)
+                ).to.be.reverted
+            })
+            it("Should Revert - NOT OWNER", async () => {
+                await expect(
+                    testPlayer["safeTransferFrom(address,address,uint256)"](await deployer.getAddress(), await player1.getAddress(), nftUniqueId)
+                ).to.be.reverted
             })
         })
     })

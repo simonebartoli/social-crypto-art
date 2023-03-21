@@ -32,7 +32,7 @@ const ResetSellingStatusBlockchainInteractions: NextPage<Props> = ({nft_id, onFi
             const result = (await socialNFTContract.connect(account!).estimateGas.resetSellingStatus(nftId)).mul(await HardhatProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
-            setEstimate(undefined)
+            setEstimate("NOT CALCULABLE")
         }
     }
 

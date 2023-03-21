@@ -2,20 +2,18 @@ import React, {useEffect, useState} from 'react';
 import {BlockchainOperationType} from "@/components/library/blockchain-interaction";
 import {HardhatProvider, socialNFTContract} from "@/contracts";
 import {ethers} from "ethers";
-import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {NextPage} from "next";
-import {Contract_setSellingFixedPrice} from "@/contexts/contract";
+import {Contract_buyNftSellingFixedPrice} from "@/contexts/contract";
 import {useBlockchainCallbackPostsContext} from "@/contexts/blockchain-callback";
 import {useEthers} from "@usedapp/core";
 
 type Props = {
     nft_id: string
     amount: string
-    currency: CurrencyEnum
     onFinish?: () => void
 }
 
-const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount, currency, onFinish}) => {
+const BuyFixedPriceBlockchainInteractions: NextPage<Props> = ({nft_id, amount, onFinish}) => {
     const {account} = useEthers()
 
     const {operations, setOperations, shiftIndex, setShiftIndex, indexAllowed, setIndexAllowed} = useBlockchainCallbackPostsContext()
@@ -32,7 +30,7 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
 
     const getEstimate = async () => {
         try{
-            const result = (await socialNFTContract.connect(account!).estimateGas.setSellingFixedPrice(nftId, amount, currency)).mul(await HardhatProvider.getGasPrice())
+            const result = (await socialNFTContract.connect(account!).estimateGas.buyNftSellingFixedPrice(nftId, {value: amount})).mul(await HardhatProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
             setEstimate("NOT CALCULABLE")
@@ -42,15 +40,13 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
     useEffect(() => {
         if(!finished){
             const newOp: BlockchainOperationType = {
-                name: "SET SELLING FIXED PRICE",
+                name: "BUY NFT (FIXED PRICE)",
                 disabled: {
                     value: disabled,
                     set: setDisabled
                 },
-                contract: <Contract_setSellingFixedPrice
+                contract: <Contract_buyNftSellingFixedPrice
                     nft_id={nft_id}
-                    amount={amount}
-                    currency={String(currency)}
                     execute={execute}
                     onError={() => {
                         setDisabled(false)
@@ -97,9 +93,10 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
         estimate, execute, disabled, nftId,
         finished
     ])
+
     return (
         <></>
     );
 };
 
-export default FixedPriceSellingBlockchainInteraction;
+export default BuyFixedPriceBlockchainInteractions;

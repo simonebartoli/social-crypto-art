@@ -19,6 +19,8 @@ contract PaymentHolder is Utils {
         uint256 date;
         bool refunded;
     }
+
+    mapping(address => uint256) public s_address_to_outstanding_balances;
     mapping(uint256 => address[]) public s_auction_to_addresses; // TODO CHANGE TO PRIVATE - JUST TESTING
     mapping(address => mapping(uint256 => Value)) public s_address_to_payment_hold; // TODO CHANGE TO PRIVATE - JUST TESTING
 
@@ -28,7 +30,6 @@ contract PaymentHolder is Utils {
         i_socialNftAddress = socialNftContract;
     }
 
-
     modifier onlySocialNftContract() {
         if(msg.sender != i_socialNftAddress){
 //            in testing needs to be commented out because this contract is inherited by the Test contract
@@ -36,6 +37,30 @@ contract PaymentHolder is Utils {
 //            revert ERR_ONLY_SOCIAL_NFT();
         }
         _;
+    }
+
+    /*
+        @notice function to withdraw outstanding balance
+    */
+    function withdrawOutstandingBalance() public payable {
+        uint256 outstandingBalance = s_address_to_outstanding_balances[msg.sender];
+        if(outstandingBalance != 0){
+            delete s_address_to_outstanding_balances[msg.sender];
+            (bool success, ) = payable(msg.sender).call{value: outstandingBalance}("");
+            if(!success){
+                revert ERR_PAYMENT_NOT_SENT();
+            }
+        }
+    }
+
+
+    /*
+        @notice function used to set outstanding balance from SocialNFT Contract
+        @param creditor | the wallet that failed to receive the payment
+        @param amount
+    */
+    function setOutstandingBalance(address creditor, uint256 amount) public onlySocialNftContract {
+        s_address_to_outstanding_balances[creditor] += amount;
     }
 
     /*
@@ -77,8 +102,11 @@ contract PaymentHolder is Utils {
             (bool successReceiver, ) = payable(receiver).call{value: amountReceiver}("");
             (bool successCreator, ) = payable(creator).call{value: amountCreator}("");
 
-            if(!successReceiver || !successCreator){
-                revert ERR_PAYMENT_NOT_SENT();
+            if(!successReceiver){
+                s_address_to_outstanding_balances[receiver] += amountReceiver;
+            }
+            if(!successCreator){
+                s_address_to_outstanding_balances[creator] += amountCreator;
             }
         }else{
             IERC20 erc20 = IERC20(payment.currency);
@@ -104,7 +132,7 @@ contract PaymentHolder is Utils {
                 if(payment.currency == ZERO_ADDRESS){
                     (bool success, ) = payable(refundAddress).call{value: payment.amount}("");
                     if(!success){
-                        revert ERR_PAYMENT_NOT_SENT();
+                        s_address_to_outstanding_balances[refundAddress] += payment.amount;
                     }
                 }else{
                     IERC20 erc20 = IERC20(payment.currency);

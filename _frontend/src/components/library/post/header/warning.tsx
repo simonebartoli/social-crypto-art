@@ -4,7 +4,11 @@ import {useMutation} from "@apollo/client";
 import {VALIDATE_NFT_CREATION} from "@/graphql/post";
 import {toast} from "react-toastify";
 import {useModal} from "@/contexts/modal";
-import BlockchainWrapper from "@/components/add-post/components/blockchain-wrapper";
+import {usePostContext} from "@/contexts/post-info";
+import {BlockchainCallbackContext} from "@/contexts/blockchain-callback";
+import BlockchainWrapper from "@/components/library/blockchain-wrapper";
+import CreateNftBlockchainInteraction
+    from "@/components/library/blockchain-operations/create-nft-blockchain-interaction";
 
 type Props = {
     ipfs: string
@@ -13,6 +17,7 @@ type Props = {
 
 const Warning: NextPage<Props> = ({ipfs, refetch}) => {
     const {showModal, closeModal, open} = useModal()
+    const {setLoadingWeb3Changes, setReloadPost} = usePostContext() || {}
     const [validateNftCreation] = useMutation(VALIDATE_NFT_CREATION, {
         onError: (error) => {
             console.log("ERROR SERVER")
@@ -42,21 +47,26 @@ const Warning: NextPage<Props> = ({ipfs, refetch}) => {
     const onCreateNftSubmit = () => {
         setCreateNftDisabled(true)
         showModal(
-            <BlockchainWrapper
-                createNft={{
-                    ipfsURI: ipfs,
-                    onFinish: () => {
-                        closeModal()
-                        toast.success("The NFT has been created!")
-                        setTimeout(() => {
-                            window.location.reload()
-                        }, 1000)
-                    }
-                }}
-            />
+            <BlockchainCallbackContext>
+                <BlockchainWrapper
+                    interactions={[
+                        <CreateNftBlockchainInteraction
+                            key={1}
+                            onFinish={() => {
+                                closeModal()
+                                toast.success("The NFT has been created!")
+                                if(setLoadingWeb3Changes && setReloadPost){
+                                    setLoadingWeb3Changes(true)
+                                    setReloadPost(true)
+                                }
+                            }}
+                            ipfsURI={ipfs}
+                        />
+                    ]}
+                />
+            </BlockchainCallbackContext>
         )
     }
-
     useEffect(() => {
         if(!open && createNftDisabled){
             setCreateNftDisabled(false)

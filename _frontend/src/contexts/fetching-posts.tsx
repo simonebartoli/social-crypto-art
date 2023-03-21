@@ -93,7 +93,7 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
     const formatPosts = ({getPosts, getPostFromUser}: {getPosts?: Get_PostsQuery, getPostFromUser?: Get_Post_From_UserQuery}) => {
         const data = getPosts?.getPosts ?? getPostFromUser?.getPostFromUser
         if(data){
-            const posts: PostType[] = data.map(_ => {
+            const postsCopy: PostType[] = data.map(_ => {
                 let isNft = false
                 let nftId: string | undefined = undefined
                 let warning = false
@@ -152,14 +152,13 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
                     } : undefined
                 }
             })
-            if(responseRef.current === JSON.stringify(posts)){
+            if(responseRef.current === JSON.stringify(postsCopy)){
                 setStopFetching(true)
             }else{
                 setStopFetching(false)
             }
-
-            responseRef.current = JSON.stringify(posts)
-            setPosts(posts)
+            responseRef.current = JSON.stringify(postsCopy)
+            setPosts(postsCopy)
         }
     }
     useEffect(() => {

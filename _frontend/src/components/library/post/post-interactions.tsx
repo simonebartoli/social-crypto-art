@@ -12,10 +12,11 @@ import {toast} from "react-toastify";
 import {useLogin} from "@/contexts/login";
 import {useFetchingPostsContext} from "@/contexts/fetching-posts";
 import {Interaction} from "@/__generated__/graphql";
-import FixedPriceSelling from "@/components/library/nft-selling/fixed-price-selling";
+import FixedPriceSelling from "@/components/library/post/interactions/fixed-price-selling";
 import ModifyNft from "@/components/library/post/interactions/modify-nft";
 import ActionRequireWeb3Account from "@/components/library/auth/action-require-web3-account";
 import {usePostContext} from "@/contexts/post-info";
+import AuctionSelling from "@/components/library/post/interactions/auction/auction-selling";
 
 type Props = {
     post_id: string
@@ -155,14 +156,28 @@ const PostInteractions: NextPage<Props> = ({post_id, interactions, nft_id, comme
                     />
             }
             {
-                (interactions.nft && interactions.selling) &&
+                (interactions.nft && interactions.selling && nftInfo && nftInfo.fixedPrice && nft_id) &&
                 <div onClick={() => setShowSections({...showSections, selling: true})}
                      className="cursor-pointer hover:bg-white hover:text-black transition border-black border-[1px] shadow-lg p-4 text-xl bg-black rounded-lg w-full flex flex-col items-center justify-center">
                     {
                         showSections.selling &&
                         <ActionRequireLogin callback={() => showModal(
-                            <FixedPriceSelling/>
+                            <ActionRequireWeb3Account
+                                specificNotAccount={nftInfo.currentOwner}
+                                callback={() => showModal(<FixedPriceSelling nftId={nft_id} nftInfo={nftInfo}/>)}
+                            />
                         )}/>
+                    }
+                    <span>Check Further Info / Make Offer</span>
+                </div>
+            }
+            {
+                (interactions.nft && interactions.selling && nftInfo && nftInfo.auction && nft_id) &&
+                <div onClick={() => setShowSections({...showSections, selling: true})}
+                     className="cursor-pointer hover:bg-white hover:text-black transition border-black border-[1px] shadow-lg p-4 text-xl bg-black rounded-lg w-full flex flex-col items-center justify-center">
+                    {
+                        showSections.selling &&
+                        <ActionRequireLogin callback={() => showModal(<AuctionSelling nftId={nft_id} nftInfo={nftInfo}/>)}/>
                     }
                     <span>Check Further Info / Make Offer</span>
                 </div>

@@ -39,7 +39,7 @@ const AuctionSellingBlockchainInteraction: NextPage<Props> = ({nft_id, initialPr
             const result = (await socialNFTContract.connect(account!).estimateGas.setSellingAuction(nftId, initialPrice, refundable, minIncrement, currency, deadline)).mul(await HardhatProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
-            setEstimate(undefined)
+            setEstimate("NOT CALCULABLE")
         }
     }
 

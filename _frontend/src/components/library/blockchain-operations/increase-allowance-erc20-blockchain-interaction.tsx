@@ -1,28 +1,26 @@
 import React, {useEffect, useState} from 'react';
 import {BlockchainOperationType} from "@/components/library/blockchain-interaction";
-import {HardhatProvider, socialNFTContract} from "@/contracts";
+import {HardhatProvider, IERC20Interface} from "@/contracts";
 import {ethers} from "ethers";
-import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {NextPage} from "next";
-import {Contract_setSellingFixedPrice} from "@/contexts/contract";
+import {Contract_increaseAllowancesErc20} from "@/contexts/contract";
 import {useBlockchainCallbackPostsContext} from "@/contexts/blockchain-callback";
 import {useEthers} from "@usedapp/core";
+import {IERC20} from "@/__typechain";
+import {SOCIAL_NFT_ADDRESS} from "@/globals";
 
 type Props = {
-    nft_id: string
     amount: string
-    currency: CurrencyEnum
+    address: string
     onFinish?: () => void
 }
 
-const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount, currency, onFinish}) => {
+const IncreaseAllowanceErc20BlockchainInteractions: NextPage<Props> = ({amount, address, onFinish}) => {
     const {account} = useEthers()
 
     const {operations, setOperations, shiftIndex, setShiftIndex, indexAllowed, setIndexAllowed} = useBlockchainCallbackPostsContext()
     const [alreadySet, setAlreadySet] = useState(false)
     const [operationId, setOperationId] = useState<number>(-1)
-
-    const [nftId] = useState(nft_id)
 
     const [estimate, setEstimate] = useState<string | undefined>(undefined)
     const [execute, setExecute] = useState(false)
@@ -32,9 +30,11 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
 
     const getEstimate = async () => {
         try{
-            const result = (await socialNFTContract.connect(account!).estimateGas.setSellingFixedPrice(nftId, amount, currency)).mul(await HardhatProvider.getGasPrice())
+            const contract = new ethers.Contract(address, IERC20Interface, HardhatProvider) as IERC20
+            const result = (await contract.connect(account!).estimateGas.approve(SOCIAL_NFT_ADDRESS, amount)).mul(await HardhatProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
+            console.log(e)
             setEstimate("NOT CALCULABLE")
         }
     }
@@ -42,15 +42,14 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
     useEffect(() => {
         if(!finished){
             const newOp: BlockchainOperationType = {
-                name: "SET SELLING FIXED PRICE",
+                name: "INCREASE ALLOWANCE",
                 disabled: {
                     value: disabled,
                     set: setDisabled
                 },
-                contract: <Contract_setSellingFixedPrice
-                    nft_id={nft_id}
+                contract: <Contract_increaseAllowancesErc20
                     amount={amount}
-                    currency={String(currency)}
+                    address={address}
                     execute={execute}
                     onError={() => {
                         setDisabled(false)
@@ -94,12 +93,14 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
             setOperations([...operations].slice(1))
         }
     }, [
-        estimate, execute, disabled, nftId,
+        estimate, execute, disabled, amount, address,
         finished
     ])
+
+
     return (
         <></>
     );
 };
 
-export default FixedPriceSellingBlockchainInteraction;
+export default IncreaseAllowanceErc20BlockchainInteractions;

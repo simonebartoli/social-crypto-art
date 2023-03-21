@@ -13,9 +13,16 @@ const tests = async (hre: HardhatRuntimeEnvironment) => {
             log: true,
             args: [erc20.address],
             from: deployer,
-            waitConfirmations: 1
+            waitConfirmations: 1,
+            gasLimit: "30000000"
         })
         await deploy("TestNftReceiver", {
+            log: true,
+            args: [],
+            from: deployer,
+            waitConfirmations: 1
+        })
+        await deploy("MaliciousUser_Revert", {
             log: true,
             args: [],
             from: deployer,

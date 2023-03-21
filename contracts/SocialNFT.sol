@@ -12,10 +12,12 @@ import "./Utils.sol";
 
 contract SocialNFT is ERC721URIStorage, Utils {
 
+    error ERR_URI_ALREADY_SET();
     error ERR_NFT_ALREADY_OWNED();
     error ERR_NFT_NOT_OWNED();
     error ERR_NFT_NOT_EXISTING();
     error ERR_NFT_SELLING_ALREADY_SET();
+    error ERR_NFT_RESET_NOT_POSSIBLE_IN_AUCTION_MODE();
 
     error ERR_NFT_BUYING_WRONG_MODE();
     error ERR_NFT_BUYING_WRONG_AMOUNT();
@@ -83,6 +85,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
     struct Selling_AuctionOffers {
         uint256 amount;
         address owner;
+        uint256 date;
         bool refunded;
     }
 
@@ -98,6 +101,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
     // STORAGE VARIABLES - STATUS NFT
     // ----------------------------------------------------------------------------------------
     mapping(address => uint256[]) public s_ownerToNftId;
+    mapping(string => uint256) public s_uriToNftId;
     mapping(uint256 => NftStatus) public s_nftIdStatus;
     mapping(uint256 => PastNftOwner[]) public s_nftIdToPastOwners;
     mapping(uint256 => GasAuction) public s_auctionIdToGasAuction;
@@ -200,6 +204,9 @@ contract SocialNFT is ERC721URIStorage, Utils {
         @param uri the link of the resource
     */
     function createNft(string calldata uri) public {
+        if(s_uriToNftId[uri] != 0){
+            revert ERR_URI_ALREADY_SET();
+        }
         _safeMint(msg.sender, s_nftUniqueId);
         _setTokenURI(s_nftUniqueId, uri);
 
@@ -209,6 +216,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
             sellingType: SellingType.NO_SELLING,
             ownedSince: block.timestamp
         });
+        s_uriToNftId[uri] = s_nftUniqueId;
         emit NewNftCreated(s_nftUniqueId, msg.sender);
         _incrementNftUniqueId();
     }
@@ -234,6 +242,18 @@ contract SocialNFT is ERC721URIStorage, Utils {
             percentage: percentage
         });
         emit RoyaltiesSet();
+    }
+
+    /*
+        @notice Reset the selling mode to NO SELLING | ALLOWED ONLY IF SELLING IS FIXED PRICE
+        @param nftId
+    */
+    function resetSellingStatus(uint256 nftId) public onlyExistingNft(nftId) onlyNftOwner(nftId) {
+        if(s_nftIdStatus[nftId].sellingType == SellingType.SELLING_AUCTION){
+            revert ERR_NFT_RESET_NOT_POSSIBLE_IN_AUCTION_MODE();
+        }
+        delete s_nftIdToSellingFixedPrice[nftId];
+        s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
     }
 
     /*
@@ -322,6 +342,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
             s_nftIdToSellingAuctionOffers[nftId].push(Selling_AuctionOffers({
                 amount: finalAmount,
                 owner: msg.sender,
+                date: block.timestamp,
                 refunded: false
             }));
             i_paymentHolder.addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
@@ -338,6 +359,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
             s_nftIdToSellingAuctionOffers[nftId].push(Selling_AuctionOffers({
                 amount: finalAmount,
                 owner: msg.sender,
+                date: block.timestamp,
                 refunded: false
             }));
             i_paymentHolder.addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
@@ -382,6 +404,9 @@ contract SocialNFT is ERC721URIStorage, Utils {
             revert ERR_AUCTION_DEADLINE_NOT_PASSED();
         }
 
+        delete s_nftIdToSellingAuction[nftId];
+        delete s_nftIdToSellingAuctionOffers[nftId];
+
         if(offers.length > 0){
             bool offerFound = false;
             for(uint256 index = offers.length - 1 ; index >= 0 && !offerFound; index--){
@@ -401,9 +426,6 @@ contract SocialNFT is ERC721URIStorage, Utils {
                 i_paymentHolder.executePayment(winner, oldOwner, auction.id, royalty.owner, royalty.percentage);
             }
         }
-
-        delete s_nftIdToSellingAuction[nftId];
-        delete s_nftIdToSellingAuctionOffers[nftId];
 
         s_nftIdStatus[nftId].sellingType = SellingType.NO_SELLING;
         if(msg.sender != ownerOf(nftId)){
@@ -431,27 +453,43 @@ contract SocialNFT is ERC721URIStorage, Utils {
     function buyNftSellingFixedPrice(uint256 nftId) public payable onlyExistingNft(nftId) onlyNotNftOwner(nftId) onlySpecificSellingType(nftId, SellingType.SELLING_FIXED_PRICE){
         NftStatus memory nftStatus = s_nftIdStatus[nftId];
         Selling_FixedPrice memory nftOptions = s_nftIdToSellingFixedPrice[nftId];
+        delete s_nftIdToSellingFixedPrice[nftId];
+
         address oldOwner = ownerOf(nftId);
         uint256 ownedSince = nftStatus.ownedSince;
         uint256 amountRoyalties = (s_nftIdToRoyalties[nftId].percentage * nftOptions.amount) / 100;
-        IERC20 erc20 = IERC20(nftOptions.currency);
 
         if(nftOptions.currency == ZERO_ADDRESS){
             if(msg.value == nftOptions.amount){
                 bool sentToSeller = false;
                 if(amountRoyalties > 0 && s_nftIdToPastOwners[nftId].length > 0){
-                    uint256 amountSeller = nftOptions.amount - amountRoyalties;
-                    (sentToSeller, ) = payable(oldOwner).call{value: amountSeller}("");
+                    // uint256 amountSeller = nftOptions.amount - amountRoyalties; - REMOVED FOR STACK TOO DEEP ERROR
+                    (sentToSeller, ) = payable(oldOwner).call{value: nftOptions.amount - amountRoyalties}(""); // AMOUNT SELLER
                     (bool sentToOriginalCreator,) = payable(s_nftIdToPastOwners[nftId][0].owner).call{value: amountRoyalties}("");
-                    require(sentToOriginalCreator, "Payment Failed to Original Creator");
+                    if(!sentToOriginalCreator){
+                        (bool success, ) = payable(i_paymentHolder).call{value: amountRoyalties}("");
+                        address creator = s_nftIdToPastOwners[nftId][0].owner;
+                        i_paymentHolder.setOutstandingBalance(creator, amountRoyalties);
+                        require(success, "Payment Failed to Creator");
+                    }
+                    if(!sentToSeller){
+                        (bool success, ) = payable(i_paymentHolder).call{value: nftOptions.amount - amountRoyalties}(""); // AMOUNT SELLER
+                        i_paymentHolder.setOutstandingBalance(oldOwner, nftOptions.amount - amountRoyalties); // AMOUNT SELLER
+                        require(success, "Payment Failed to Seller");
+                    }
                 }else{
                     (sentToSeller, ) = payable(oldOwner).call{value: nftOptions.amount}("");
+                    if(!sentToSeller){
+                        (bool success, ) = payable(i_paymentHolder).call{value: nftOptions.amount}("");
+                        i_paymentHolder.setOutstandingBalance(oldOwner, nftOptions.amount);
+                        require(success, "Payment Failed to Seller");
+                    }
                 }
-                require(sentToSeller, "Payment Failed to Seller");
             }else{
                 revert ERR_NFT_BUYING_WRONG_AMOUNT();
             }
         }else{
+            IERC20 erc20 = IERC20(nftOptions.currency);
             if(erc20.allowance(msg.sender, address(this)) >= nftOptions.amount){
                 if(amountRoyalties > 0 && s_nftIdToPastOwners[nftId].length > 0){
                     uint256 amountSeller = nftOptions.amount - amountRoyalties;
@@ -466,7 +504,6 @@ contract SocialNFT is ERC721URIStorage, Utils {
                 revert ERR_NFT_BUYING_ERC20_NEEDS_TO_BE_ALLOWED();
             }
         }
-        delete s_nftIdToSellingFixedPrice[nftId];
         _transferNft(nftId, msg.sender);
         _postTransferNft(nftId, oldOwner, ownedSince);
     }
@@ -553,8 +590,6 @@ contract SocialNFT is ERC721URIStorage, Utils {
         }
     }
 
-
-
     /*
         @notice get the offer of a specific sender for a specific auction
         @param nftId
@@ -575,29 +610,33 @@ contract SocialNFT is ERC721URIStorage, Utils {
         }
     }
 
-/*
-    @dev UNNECESSARY - REMOVE
-    function getRoyalties(uint256 nftId) internal view returns(uint256){
-        uint8 percentage = s_nftIdToRoyalties[nftId].percentage;
-        if(percentage == 0){
-            return 0;
-        }else{
-            if(s_nftIdToPastOwners[nftId].length == 0){
-                return 0;
-            }else{
-                return percentage;
-            }
-        }
+    /*
+        @notice get all the offers of an auction in progress
+        @param nftId
+        @return Selling_AuctionOffers[]
+    */
+    function getAllOffers(uint256 nftId) onlyExistingNft(nftId) onlySpecificSellingType(nftId, SellingType.SELLING_AUCTION) external view returns (Selling_AuctionOffers[] memory) {
+        return s_nftIdToSellingAuctionOffers[nftId];
     }
-*/
-    function getNftId(address owner, string memory ipfs) public view returns(uint256){
-        uint256[] memory listNft = s_ownerToNftId[owner];
-        for(uint256 index = 0; index < listNft.length; index++){
-            if(keccak256(bytes(tokenURI(listNft[index]))) == keccak256(bytes(ipfs))){
-                return listNft[index];
-            }
+
+    function getNftId(string memory ipfs) public view returns(uint256){
+        uint256 nftId = s_uriToNftId[ipfs];
+        if(nftId != 0){
+            return nftId;
         }
         revert ERR_NFT_NOT_EXISTING();
+    }
+    function getOriginalOwner(uint256 nftId) public view returns (PastNftOwner memory) {
+        PastNftOwner[] memory pastOwners = s_nftIdToPastOwners[nftId];
+        if(pastOwners.length == 0){
+            return PastNftOwner({
+                start_date: block.timestamp,
+                end_date: block.timestamp,
+                owner: ZERO_ADDRESS
+            });
+        }else{
+            return pastOwners[0];
+        }
     }
 
     function getTokenAddress(CurrecyAddress currency) public view returns(address){

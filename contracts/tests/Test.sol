@@ -30,6 +30,7 @@ contract Test is SocialNFT, PaymentHolder{
         s_nftIdToSellingAuctionOffers[nftId].push(Selling_AuctionOffers({
             amount: amount,
             owner: owner,
+            date: block.timestamp,
             refunded: refunded
         }));
     }

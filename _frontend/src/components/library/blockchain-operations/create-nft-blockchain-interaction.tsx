@@ -1,38 +1,47 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {BlockchainOperationType} from "@/components/library/blockchain-interaction";
 import {HardhatProvider, socialNFTContract} from "@/contracts";
 import {ethers} from "ethers";
-import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {NextPage} from "next";
-import {Contract_setSellingFixedPrice} from "@/contexts/contract";
+import {Contract_createNft} from "@/contexts/contract";
 import {useBlockchainCallbackPostsContext} from "@/contexts/blockchain-callback";
 import {useEthers} from "@usedapp/core";
+import {useMutation} from "@apollo/client";
+import {VALIDATE_NFT_CREATION} from "@/graphql/post";
+import {toast} from "react-toastify";
 
 type Props = {
-    nft_id: string
-    amount: string
-    currency: CurrencyEnum
+    ipfsURI: string
+    setNftId?: React.Dispatch<React.SetStateAction<string | undefined>>
     onFinish?: () => void
 }
 
-const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount, currency, onFinish}) => {
+const CreateNftBlockchainInteraction: NextPage<Props> = ({ipfsURI, setNftId, onFinish}) => {
     const {account} = useEthers()
 
     const {operations, setOperations, shiftIndex, setShiftIndex, indexAllowed, setIndexAllowed} = useBlockchainCallbackPostsContext()
     const [alreadySet, setAlreadySet] = useState(false)
     const [operationId, setOperationId] = useState<number>(-1)
 
-    const [nftId] = useState(nft_id)
-
+    const tempNftId = useRef<string>()
     const [estimate, setEstimate] = useState<string | undefined>(undefined)
     const [execute, setExecute] = useState(false)
     const [disabled, setDisabled] = useState(false)
 
     const [finished, setFinished] = useState(false)
-
+    const [validateNftCreation] = useMutation(VALIDATE_NFT_CREATION, {
+        onError: (error) => {
+            console.log("ERROR SERVER")
+            toast.error(error.message)
+        },
+        onCompleted: () => {
+            setFinished(true)
+            console.log("VERIFIED ON THE SERVER")
+        }
+    })
     const getEstimate = async () => {
         try{
-            const result = (await socialNFTContract.connect(account!).estimateGas.setSellingFixedPrice(nftId, amount, currency)).mul(await HardhatProvider.getGasPrice())
+            const result = (await socialNFTContract.connect(account!).estimateGas.createNft(ipfsURI)).mul(await HardhatProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
             setEstimate("NOT CALCULABLE")
@@ -42,27 +51,30 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
     useEffect(() => {
         if(!finished){
             const newOp: BlockchainOperationType = {
-                name: "SET SELLING FIXED PRICE",
+                name: "CREATE NFT",
                 disabled: {
                     value: disabled,
                     set: setDisabled
                 },
-                contract: <Contract_setSellingFixedPrice
-                    nft_id={nft_id}
-                    amount={amount}
-                    currency={String(currency)}
-                    execute={execute}
-                    onError={() => {
-                        setDisabled(false)
-                        setExecute(false)
-                    }}
-                    callback={() => {
-                        if(onFinish && operations.length === 1){
-                            onFinish()
-                        }
+                contract: <Contract_createNft
+                    callback={(id) => {
                         setDisabled(true)
-                        setFinished(true)
+                        tempNftId.current = id
+                        validateNftCreation({
+                            variables: {
+                                data: {
+                                    ipfs: ipfsURI
+                                }
+                            }
+                        })
                     }}
+                    onError={(message) => {
+                        console.log(message)
+                        setExecute(false)
+                        setDisabled(false)
+                    }}
+                    execute={execute}
+                    URI={ipfsURI}
                 />,
                 execute: {
                     value: execute,
@@ -90,16 +102,30 @@ const FixedPriceSellingBlockchainInteraction: NextPage<Props> = ({nft_id, amount
                 setOperations(newOps)
             }
         }else{
-            setShiftIndex(shiftIndex + 1)
+            setShiftIndex(0)
+            setIndexAllowed([0])
+
             setOperations([...operations].slice(1))
         }
     }, [
-        estimate, execute, disabled, nftId,
+        estimate, execute, disabled, ipfsURI,
         finished
     ])
+    useEffect(() => {
+        if(finished && operations.length === 0 && shiftIndex === 0 && indexAllowed[0] === 0){
+            if(onFinish){
+                onFinish()
+            }
+            if(setNftId){
+                setNftId(tempNftId.current)
+            }
+        }
+    }, [finished, operations, shiftIndex, indexAllowed])
+
+
     return (
         <></>
     );
 };
 
-export default FixedPriceSellingBlockchainInteraction;
+export default CreateNftBlockchainInteraction;

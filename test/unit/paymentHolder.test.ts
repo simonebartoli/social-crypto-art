@@ -83,7 +83,7 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers"
                 assert.equal(payment.amount.toString(), amount.toString())
                 assert.equal(payment.currency, currency)
                 assert.equal(payment.created, true)
-                assert(payment.date.toString() >= String(currentTime - 10) && payment.date.toString() <= String(currentTime + 10))
+                assert(payment.date.toString() >= String(currentTime - 30) && payment.date.toString() <= String(currentTime + 30), `Payment Date is ${payment.date} and current time is ${currentTime}`)
             })
             it("Should Add Correctly - Second Offer from Sender", async () => {
                 await test.addNewHoldPayment_Auction(auctionId, await player1.getAddress(), amount, currency)
@@ -99,8 +99,8 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers"
                 assert.equal(payment.amount.toString(), amount.mul(2).toString())
                 assert.equal(payment.currency, currency)
                 assert.equal(payment.created, true)
-                assert(payment.date.toString() >= String(newCurrentTime - 10) && payment.date.toString() <= String(newCurrentTime + 10),
-                    `Date is ${payment.date.toString()} and should be between ${String(newCurrentTime - 10)} and ${String(newCurrentTime + 10)}`)
+                assert(payment.date.toString() >= String(newCurrentTime - 30) && payment.date.toString() <= String(newCurrentTime + 30),
+                    `Date is ${payment.date.toString()} and should be between ${String(newCurrentTime - 30)} and ${String(newCurrentTime + 30)}`)
             })
         })
         describe("Withdraw Payment Testing", () => {

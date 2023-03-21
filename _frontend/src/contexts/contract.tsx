@@ -1,11 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {NextPage} from "next";
 import {useCall, useContractFunction} from "@usedapp/core";
-import {VerifySignature} from "@/__typechain";
-import {socialNFTContract, verifySignatureAddress, VerifySignatureContract} from "@/contracts";
+import {IERC20, SocialNFT, VerifySignature} from "@/__typechain";
+import {
+    HardhatProvider,
+    IERC20Interface,
+    socialNFTContract,
+    verifySignatureAddress,
+    VerifySignatureContract
+} from "@/contracts";
 import {DateTime} from "luxon";
-import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
-import {ZERO_ADDRESS} from "@/globals";
+import {NftSellingStatusEnum} from "@/enums/global/nft-enum";
+import {SOCIAL_NFT_ADDRESS, ZERO_ADDRESS} from "@/globals";
+import {ethers} from "ethers";
 
 export type Contract_getMessageHash_CallbackType = {
     value: string[] | undefined
@@ -75,49 +82,6 @@ export const Contract_getVerification: NextPage<Contract_getVerification_Props> 
     return <></>
 }
 
-// export type Contract_getSellingInfo_CallbackType = {
-//     value?: {
-//         sellingType: NftSellingStatusEnum,
-//         owner: string
-//     }
-//     error?: Error
-// }
-// type Contract_getSellingInfo_Props = {
-//     nft_id: string
-//     callback: (value: Contract_getSellingInfo_CallbackType) => void
-// }
-// export const Contract_getSellingInfo: NextPage<Contract_getSellingInfo_Props> = ({nft_id, callback}) => {
-//     const {value: value_sellingStatus, error: error_sellingStatus} = useCall({
-//         contract: socialNFTContract,
-//         method: "s_nftIdStatus",
-//         args: [nft_id]
-//     }) ?? {}
-//     const {value: value_originalOwner, error: error_originalOwner} = useCall({
-//         contract: socialNFTContract,
-//         method: "getOriginalOwner",
-//         args: [nft_id]
-//     }) ?? {}
-//
-//     useEffect(() => {
-//         if(error_sellingStatus || error_originalOwner){
-//             callback({
-//                 error: error_sellingStatus ?? error_originalOwner
-//             })
-//         }else if(value_sellingStatus && value_originalOwner){
-//             callback({
-//                 value: {
-//                     sellingType: value_sellingStatus.sellingType,
-//                     owner: value_originalOwner[0].owner
-//                 }
-//             })
-//         }
-//     }, [
-//         value_sellingStatus, value_originalOwner,
-//         error_sellingStatus, error_originalOwner
-//     ])
-//     return <></>
-// }
-
 export type Contract_getAllInfoNft_CallbackType = {
     value?: {
         currentOwner: string
@@ -126,10 +90,10 @@ export type Contract_getAllInfoNft_CallbackType = {
         royalties: string
         fixedPrice?: {
             amount: string
-            currency: CurrencyEnum
+            currency: string
         }
         auction?: {
-            currency: CurrencyEnum
+            currency: string
             deadline: string
             minIncrement: string
             refundable: boolean
@@ -198,7 +162,7 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
                         sellingType: value_sellingStatus!.sellingType,
                         fixedPrice: {
                             amount: value_sellingFixedPrice.amount.toString(),
-                            currency: CurrencyEnum[value_sellingFixedPrice.currency as keyof typeof CurrencyEnum]
+                            currency: value_sellingFixedPrice.currency
                         }
                     }
                 })
@@ -210,7 +174,7 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
                         royalties: value_royalties!.percentage.toString(),
                         sellingType: value_sellingStatus!.sellingType,
                         auction: {
-                            currency: CurrencyEnum[value_sellingAuction.currency as keyof typeof CurrencyEnum],
+                            currency: value_sellingAuction.currency,
                             deadline: value_sellingAuction.deadline.toString(),
                             minIncrement: value_sellingAuction.minIncrement.toString(),
                             refundable: value_sellingAuction.refundable,
@@ -242,6 +206,81 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
     }, [
         value_sellingStatus, value_originalOwner, value_royalties, value_currentOwner,
         error_sellingStatus, error_originalOwner, error_royalties, error_currentOwner, error_sellingFixedPrice, error_sellingAuction,
+    ])
+    return <></>
+}
+
+export type Contract_getAuctionOffers_CallbackType = {
+    value?: SocialNFT.Selling_AuctionOffersStructOutput[]
+    error?: Error
+}
+type Contract_getAuctionOffers_Props = {
+    nft_id: string
+    callback: (value: Contract_getAuctionOffers_CallbackType) => void
+}
+export const Contract_getAuctionOffers: NextPage<Contract_getAuctionOffers_Props> = ({nft_id, callback}) => {
+    const {value, error} = useCall({
+        contract: socialNFTContract,
+        method: "getAllOffers",
+        args: [nft_id]
+    }) ?? {}
+
+    useEffect(() => {
+        if(error){
+            callback({
+                error: error
+            })
+        }else if(value){
+            callback({
+                value: value[0]
+            })
+        }
+    }, [
+        value, error
+    ])
+    return <></>
+}
+
+export type Contract_getERC20TokenBalance_CallbackType = {
+    value?: {
+        balance: string
+        allowance: string
+    }
+    error?: Error
+}
+type Contract_getERC20TokenBalance = {
+    erc20Address: string
+    owner: string
+    callback: (value: Contract_getERC20TokenBalance_CallbackType) => void
+}
+export const Contract_getERC20TokenBalance: NextPage<Contract_getERC20TokenBalance> = ({erc20Address, owner, callback}) => {
+    const {value: value_allowance, error: error_allowance} = useCall({
+        contract: new ethers.Contract(erc20Address, IERC20Interface) as IERC20,
+        method: "allowance",
+        args: [owner, SOCIAL_NFT_ADDRESS]
+    }) ?? {}
+    const {value: value_balanceOf, error: error_balanceOf} = useCall({
+        contract: new ethers.Contract(erc20Address, IERC20Interface) as IERC20,
+        method: "balanceOf",
+        args: [owner]
+    }) ?? {}
+
+    useEffect(() => {
+        if(error_allowance || error_balanceOf){
+            callback({
+                error: error_allowance ?? error_balanceOf
+            })
+        }else if(value_allowance && value_balanceOf){
+            callback({
+                value: {
+                    balance: value_balanceOf.toString(),
+                    allowance: value_allowance.toString()
+                }
+            })
+        }
+    }, [
+        value_allowance, value_balanceOf,
+        error_allowance, error_balanceOf
     ])
     return <></>
 }
@@ -438,7 +477,13 @@ export const Contract_buyNftSellingFixedPrice: NextPage<Contract_buyNftSellingFi
         if(value){
             if(value.amount.toString() !== "0" && value.currency !== ZERO_ADDRESS){
                 if(execute){
-                    send(value.amount)
+                    send(nft_id)
+                }
+            }else if(value.amount.toString() !== "0" && value.currency === ZERO_ADDRESS) {
+                if(execute){
+                    send(nft_id, {
+                        value: value.amount.toString()
+                    })
                 }
             }else{
                 onError("The NFT ID provided is not in selling (FIXED PRICE MODE)")
@@ -465,6 +510,40 @@ export const Contract_buyNftSellingFixedPrice: NextPage<Contract_buyNftSellingFi
         }
     }, [error])
 
+    return (
+        <></>
+    )
+}
+
+type Contract_increaseAllowancesErc20_Props = {
+    execute: boolean
+    amount: string
+    address: string
+    callback: () => void
+    onError: (message: string) => void
+}
+export const Contract_increaseAllowancesErc20: NextPage<Contract_increaseAllowancesErc20_Props> = ({execute, amount, address, onError, callback}) => {
+    const {send, events, state} = useContractFunction(new ethers.Contract(address, IERC20Interface, HardhatProvider) as IERC20, "approve")
+
+    useEffect(() => {
+        if(execute){
+            send(SOCIAL_NFT_ADDRESS, amount)
+        }
+    }, [execute])
+    useEffect(() => {
+        if(execute){
+            if(state.errorMessage){
+                onError(state.errorMessage)
+            }
+        }
+    }, [state])
+    useEffect(() => {
+        if(execute){
+            if (events) {
+                callback()
+            }
+        }
+    }, [events])
     return (
         <></>
     )

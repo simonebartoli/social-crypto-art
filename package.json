@@ -10,14 +10,13 @@
   "scripts": {
     "run": "yarn hardhat node",
     "test": "yarn hardhat test",
-    "coverage": "nyc yarn run test",
+    "coverage": "nyc yarn hardhat test",
     "lint": "solhint 'contracts/*.sol'"
   },
   "devDependencies": {
     "@chainlink/contracts": "^0.5.1",
     "@ethersproject/abi": "^5.4.7",
     "@ethersproject/providers": "^5.4.7",
-    "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.7",
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
@@ -37,7 +36,6 @@
     "hardhat-deploy": "^0.11.15",
     "hardhat-gas-reporter": "^1.0.8",
     "mocha": "^10.2.0",
-    "nyc": "^15.1.0",
     "solidity-coverage": "^0.8.2",
     "ts-node": ">=8.0.0",
     "typechain": "^8.1.0",

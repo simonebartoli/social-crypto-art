@@ -15,14 +15,27 @@ import {API_URL_REST} from "@/globals";
 import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
 import {useModal} from "@/contexts/modal";
 import {useRouter} from "next/router";
-import BlockchainWrapper from "@/components/add-post/components/blockchain-wrapper";
 import {ethers} from "ethers";
 import {DateTime} from "luxon";
+import BlockchainWrapper from "@/components/library/blockchain-wrapper";
+import CreateNftBlockchainInteraction
+    from "@/components/library/blockchain-operations/create-nft-blockchain-interaction";
+import SetRoyaltiesBlockchainInteraction
+    from "@/components/library/blockchain-operations/set-royalties-blockchain-interaction";
+import FixedPriceSellingBlockchainInteraction
+    from "@/components/library/blockchain-operations/fixed-price-selling-blockchain-interaction";
+import AuctionSellingBlockchainInteraction
+    from "@/components/library/blockchain-operations/auction-selling-blockchain-interaction";
+import {BlockchainCallbackContext} from "@/contexts/blockchain-callback";
+import {NextPage} from "next";
 
 const AddPost = () => {
     const router = useRouter()
     const {showModal, open} = useModal()
-    const [nftDialogueOpen, setNftDialogueOpen] = useState(false)
+    const [nftDialogueOpen] = useState(false)
+
+    const [blockchainInteraction, setBlockchainInteraction] = useState(false)
+    const [dataModal, setDataModal] = useState<Props["data"]>()
 
     const [postSubmitted, setPostSubmitted] = useState(false)
     const [ipfsURI, setIpfsURI] = useState<string | undefined>(undefined)
@@ -138,59 +151,23 @@ const AddPost = () => {
 
     useEffect(() => {
         if(ipfsURI){
-            const sellingOptions =
-                selling.value === NftSellingStatusEnum[NftSellingStatusEnum.NO_SELLING] ? undefined :
-                selling.value === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_FIXED_PRICE] ?
-                    {
-                        setSellingFixedPrice: {
-                            amount: ethers.utils.parseEther(amount.value).toString(),
-                            currency: String(CurrencyEnum[currency.value as keyof typeof CurrencyEnum]),
-                            onFinish: () => {
-                                toast.success("Good Job, Your NFT has been added")
-                                setTimeout(() => router.push("/home"), 5000)
-                            }
-                        }
-                    }:
-                    {
-                        setSellingAuction: {
-                            initialPrice: ethers.utils.parseEther(amount.value).toString(),
-                            refundable: false,
-                            minIncrement: minIncrement.value,
-                            currency: String(CurrencyEnum[currency.value as keyof typeof CurrencyEnum]),
-                            deadline: String(Number(DateTime.fromJSDate(deadline.value).toSeconds())),
-                            onFinish: () => {
-                                toast.success("Good Job, Your NFT has been added")
-                                setTimeout(() => router.push("/home"), 5000)
-                            }
-                        }
-                    }
-
-            const royaltiesOptions =
-                selling.value === NftSellingStatusEnum[NftSellingStatusEnum.NO_SELLING] ? undefined :
-                    {
-                        percentage: royalties.value,
-                        onFinish: sellingOptions === undefined ? () => {
-                            toast.success("Good Job, Your NFT has been added")
-                            setTimeout(() => router.push("/home"), 5000)
-                        } : undefined
-                    }
-
-            const createNftOptions = {
-                ipfsURI: ipfsURI,
-                onFinish: (sellingOptions === undefined && royaltiesOptions === undefined) ? () => {
-                    console.log("FUNCTION TRIGGER")
-                    toast.success("Good Job, Your NFT has been added")
-                    setTimeout(() => router.push("/home"), 5000)
+            setDataModal({
+                ipfs: ipfsURI,
+                percentage: royalties.value,
+                selling: selling.value,
+                fixedPrice: selling.value === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_FIXED_PRICE] ? {
+                    currency: currency.value,
+                    amount: amount.value
+                } : undefined,
+                auction: selling.value === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_AUCTION] ? {
+                    currency: currency.value,
+                    deadline: deadline.value,
+                    minIncrement: minIncrement.value,
+                    initialPrice: amount.value,
+                    refundable: false
                 } : undefined
-            }
-            setNftDialogueOpen(true)
-            showModal(
-                <BlockchainWrapper
-                    createNft={createNftOptions}
-                    setRoyalties={royaltiesOptions}
-                    setSelling={sellingOptions}
-                />
-            )
+            })
+            setBlockchainInteraction(true)
         }
     }, [ipfsURI])
     useEffect(() => {
@@ -198,6 +175,11 @@ const AddPost = () => {
             router.push("/home")
         }
     }, [open, nftDialogueOpen])
+    useEffect(() => {
+        if(blockchainInteraction && dataModal){
+            showModal(<Modal data={dataModal}/>)
+        }
+    }, [blockchainInteraction, dataModal])
 
     return (
         <div className="flex font-main flex-col gap-12 items-center justify-center w-full text-white">
@@ -213,6 +195,108 @@ const AddPost = () => {
         </div>
     );
 };
+
+type Props = {
+    data: {
+        ipfs: string
+        selling: string
+        percentage?: string
+        fixedPrice?: {
+            amount: string
+            currency: string
+        }
+        auction?: {
+            currency: string
+            initialPrice: string
+            refundable: boolean
+            minIncrement: string
+            deadline: Date
+        }
+    }
+}
+const Modal: NextPage<Props> = ({data}) => {
+    const router = useRouter()
+
+    const [nftId, setNftId] = useState<string>()
+    const [interactions, setInteractions] = useState<JSX.Element[]>([])
+
+    useEffect(() => {
+        if(data.ipfs && !nftId){
+            const sellingOptions = data.selling === NftSellingStatusEnum[NftSellingStatusEnum.NO_SELLING] ? undefined : true
+            const royaltiesOptions = data.selling === NftSellingStatusEnum[NftSellingStatusEnum.NO_SELLING] ? undefined : true
+            const createNftOptions = {
+                ipfsURI: data.ipfs,
+                onFinish: (sellingOptions === undefined && royaltiesOptions === undefined) ? () => {
+                    console.log("FUNCTION TRIGGER")
+                    toast.success("Good Job, Your NFT has been added")
+                    setTimeout(() => router.push("/home"), 5000)
+                } : undefined
+            }
+            const newOps: JSX.Element[] = [
+                <CreateNftBlockchainInteraction
+                    key={1}
+                    ipfsURI={createNftOptions.ipfsURI}
+                    setNftId={setNftId}
+                    onFinish={createNftOptions.onFinish}
+                />
+            ]
+            setInteractions(newOps)
+        }
+    }, [data.ipfs])
+    useEffect(() => {
+        if(nftId){
+            const newOps: JSX.Element[] = []
+            if(data.selling === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_FIXED_PRICE] || data.selling === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_AUCTION]){
+                newOps.push(
+                    <SetRoyaltiesBlockchainInteraction
+                        nft_id={nftId}
+                        onFinish={() => {
+                            toast.success("Good Job, Your NFT has been added")
+                            setTimeout(() => router.push("/home"), 5000)
+                        }}
+                        percentage={data.percentage!}
+                    />
+                )
+                if(data.selling === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_FIXED_PRICE]){
+                    newOps.push(
+                        <FixedPriceSellingBlockchainInteraction
+                            nft_id={nftId}
+                            amount={ethers.utils.parseEther(data.fixedPrice!.amount!).toString()}
+                            currency={CurrencyEnum[data.fixedPrice!.currency as keyof typeof CurrencyEnum]}
+                            onFinish={() => {
+                                toast.success("Good Job, Your NFT has been added")
+                                setTimeout(() => router.push("/home"), 5000)
+                            }}
+                        />
+                    )
+                }else if(data.selling === NftSellingStatusEnum[NftSellingStatusEnum.SELLING_AUCTION]) {
+                    newOps.push(
+                        <AuctionSellingBlockchainInteraction
+                            nft_id={nftId}
+                            currency={CurrencyEnum[data.auction!.currency as keyof typeof CurrencyEnum]}
+                            initialPrice={ethers.utils.parseEther(data.auction!.initialPrice).toString()}
+                            refundable={false}
+                            minIncrement={data.auction!.minIncrement}
+                            deadline={String(Number(DateTime.fromJSDate(data.auction!.deadline).toSeconds()))}
+                            onFinish={() => {
+                                toast.success("Good Job, Your NFT has been added")
+                                setTimeout(() => router.push("/home"), 5000)
+                            }}
+                        />
+                    )
+                }
+            }
+            setInteractions(newOps)
+        }
+    }, [nftId])
+    return (
+        <BlockchainCallbackContext>
+            <BlockchainWrapper
+                interactions={interactions}
+            />
+        </BlockchainCallbackContext>
+    )
+}
 
 AddPost.getLayout = function getLayout(page: ReactElement) {
     return (

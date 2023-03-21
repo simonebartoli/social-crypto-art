@@ -7,9 +7,10 @@ import Button from "@/components/login/button";
 
 type Props = {
     specificAccount?: string
+    specificNotAccount?: string
 }
 
-const RequireWeb3Account: NextPage<Props> = ({specificAccount}) => {
+const RequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccount}) => {
     const {deactivate, account} = useEthers()
     return (
         <div className="flex flex-col gap-8 items-center justify-center h-full w-2/3">
@@ -20,6 +21,13 @@ const RequireWeb3Account: NextPage<Props> = ({specificAccount}) => {
                             <span>You need the following account for this functionality:<br/><br/></span>
                             <span className="p-2 bg-black text-white rounded-lg text-lg">
                                 {specificAccount}
+                            </span>
+                        </> :
+                    specificNotAccount ?
+                        <>
+                            <span>You need a different account from the following for this functionality:<br/><br/></span>
+                            <span className="p-2 bg-black text-white rounded-lg text-lg">
+                                {specificNotAccount}
                             </span>
                         </> :
                         "You need a Web3 Account for this functionality"

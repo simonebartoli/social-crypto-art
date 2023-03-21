@@ -1,6 +1,7 @@
 import {ethers, utils} from 'ethers'
 import VerifySignatureABI from "@/__abi/VerifySignature.json"
 import SocialNFTAbi from "@/__abi/SocialNFT.json"
+import IER20Abi from "@/__abi/IERC20.json"
 
 import {SocialNFT, VerifySignature} from "@/__typechain";
 import { Contract } from '@ethersproject/contracts'
@@ -14,3 +15,5 @@ export const VerifySignatureContract = new Contract(verifySignatureAddress, veri
 const socialNFTInterface = new utils.Interface(SocialNFTAbi.abi)
 export const socialNFTAddress = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
 export const socialNFTContract = new Contract(socialNFTAddress, socialNFTInterface, HardhatProvider) as SocialNFT
+
+export const IERC20Interface = new utils.Interface(IER20Abi.abi)

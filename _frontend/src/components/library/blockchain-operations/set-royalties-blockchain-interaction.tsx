@@ -33,7 +33,7 @@ const SetRoyaltiesBlockchainInteractions: NextPage<Props> = ({nft_id, percentage
             const result = (await socialNFTContract.connect(account!).estimateGas.setRoyalties(nftId, percentage)).mul(await HardhatProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
-            setEstimate(undefined)
+            setEstimate("NOT CALCULABLE")
         }
     }
 
