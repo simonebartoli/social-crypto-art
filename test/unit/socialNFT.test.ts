@@ -515,22 +515,23 @@ import {beforeEach} from "mocha";
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_INCREMENT_NOT_IN_RANGE")
             })
             it("Should set the variables correctly", async () => {
+                const auctionId = (await testDeployer.s_auctionId()).toString()
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
                 const sellingType = (await testDeployer.s_nftIdStatus(nftUniqueId)).sellingType
-                const auction = await testDeployer.s_nftIdToSellingAuction(nftUniqueId)
-                const auctionId = (await testDeployer.s_auctionId()).toString()
+                const auction = await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)
 
                 assert.equal(sellingType, SellingType.SELLING_AUCTION)
                 assert.equal(auction.initialPrice.toString(), initialOffer.toString())
                 assert.equal(auction.deadline.toString(), deadline.toString())
                 assert.equal(auction.minIncrement.toString(), minIncrement)
                 assert.equal(auction.refundable, refundable)
-                assert.equal(auctionId.toString(), "2")
+                assert.equal((await testDeployer.s_auctionId()).toString(), "2")
             })
         })
         describe("Get Last Offer Testing - INTERNAL", () => {
             const uri = "THIS_IS_A_TEST"
             const nftUniqueId = 1
+            const auctionId = 1
             const initialOffer = ethers.utils.parseEther("10")
             const minIncrement = "10"
             const DAYS_10 = 60 * 60 * 24 * 10
@@ -546,16 +547,16 @@ import {beforeEach} from "mocha";
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
             })
             it("Should return the initial offer and address 0 - NO OFFERS", async () => {
-                const lastOffer = await testDeployer._getLastOffer(nftUniqueId)
+                const lastOffer = await testDeployer._getLastOffer(nftUniqueId, auctionId)
                 assert.equal(lastOffer[0].toString(), initialOffer.toString())
                 assert.equal(lastOffer[1], ZERO_ADDRESS)
             })
             it("Should return the initial offer and address 0 - OFFERS ALL REFUNDED", async () => {
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, ethers.utils.parseEther("1"), await player1.getAddress(), true)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, ethers.utils.parseEther("2"), await player2.getAddress(), true)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, ethers.utils.parseEther("2"), await player3.getAddress(), true)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, ethers.utils.parseEther("1"), await player1.getAddress(), true)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, ethers.utils.parseEther("2"), await player2.getAddress(), true)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, ethers.utils.parseEther("2"), await player3.getAddress(), true)
 
-                const lastOffer = await testDeployer._getLastOffer(nftUniqueId)
+                const lastOffer = await testDeployer._getLastOffer(nftUniqueId, auctionId)
                 assert.equal(lastOffer[0].toString(), initialOffer.toString())
                 assert.equal(lastOffer[1], ZERO_ADDRESS)
             })
@@ -563,11 +564,11 @@ import {beforeEach} from "mocha";
                 const highestOffer = ethers.utils.parseEther("3")
                 const highestBidder = player3
 
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.sub(2), await player1.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.sub(1), await player2.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer, await highestBidder.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.sub(2), await player1.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.sub(1), await player2.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer, await highestBidder.getAddress(), false)
 
-                const lastOffer = await testDeployer._getLastOffer(nftUniqueId)
+                const lastOffer = await testDeployer._getLastOffer(nftUniqueId, auctionId)
                 assert.equal(lastOffer[0].toString(), highestOffer.toString())
                 assert.equal(lastOffer[1], await highestBidder.getAddress())
             })
@@ -575,11 +576,11 @@ import {beforeEach} from "mocha";
                 const highestOffer = ethers.utils.parseEther("3")
                 const highestBidder = player3
 
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.sub(2), await player1.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer, await highestBidder.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.add(2), await player2.getAddress(), true)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.sub(2), await player1.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer, await highestBidder.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.add(2), await player2.getAddress(), true)
 
-                const lastOffer = await testDeployer._getLastOffer(nftUniqueId)
+                const lastOffer = await testDeployer._getLastOffer(nftUniqueId, auctionId)
                 assert.equal(lastOffer[0].toString(), highestOffer.toString())
                 assert.equal(lastOffer[1], await highestBidder.getAddress())
             })
@@ -587,14 +588,14 @@ import {beforeEach} from "mocha";
                 const highestOffer = ethers.utils.parseEther("3")
                 const highestBidder = player3
 
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.sub(2), await player1.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer, await highestBidder.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.add(2), await player3.getAddress(), true)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.sub(2), await player1.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer, await highestBidder.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.add(2), await player3.getAddress(), true)
 
-                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, 2)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, 0)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, auctionId, 2)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, auctionId, 0)
 
-                const lastOffer = await testDeployer._getLastOffer(nftUniqueId)
+                const lastOffer = await testDeployer._getLastOffer(nftUniqueId, auctionId)
                 assert.equal(lastOffer[0].toString(), highestOffer.toString())
                 assert.equal(lastOffer[1], await highestBidder.getAddress())
             })
@@ -602,15 +603,15 @@ import {beforeEach} from "mocha";
                 const highestOffer = ethers.utils.parseEther("3")
                 const highestBidder = player3
 
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.sub(2), await player1.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer, await highestBidder.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, highestOffer.add(2), await player3.getAddress(), true)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.sub(2), await player1.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer, await highestBidder.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, highestOffer.add(2), await player3.getAddress(), true)
 
-                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, 2)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, 1)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, 0)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, auctionId, 2)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, auctionId, 1)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffersWithEmptySpace(nftUniqueId, auctionId, 0)
 
-                const lastOffer = await testDeployer._getLastOffer(nftUniqueId)
+                const lastOffer = await testDeployer._getLastOffer(nftUniqueId, auctionId)
                 assert.equal(lastOffer[0].toString(), initialOffer.toString())
                 assert.equal(lastOffer[1], ZERO_ADDRESS)
             })
@@ -618,6 +619,7 @@ import {beforeEach} from "mocha";
         describe("Get Last Offer From Sender Testing", () => {
             const uri = "THIS_IS_A_TEST"
             const nftUniqueId = 1
+            const auctionId = 1
             const initialOffer = ethers.utils.parseEther("10")
             const minIncrement = "10"
             const DAYS_10 = 60 * 60 * 24 * 10
@@ -634,38 +636,43 @@ import {beforeEach} from "mocha";
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
             })
             it("Should return 0 - NO OFFERS", async () => {
-                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, await player1.getAddress())
+                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, auctionId, await player1.getAddress())
                 assert.equal(lastOffer[0].toString(), "0")
                 assert.equal(lastOffer[1].toString(), "0")
             })
             it("Should return 0 - NFT NOT EXISTING", async () => {
-                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId + 1, await player1.getAddress())
+                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId + 1, auctionId, await player1.getAddress())
+                assert.equal(lastOffer[0].toString(), "0")
+                assert.equal(lastOffer[1].toString(), "0")
+            })
+            it("Should return 0 - AUCTION ID NOT EXISTING", async () => {
+                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, auctionId + 1, await player1.getAddress())
                 assert.equal(lastOffer[0].toString(), "0")
                 assert.equal(lastOffer[1].toString(), "0")
             })
             it("Should return 0 - SENDER HAS NO OFFER", async () => {
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount, await player2.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount.add(1), await player3.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount, await player2.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount.add(1), await player3.getAddress(), false)
 
-                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, await player1.getAddress())
+                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, auctionId, await player1.getAddress())
                 assert.equal(lastOffer[0].toString(), "0")
                 assert.equal(lastOffer[1].toString(), "0")
             })
             it("Should return the last offer", async () => {
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount.sub(1), await player2.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount.add(1), await player3.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount, await player1.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount.sub(1), await player2.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount.add(1), await player3.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount, await player1.getAddress(), false)
 
-                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, await player1.getAddress())
+                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, auctionId, await player1.getAddress())
                 assert.equal(lastOffer[0].toString(), amount.toString())
                 assert.equal(lastOffer[1].toString(), "2")
             })
             it("Should return the 0 - OFFERS REFUNDED", async () => {
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount.sub(1), await player2.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount.add(1), await player3.getAddress(), false)
-                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, amount, await player1.getAddress(), true)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount.sub(1), await player2.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount.add(1), await player3.getAddress(), false)
+                await testDeployer.test_modifyNftIdToSellingAuctionOffers(nftUniqueId, auctionId, amount, await player1.getAddress(), true)
 
-                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, await player1.getAddress())
+                const lastOffer = await testDeployer.getLastOfferFromSender(nftUniqueId, auctionId, await player1.getAddress())
                 assert.equal(lastOffer[0].toString(), "0")
                 assert.equal(lastOffer[1].toString(), "0")
             })
@@ -673,6 +680,7 @@ import {beforeEach} from "mocha";
         describe("Make Offer Auction Testing", () => {
             const uri = "THIS_IS_A_TEST"
             const nftUniqueId = 1
+            const auctionId = 1
             const initialOffer = ethers.utils.parseEther("10")
             const minIncrement = "10"
             const DAYS_10 = 60 * 60 * 24 * 10
@@ -698,7 +706,7 @@ import {beforeEach} from "mocha";
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
 
                 await helpers.time.increase(DAYS_10 + 1)
-                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, offer, {value: offer}))
+                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, offer, {value: offer}))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_DEADLINE_PASSED")
             })
             it("Should revert - Min Increment Not Respected - NO OTHER OFFERS", async () => {
@@ -706,38 +714,38 @@ import {beforeEach} from "mocha";
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
 
                 let amountTest1 = initialOffer
-                let amountTest2 = initialOffer.mul((await testDeployer.s_nftIdToSellingAuction(nftUniqueId)).minIncrement.add(100)).div(100).sub(1)
-                let amountTest3 = initialOffer.mul((await testDeployer.s_nftIdToSellingAuction(nftUniqueId)).minIncrement.add(100)).div(100)
+                let amountTest2 = initialOffer.mul((await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)).minIncrement.add(100)).div(100).sub(1)
+                let amountTest3 = initialOffer.mul((await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)).minIncrement.add(100)).div(100)
 
-                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, amountTest1, {value: amountTest1}))
+                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountTest1, {value: amountTest1}))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_OFFER_TOO_LOW")
-                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, amountTest2, {value: amountTest2}))
+                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountTest2, {value: amountTest2}))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_OFFER_TOO_LOW")
-                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, amountTest3, {value: amountTest3}))
+                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountTest3, {value: amountTest3}))
                     .to.not.be.reverted
             })
             it("Should revert - Min Increment Not Respected - OTHER OFFERS", async () => {
                 const currency = CurrecyAddress.ETH
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
-                let amountTest1 = initialOffer.mul((await testDeployer.s_nftIdToSellingAuction(nftUniqueId)).minIncrement.add(100)).div(100)
+                let amountTest1 = initialOffer.mul((await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)).minIncrement.add(100)).div(100)
 
-                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, amountTest1, {value: amountTest1}))
+                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountTest1, {value: amountTest1}))
                     .to.not.be.reverted
 
-                let amountTest2 = (await testDeployer._getLastOffer(nftUniqueId))[0].mul((await testDeployer.s_nftIdToSellingAuction(nftUniqueId)).minIncrement.add(100)).div(100)
-                await expect(testPlayer_2.makeOfferAuction(nftUniqueId, amountTest1, {value: amountTest1}))
+                let amountTest2 = (await testDeployer._getLastOffer(nftUniqueId, auctionId))[0].mul((await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)).minIncrement.add(100)).div(100)
+                await expect(testPlayer_2.makeOfferAuction(nftUniqueId, auctionId, amountTest1, {value: amountTest1}))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_OFFER_TOO_LOW")
-                await expect(testPlayer_2.makeOfferAuction(nftUniqueId, amountTest2, {value: amountTest2}))
+                await expect(testPlayer_2.makeOfferAuction(nftUniqueId, auctionId, amountTest2, {value: amountTest2}))
                     .to.not.be.reverted
 
             })
             it("Should not revert - Min Increment Not Respected - OTHER OFFERS - HIGHEST FROM SENDER", async () => {
                 const currency = CurrecyAddress.ETH
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
-                let amountTest = initialOffer.mul((await testDeployer.s_nftIdToSellingAuction(nftUniqueId)).minIncrement.add(100)).div(100)
-                await testPlayer_1.makeOfferAuction(nftUniqueId, amountTest, {value: amountTest})
+                let amountTest = initialOffer.mul((await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)).minIncrement.add(100)).div(100)
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountTest, {value: amountTest})
 
-                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, 1, {value: 1}))
+                await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, 1, {value: 1}))
                     .to.not.be.reverted
             })
 
@@ -749,7 +757,7 @@ import {beforeEach} from "mocha";
                 it("Should Revert - Amount different from value sent", async () => {
                     const amountSent = initialOffer.mul(2)
                     const amountDeclared = initialOffer.mul(3)
-                    await expect(testPlayer_1.makeOfferAuction(nftUniqueId, amountDeclared, {value: amountSent}))
+                    await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountDeclared, {value: amountSent}))
                         .to.be.revertedWithCustomError(socialNFT, "ERR_NFT_BUYING_WRONG_AMOUNT")
                 })
                 it("Should succeed", async () => {
@@ -758,11 +766,11 @@ import {beforeEach} from "mocha";
                     const deployerBalanceBefore = await deployer.getBalance()
                     const player1BalanceBefore = await player1.getBalance()
 
-                    const txResponse = await testPlayer_1.makeOfferAuction(nftUniqueId, amount, {value: amount})
+                    const txResponse = await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amount, {value: amount})
                     const txReceipt = await txResponse.wait(1)
                     const gasUsed = txReceipt.gasUsed
                     const gasCost = gasUsed.mul(txReceipt.effectiveGasPrice)
-                    const auction = await testDeployer.s_nftIdToSellingAuctionOffers(nftUniqueId, 0)
+                    const auction = await testDeployer.s_nftIdToAuctionIdSellingAuctionOffers(nftUniqueId, auctionId, 0)
 
                     const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
                     const deployerBalanceAfter = await deployer.getBalance()
@@ -778,21 +786,21 @@ import {beforeEach} from "mocha";
                 })
                 it("Should succeed - ALREADY OFFERED", async () => {
                     const amountPlayer1Initial = initialOffer.mul(2)
-                    await testPlayer_1.makeOfferAuction(nftUniqueId, amountPlayer1Initial, {value: amountPlayer1Initial})
+                    await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountPlayer1Initial, {value: amountPlayer1Initial})
                     const amountPlayer2 = amountPlayer1Initial.mul(120).div(100)
-                    await testPlayer_2.makeOfferAuction(nftUniqueId, amountPlayer2, {value: amountPlayer2})
-                    const amountPlayer1After = amountPlayer2.mul((await testDeployer.s_nftIdToSellingAuction(nftUniqueId)).minIncrement.add(100)).div(100).sub(amountPlayer1Initial)
+                    await testPlayer_2.makeOfferAuction(nftUniqueId, auctionId, amountPlayer2, {value: amountPlayer2})
+                    const amountPlayer1After = amountPlayer2.mul((await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)).minIncrement.add(100)).div(100).sub(amountPlayer1Initial)
 
                     const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
                     const deployerBalanceBefore = await deployer.getBalance()
                     const player1BalanceBefore = await player1.getBalance()
 
-                    const txResponse = await testPlayer_1.makeOfferAuction(nftUniqueId, amountPlayer1After, {value: amountPlayer1After})
+                    const txResponse = await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountPlayer1After, {value: amountPlayer1After})
                     const txReceipt = await txResponse.wait(1)
                     const gasUsed = txReceipt.gasUsed
                     const gasCost = gasUsed.mul(txReceipt.effectiveGasPrice)
-                    const auctionDestroyed = await testDeployer.s_nftIdToSellingAuctionOffers(nftUniqueId, 0)
-                    const auctionPlayer1 = await testDeployer.s_nftIdToSellingAuctionOffers(nftUniqueId, 2)
+                    const auctionDestroyed = await testDeployer.s_nftIdToAuctionIdSellingAuctionOffers(nftUniqueId, auctionId, 0)
+                    const auctionPlayer1 = await testDeployer.s_nftIdToAuctionIdSellingAuctionOffers(nftUniqueId, auctionId, 2)
 
                     const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
                     const deployerBalanceAfter = await deployer.getBalance()
@@ -819,7 +827,7 @@ import {beforeEach} from "mocha";
                 })
                 it("Should Revert - ERC20 Not allowed", async () => {
                     const amount = initialOffer.mul(2)
-                    await expect(testPlayer_1.makeOfferAuction(nftUniqueId, amount))
+                    await expect(testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amount))
                         .to.be.revertedWithCustomError(socialNFT, "ERR_NFT_BUYING_ERC20_NEEDS_TO_BE_ALLOWED")
                 })
                 it("Should succeed - ERC20", async () => {
@@ -835,11 +843,11 @@ import {beforeEach} from "mocha";
                     const deployerBalanceBeforeERC20 = await erc20.balanceOf(await deployer.getAddress())
                     const player1BalanceBeforeERC20 = await erc20.balanceOf(await player1.getAddress())
 
-                    const txResponse = await testPlayer_1.makeOfferAuction(nftUniqueId, amount)
+                    const txResponse = await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amount)
                     const txReceipt = await txResponse.wait(1)
                     const gasUsed = txReceipt.gasUsed
                     const gasCost = gasUsed.mul(txReceipt.effectiveGasPrice)
-                    const auction = await testDeployer.s_nftIdToSellingAuctionOffers(nftUniqueId, 0)
+                    const auction = await testDeployer.s_nftIdToAuctionIdSellingAuctionOffers(nftUniqueId, auctionId, 0)
 
                     const paymentHolderBalanceAfterNative = await ethers.provider.getBalance(paymentHolder.address)
                     const deployerBalanceAfterNative = await deployer.getBalance()
@@ -868,6 +876,7 @@ import {beforeEach} from "mocha";
         describe("Withdraw Offer Testing", () => {
             const uri = "THIS_IS_A_TEST"
             const nftUniqueId = 1
+            const auctionId = 1
             const initialOffer = ethers.utils.parseEther("10")
             const minIncrement = "10"
             const DAYS_10 = 60 * 60 * 24 * 10
@@ -889,37 +898,37 @@ import {beforeEach} from "mocha";
             it("Should Revert - Deadline Passed", async () => {
                 const refundable = true
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, CurrecyAddress.ETH, deadline)
-                await testPlayer_1.makeOfferAuction(nftUniqueId, initialOffer.mul(2), { value: initialOffer.mul(2)})
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, initialOffer.mul(2), { value: initialOffer.mul(2)})
 
                 await helpers.time.increase(DAYS_10 + 1)
-                await expect(testPlayer_1.withdrawOffer(nftUniqueId))
+                await expect(testPlayer_1.withdrawOffer(nftUniqueId, auctionId))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_DEADLINE_PASSED")
             })
             it("Should Revert - Auction Not Refundable", async () => {
                 const refundable = false
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, CurrecyAddress.ETH, deadline)
-                await testPlayer_1.makeOfferAuction(nftUniqueId, initialOffer.mul(2), { value: initialOffer.mul(2)})
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, initialOffer.mul(2), { value: initialOffer.mul(2)})
 
-                await expect(testPlayer_1.withdrawOffer(nftUniqueId))
+                await expect(testPlayer_1.withdrawOffer(nftUniqueId, auctionId))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_NOT_REFUNDABLE")
             })
             it("Should succeed - ONLY 1 OFFER | NATIVE", async () => {
                 const amount = initialOffer.mul(2)
                 const refundable = true
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, CurrecyAddress.ETH, deadline)
-                await testPlayer_1.makeOfferAuction(nftUniqueId, amount, { value: amount})
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amount, { value: amount})
 
                 const player1BalanceBefore = await player1.getBalance()
                 const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
 
                 // console.log(ethers.utils.formatEther(paymentHolderBalanceBefore.toString()))
 
-                const txResponse = await testPlayer_1.withdrawOffer(nftUniqueId)
+                const txResponse = await testPlayer_1.withdrawOffer(nftUniqueId, auctionId)
                 const tx = await txResponse.wait(1)
                 const gasUsed = tx.gasUsed
                 const gasCost = gasUsed.mul(tx.effectiveGasPrice)
 
-                const offer = await testPlayer_1.s_nftIdToSellingAuctionOffers(nftUniqueId, 0)
+                const offer = await testPlayer_1.s_nftIdToAuctionIdSellingAuctionOffers(nftUniqueId, auctionId, 0)
                 const player1BalanceAfter = await player1.getBalance()
                 const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
 
@@ -931,13 +940,13 @@ import {beforeEach} from "mocha";
                 const amount = initialOffer.mul(2)
                 const refundable = true
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, CurrecyAddress.ETH, deadline)
-                await testPlayer_1.makeOfferAuction(nftUniqueId, amount, { value: amount})
-                await testPlayer_1.withdrawOffer(nftUniqueId)
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amount, { value: amount})
+                await testPlayer_1.withdrawOffer(nftUniqueId, auctionId)
 
                 const player1BalanceBefore = await player1.getBalance()
                 const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
 
-                const txResponse = await testPlayer_1.withdrawOffer(nftUniqueId)
+                const txResponse = await testPlayer_1.withdrawOffer(nftUniqueId, auctionId)
                 const tx = await txResponse.wait(1)
                 const gasUsed = tx.gasUsed
                 const gasCost = gasUsed.mul(tx.effectiveGasPrice)
@@ -956,14 +965,14 @@ import {beforeEach} from "mocha";
                 const refundable = true
                 await testDeployer.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, CurrecyAddress.ETH, deadline)
 
-                await testPlayer_2.makeOfferAuction(nftUniqueId, amountPlayer2, { value: amountPlayer2})
-                await testPlayer_1.makeOfferAuction(nftUniqueId, amountPlayer1First, { value: amountPlayer1First})
-                await testPlayer_1.makeOfferAuction(nftUniqueId, amountPlayer1Second, { value: amountPlayer1Second})
+                await testPlayer_2.makeOfferAuction(nftUniqueId, auctionId, amountPlayer2, { value: amountPlayer2})
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountPlayer1First, { value: amountPlayer1First})
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, amountPlayer1Second, { value: amountPlayer1Second})
 
                 const player1BalanceBefore = await player1.getBalance()
                 const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
 
-                const txResponse = await testPlayer_1.withdrawOffer(nftUniqueId)
+                const txResponse = await testPlayer_1.withdrawOffer(nftUniqueId, auctionId)
                 const tx = await txResponse.wait(1)
                 const gasUsed = tx.gasUsed
                 const gasCost = gasUsed.mul(tx.effectiveGasPrice)
@@ -978,6 +987,7 @@ import {beforeEach} from "mocha";
         describe("Terminate Auction Testing", () => {
             const uri = "THIS_IS_A_TEST"
             const nftUniqueId = 1
+            const auctionId = 1
             const initialOffer = ethers.utils.parseEther("10")
             const minIncrement = "10"
             const DAYS_10 = 60 * 60 * 24 * 10
@@ -1009,62 +1019,52 @@ import {beforeEach} from "mocha";
                 await testPlayer_4.setSellingAuction(nftUniqueId, initialOffer, refundable, minIncrement, currency, deadline)
             })
             it("Should Revert - DEADLINE NOT PASSED", async () => {
-                await expect(testDeployer.terminateAuction(nftUniqueId))
+                await expect(testDeployer.terminateAuction(nftUniqueId, auctionId))
                     .to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_DEADLINE_NOT_PASSED")
             })
             it("Should Succeed - NO OFFERS", async () => {
                 await helpers.time.increase(DAYS_10 + 1)
-                await testDeployer.terminateAuction(nftUniqueId)
+                await testDeployer.terminateAuction(nftUniqueId, auctionId)
                 const nftStatus = await testDeployer.s_nftIdStatus(nftUniqueId)
-                const auction = await testDeployer.s_nftIdToSellingAuction(nftUniqueId)
+                const auction = await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)
                 assert.equal(nftStatus.sellingType, SellingType.NO_SELLING)
-                assert.equal(auction.id.toString(), "0")
+                assert.equal(auction.id.toString(), auctionId.toString())
             })
             it("Should Succeed - ALL OFFERS REFUNDED", async () => {
                 const testAmount1 = initialOffer.mul(Number(minIncrement) + 100).div(100)
                 const testAmount2 = testAmount1.mul(Number(minIncrement) + 100).div(100)
                 const testAmount3 = testAmount2.mul(Number(minIncrement) + 100).div(100)
 
-                await testPlayer_1.makeOfferAuction(nftUniqueId, testAmount1, {value: testAmount1})
-                await testPlayer_2.makeOfferAuction(nftUniqueId, testAmount2, {value: testAmount2})
-                await testPlayer_1.withdrawOffer(nftUniqueId)
-                await testPlayer_1.makeOfferAuction(nftUniqueId, testAmount3, {value: testAmount3})
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, testAmount1, {value: testAmount1})
+                await testPlayer_2.makeOfferAuction(nftUniqueId, auctionId, testAmount2, {value: testAmount2})
+                await testPlayer_1.withdrawOffer(nftUniqueId, auctionId)
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, testAmount3, {value: testAmount3})
 
-                await testPlayer_1.withdrawOffer(nftUniqueId)
-                await testPlayer_2.withdrawOffer(nftUniqueId)
+                await testPlayer_1.withdrawOffer(nftUniqueId, auctionId)
+                await testPlayer_2.withdrawOffer(nftUniqueId, auctionId)
 
                 await helpers.time.increase(DAYS_10 + 1)
-                await testDeployer.terminateAuction(nftUniqueId)
 
                 const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
+                await testPlayer_1.terminateAuction(nftUniqueId, auctionId)
+                await testPlayer_2.terminateAuction(nftUniqueId, auctionId)
                 const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
 
                 const nftStatus = await testDeployer.s_nftIdStatus(nftUniqueId)
-                const auction = await testDeployer.s_nftIdToSellingAuction(nftUniqueId)
+                const auction = await testDeployer.s_nftIdToAuctionIdToSellingAuction(nftUniqueId, auctionId)
+                const offerPlayer1 = await testDeployer.getLastOfferFromSender(nftUniqueId, auctionId, await player1.getAddress())
+                const offerPlayer2 = await testDeployer.getLastOfferFromSender(nftUniqueId, auctionId, await player2.getAddress())
 
-
-                assert.equal(nftStatus.sellingType, SellingType.NO_SELLING) // TODO DOUBLE CHECK
-                assert.equal(auction.id.toString(), "0")
-
+                assert.equal(nftStatus.sellingType, SellingType.NO_SELLING)
+                assert.equal(auction.id.toString(), auctionId.toString())
+                assert.equal(auction.royaltiesProcessed, false)
                 assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.toString())
-            })
-            it("Should Calculate Gas Correctly - SENDER IS THE CREATOR", async () => {
-                await helpers.time.increase(DAYS_10 + 1)
-                await testPlayer_4.terminateAuction(nftUniqueId)
-                const gasUsed = await testPlayer_4.s_auctionIdToGasAuction(1)
-                assert.equal(gasUsed.gasInitial.toString(), "0")
-                assert.equal(gasUsed.gasEnd.toString(), "0")
-                assert.equal(gasUsed.payer, ZERO_ADDRESS)
-                assert.equal(gasUsed.debtor, ZERO_ADDRESS)
-            })
-            it("Should Calculate Gas Correctly - SENDER IS NOT THE CREATOR", async () => {
-                await helpers.time.increase(DAYS_10 + 1)
-                await testPlayer_1.terminateAuction(nftUniqueId)
-                const gasUsed = await testDeployer.s_auctionIdToGasAuction(1)
-                assert(Number(gasUsed.gasInitial.toString()) > 0, "Gas Initial should be greater than 0")
-                assert(Number(gasUsed.gasEnd.toString()) > 0, "Gas End should be greater than 0")
-                assert.equal(gasUsed.payer, await player1.getAddress())
-                assert.equal(gasUsed.debtor, await player4.getAddress())
+
+                assert.equal(offerPlayer1[0].toString(), "0")
+                assert.equal(offerPlayer1[1].toString(), "0")
+                assert.equal(offerPlayer2[0].toString(), "0")
+                assert.equal(offerPlayer2[1].toString(), "0")
+
             })
             it("Should Succeed - WINNER AND LOSERS", async () => {
                 const winner = player2
@@ -1078,10 +1078,13 @@ import {beforeEach} from "mocha";
                 const winnerAmount = loserAmount1.mul(100 + Number(minIncrement)).div(100)
                 const loserAmount2Refunded = winnerAmount.mul(100 + Number(minIncrement)).div(100)
 
-                await testPlayer_1.makeOfferAuction(nftUniqueId, loserAmount1, {value: loserAmount1})
-                await testPlayer_2.makeOfferAuction(nftUniqueId, winnerAmount, {value: winnerAmount})
-                await testPlayer_3.makeOfferAuction(nftUniqueId, loserAmount2Refunded, {value: loserAmount2Refunded})
-                await testPlayer_3.withdrawOffer(nftUniqueId)
+                const amountToOwner = winnerAmount.mul(100 - Number(royalties)).div(100)
+                const amountToCreator = winnerAmount.mul(royalties).div(100)
+
+                await testPlayer_1.makeOfferAuction(nftUniqueId, auctionId, loserAmount1, {value: loserAmount1})
+                await testPlayer_2.makeOfferAuction(nftUniqueId, auctionId, winnerAmount, {value: winnerAmount})
+                await testPlayer_3.makeOfferAuction(nftUniqueId, auctionId, loserAmount2Refunded, {value: loserAmount2Refunded})
+                await testPlayer_3.withdrawOffer(nftUniqueId, auctionId)
 
                 const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
                 const winnerBalanceBefore = await winner.getBalance()
@@ -1091,27 +1094,43 @@ import {beforeEach} from "mocha";
                 const ownerBalanceBefore = await owner.getBalance()
 
                 await helpers.time.increase(DAYS_10 + 1)
-                const txResponse = await testDeployer.terminateAuction(nftUniqueId)
-                const txReceipt = await txResponse.wait(1)
-                const gasUsed = txReceipt.gasUsed
-                const gasCost = gasUsed.mul(txReceipt.effectiveGasPrice)
+
+                const txResponse_loser1 = await testPlayer_1.terminateAuction(nftUniqueId, auctionId)
+                const txReceipt_loser1 = await txResponse_loser1.wait(1)
+                const gasUsed_loser1 = txReceipt_loser1.gasUsed
+                const gasCost_loser1 = gasUsed_loser1.mul(txReceipt_loser1.effectiveGasPrice)
+
+                const txResponse_winner = await testPlayer_2.terminateAuction(nftUniqueId, auctionId)
+                const txReceipt_winner = await txResponse_winner.wait(1)
+                const gasUsed_winner = txReceipt_winner.gasUsed
+                const gasCost_winner = gasUsed_winner.mul(txReceipt_winner.effectiveGasPrice)
+
+                const txResponse_owner = await testPlayer_4.terminateAuction(nftUniqueId, auctionId)
+                const txReceipt_owner = await txResponse_owner.wait(1)
+                const gasUsed_owner = txReceipt_owner.gasUsed
+                const gasCost_owner = gasUsed_owner.mul(txReceipt_owner.effectiveGasPrice)
+
+                const txResponse_creator = await testDeployer.terminateAuction(nftUniqueId, auctionId)
+                const txReceipt_creator = await txResponse_creator.wait(1)
+                const gasUsed_creator = txReceipt_creator.gasUsed
+                const gasCost_creator = gasUsed_creator.mul(txReceipt_creator.effectiveGasPrice)
 
                 const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
                 const winnerBalanceAfter = await winner.getBalance()
                 const loser1BalanceAfter = await loser1.getBalance()
-                const loser2RefundedBalanceAfter = await loser2Refunded.getBalance()
                 const creatorBalanceAfter = await creator.getBalance()
                 const ownerBalanceAfter = await owner.getBalance()
 
-                const amountToOwner = winnerAmount.mul(100 - Number(royalties)).div(100)
-                const amountToCreator = winnerAmount.mul(royalties).div(100)
+                // console.log("BALANCE BEFORE:", ethers.utils.formatEther(winnerBalanceBefore))
+                // console.log("BALANCE AFTER :", ethers.utils.formatEther(winnerBalanceAfter))
 
                 assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.sub(winnerAmount).sub(loserAmount1).toString())
-                assert.equal(winnerBalanceAfter.toString(), winnerBalanceBefore.toString())
-                assert.equal(loser1BalanceAfter.toString(), loser1BalanceBefore.add(loserAmount1).toString())
-                assert.equal(loser2RefundedBalanceAfter.toString(), loser2RefundedBalanceBefore.toString())
-                assert.equal(creatorBalanceAfter.toString(), creatorBalanceBefore.add(amountToCreator).sub(gasCost).toString())
-                assert.equal(ownerBalanceAfter.toString(), ownerBalanceBefore.add(amountToOwner).toString())
+                assert.equal(winnerBalanceAfter.toString(), winnerBalanceBefore.sub(gasCost_winner).toString())
+                assert.equal(loser1BalanceAfter.toString(), loser1BalanceBefore.add(loserAmount1).sub(gasCost_loser1).toString())
+                await expect(testPlayer_3.terminateAuction(nftUniqueId, auctionId)).to.be.revertedWithCustomError(socialNFT, "ERR_AUCTION_NO_OFFER_FOUND")
+
+                assert.equal(creatorBalanceAfter.toString(), creatorBalanceBefore.add(amountToCreator).sub(gasCost_creator).toString())
+                assert.equal(ownerBalanceAfter.toString(), ownerBalanceBefore.add(amountToOwner).sub(gasCost_owner).toString())
             })
         })
         describe("Reset Selling Status Testing", () => {

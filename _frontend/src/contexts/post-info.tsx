@@ -61,6 +61,7 @@ export const PostContext: NextPage<Props> = ({children, post}) => {
                     currency: CurrencyAddressEnum.has(e.value.fixedPrice.currency) ? CurrencyAddressEnum.get(e.value.fixedPrice.currency)! : CurrencyEnum.ETH
                 } : undefined,
                 auction: e.value.auction ? {
+                    auctionId: e.value.auction.auctionId,
                     currency: CurrencyAddressEnum.has(e.value.auction.currency) ? CurrencyAddressEnum.get(e.value.auction.currency)! : CurrencyEnum.ETH,
                     currencyAddress: e.value.auction.currency,
                     initialPrice: e.value.auction.initialPrice.toString(),

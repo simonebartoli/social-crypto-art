@@ -1,11 +1,11 @@
 import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
 
-export type NftInfoType<T extends never | "FIXED" | "AUCTION" = never> = {
+export type NftInfoType<T extends (void | "FIXED" | "AUCTION") = void> = {
     originalOwner: string
     currentOwner: string
     royalties: string
     sellingType: NftSellingStatusEnum,
-    fixedPrice: T extends never ? ({
+    fixedPrice: T extends void ? ({
         amount: string
         currency: CurrencyEnum
         currencyAddress: string
@@ -14,7 +14,8 @@ export type NftInfoType<T extends never | "FIXED" | "AUCTION" = never> = {
         currency: CurrencyEnum
         currencyAddress: string
     } : undefined
-    auction: T extends never ? ({
+    auction: T extends void ? ({
+        auctionId: string
         currency: CurrencyEnum
         currencyAddress: string
         deadline: string
@@ -22,6 +23,7 @@ export type NftInfoType<T extends never | "FIXED" | "AUCTION" = never> = {
         refundable: boolean
         initialPrice: string
     } | undefined) : T extends "AUCTION" ? {
+        auctionId: string
         currency: CurrencyEnum
         currencyAddress: string
         deadline: string

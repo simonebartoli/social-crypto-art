@@ -1,5 +1,13 @@
 import {Field, InputType} from "type-graphql";
-import {IsEmail, Length} from "class-validator";
+import {IsEmail, IsString, Length} from "class-validator";
+
+@InputType()
+export class Input_SearchForUsers {
+    @Field(() => String)
+    @IsString()
+    @Length(3, 20)
+    query: string
+}
 
 @InputType()
 export class Input_NewUser {

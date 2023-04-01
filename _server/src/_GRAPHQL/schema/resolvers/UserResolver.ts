@@ -12,7 +12,11 @@ import {AccountType, PostType, UserType} from "../types";
 import PostModel from "../../models/post/PostModel";
 import {OptionalAccessToken} from "../decorators/OptionalAccessToken";
 import {Prisma} from "@prisma/client";
-import {sendEmail} from "../../../common/SendEmail";
+import {PostTypeFilter} from "../../enums/PostTypeFilter";
+import {Input_SearchForUsers} from "../args&inputs/Input_User";
+import {distance} from "fastest-levenshtein";
+import Email from "../../models/email/Email";
+import {DateTime} from "luxon";
 
 @Resolver()
 export class UserResolver {
@@ -59,11 +63,22 @@ export class UserResolver {
         const requestToken = (await recoveryToken.getRequestToken()).token
 
         const url = `http://localhost:3000/verify?token=${requestToken}&new_account=true`
-        await sendEmail({
-            from: "noreply@socialcryptoart.com",
+        const date = DateTime.now()
+
+        const newEmail = new Email()
+        await newEmail.init()
+        await newEmail.sendEmail({
             to: email,
-            subject: "Verify your account now",
-            text: `This is the url to click ${url}`
+            subject: `Authorize the Session - ${date.toLocaleString(DateTime.DATETIME_FULL)}`,
+            info: {
+                ACCESS: {
+                    nickname: nickname,
+                    date: date.toLocaleString(DateTime.DATETIME_FULL),
+                    ua: ua,
+                    ip: ip,
+                    link: url
+                }
+            }
         })
 
         await prisma.temp_users.create({
@@ -126,15 +141,54 @@ export class UserResolver {
         })
     }
 
-    @Query(() => [PostType], {nullable: true})
+    @Query(() => [UserType])
+    async getListOfUsers(
+        @Arg("data", () => Input_SearchForUsers) data: Input_SearchForUsers
+    ): Promise<UserType[]> {
+        const minLength = data.query.length - 2
+        const maxLength = data.query.length + 4
+        const users = await prisma.users.findMany()
+
+        let userFormatted = []
+        let avgSimilarity = 0
+        let totUsers = 0
+
+        for(const user of users){
+            if((user.nickname.length >= minLength && user.nickname.length <= maxLength) || user.nickname.includes(data.query)){
+                const similarity = distance(user.nickname, data.query)
+                avgSimilarity += similarity
+                totUsers += 1
+                userFormatted.push({
+                    user: user,
+                    distance: similarity
+                })
+            }
+        }
+        avgSimilarity = avgSimilarity / totUsers
+        const usersFormatted = userFormatted.filter(_ =>  _.distance < avgSimilarity)
+        usersFormatted.sort((a, b) => a.distance > b.distance ? 1 : -1)
+
+        return usersFormatted.map(_ => _.user)
+    }
+
+    @Query(() => [PostType])
     @OptionalAccessToken()
     async getPostFromUser(
         @Ctx() ctx: ContextAuthCustom<Map<string, PostModel>> | ContextCustom<Map<string, PostModel>>,
         @Arg("nickname", () => String) nickname: string,
         @Arg("data", () => Input_GetPosts, {nullable: true}) data?: Input_GetPosts
-    ): Promise<PostType[] | null> {
-        const posts = await PostModel.loadPostByNickname(nickname, ctx.nickname === null ? undefined : ctx.nickname, data)
-        if(posts.length === 0) return null
+    ): Promise<PostType[]> {
+        let nftIdList: string[] = []
+        if(data && data.address){
+            if(data.type === PostTypeFilter.NFT_CREATED || data.type === PostTypeFilter.ALL) {
+                nftIdList = nftIdList.concat(await PostModel.loadNftCreated(nickname, ctx.nickname === null ? undefined : ctx.nickname, data))
+            }
+            if(data.type === PostTypeFilter.NFT_OWNED || data.type === PostTypeFilter.ALL){
+                nftIdList = nftIdList.concat(await PostModel.loadNftOwned(nickname, ctx.nickname === null ? undefined : ctx.nickname, data))
+            }
+        }
+        const posts = await PostModel.loadPostByNickname(nickname, nftIdList, ctx.nickname === null ? undefined : ctx.nickname, data)
+        if(posts.length === 0) return []
         ctx["post"] = new Map()
         return posts.map((_) => {
             ctx["post"].set(_.getPost().post_id, _)

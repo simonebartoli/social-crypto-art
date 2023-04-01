@@ -29,6 +29,28 @@ import type {
 } from "../common";
 
 export declare namespace SocialNFT {
+  export type Selling_AuctionOffersStruct = {
+    amount: PromiseOrValue<BigNumberish>;
+    owner: PromiseOrValue<string>;
+    date: PromiseOrValue<BigNumberish>;
+    refunded: PromiseOrValue<boolean>;
+    processed: PromiseOrValue<boolean>;
+  };
+
+  export type Selling_AuctionOffersStructOutput = [
+    BigNumber,
+    string,
+    BigNumber,
+    boolean,
+    boolean
+  ] & {
+    amount: BigNumber;
+    owner: string;
+    date: BigNumber;
+    refunded: boolean;
+    processed: boolean;
+  };
+
   export type PastNftOwnerStruct = {
     start_date: PromiseOrValue<BigNumberish>;
     end_date: PromiseOrValue<BigNumberish>;
@@ -47,15 +69,18 @@ export interface SocialNFTInterface extends utils.Interface {
     "NAME()": FunctionFragment;
     "SYMBOL()": FunctionFragment;
     "ZERO_ADDRESS()": FunctionFragment;
-    "_getLastOffer(uint256)": FunctionFragment;
+    "_getLastOffer(uint256,uint256)": FunctionFragment;
     "_postTransferNft(uint256,address,uint256)": FunctionFragment;
     "_transferNft(uint256,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "buyNftSellingFixedPrice(uint256)": FunctionFragment;
     "createNft(string)": FunctionFragment;
+    "getAllAuctionIdFromNftId(uint256)": FunctionFragment;
+    "getAllNftIdFromSender(address)": FunctionFragment;
+    "getAllOffers(uint256,uint256)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
-    "getLastOfferFromSender(uint256,address)": FunctionFragment;
+    "getLastOfferFromSender(uint256,uint256,address)": FunctionFragment;
     "getNftId(string)": FunctionFragment;
     "getOriginalOwner(uint256)": FunctionFragment;
     "getTokenAddress(uint8)": FunctionFragment;
@@ -66,16 +91,18 @@ export interface SocialNFTInterface extends utils.Interface {
     "i_usdt()": FunctionFragment;
     "i_weth()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "makeOfferAuction(uint256,uint256)": FunctionFragment;
+    "makeOfferAuction(uint256,uint256,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
+    "resetSellingStatus(uint256)": FunctionFragment;
     "s_auctionId()": FunctionFragment;
-    "s_auctionIdToGasAuction(uint256)": FunctionFragment;
     "s_nftIdStatus(uint256)": FunctionFragment;
+    "s_nftIdToAuctionId(uint256,uint256)": FunctionFragment;
+    "s_nftIdToAuctionIdSellingAuctionOffers(uint256,uint256,uint256)": FunctionFragment;
+    "s_nftIdToAuctionIdToSellingAuction(uint256,uint256)": FunctionFragment;
+    "s_nftIdToCurrentAuctionId(uint256)": FunctionFragment;
     "s_nftIdToPastOwners(uint256,uint256)": FunctionFragment;
     "s_nftIdToRoyalties(uint256)": FunctionFragment;
-    "s_nftIdToSellingAuction(uint256)": FunctionFragment;
-    "s_nftIdToSellingAuctionOffers(uint256,uint256)": FunctionFragment;
     "s_nftIdToSellingFixedPrice(uint256)": FunctionFragment;
     "s_nftUniqueId()": FunctionFragment;
     "s_ownerToNftId(address,uint256)": FunctionFragment;
@@ -88,10 +115,10 @@ export interface SocialNFTInterface extends utils.Interface {
     "setSellingFixedPrice(uint256,uint256,uint8)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
-    "terminateAuction(uint256)": FunctionFragment;
+    "terminateAuction(uint256,uint256)": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
-    "withdrawOffer(uint256)": FunctionFragment;
+    "withdrawOffer(uint256,uint256)": FunctionFragment;
   };
 
   getFunction(
@@ -106,6 +133,9 @@ export interface SocialNFTInterface extends utils.Interface {
       | "balanceOf"
       | "buyNftSellingFixedPrice"
       | "createNft"
+      | "getAllAuctionIdFromNftId"
+      | "getAllNftIdFromSender"
+      | "getAllOffers"
       | "getApproved"
       | "getLastOfferFromSender"
       | "getNftId"
@@ -121,13 +151,15 @@ export interface SocialNFTInterface extends utils.Interface {
       | "makeOfferAuction"
       | "name"
       | "ownerOf"
+      | "resetSellingStatus"
       | "s_auctionId"
-      | "s_auctionIdToGasAuction"
       | "s_nftIdStatus"
+      | "s_nftIdToAuctionId"
+      | "s_nftIdToAuctionIdSellingAuctionOffers"
+      | "s_nftIdToAuctionIdToSellingAuction"
+      | "s_nftIdToCurrentAuctionId"
       | "s_nftIdToPastOwners"
       | "s_nftIdToRoyalties"
-      | "s_nftIdToSellingAuction"
-      | "s_nftIdToSellingAuctionOffers"
       | "s_nftIdToSellingFixedPrice"
       | "s_nftUniqueId"
       | "s_ownerToNftId"
@@ -154,7 +186,7 @@ export interface SocialNFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "_getLastOffer",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "_postTransferNft",
@@ -185,12 +217,28 @@ export interface SocialNFTInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getAllAuctionIdFromNftId",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAllNftIdFromSender",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAllOffers",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getApproved",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getLastOfferFromSender",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "getNftId",
@@ -222,7 +270,11 @@ export interface SocialNFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "makeOfferAuction",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
@@ -230,15 +282,35 @@ export interface SocialNFTInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "resetSellingStatus",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "s_auctionId",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "s_auctionIdToGasAuction",
+    functionFragment: "s_nftIdStatus",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "s_nftIdStatus",
+    functionFragment: "s_nftIdToAuctionId",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "s_nftIdToAuctionIdSellingAuctionOffers",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "s_nftIdToAuctionIdToSellingAuction",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "s_nftIdToCurrentAuctionId",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -248,14 +320,6 @@ export interface SocialNFTInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "s_nftIdToRoyalties",
     values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "s_nftIdToSellingAuction",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "s_nftIdToSellingAuctionOffers",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "s_nftIdToSellingFixedPrice",
@@ -324,7 +388,7 @@ export interface SocialNFTInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "terminateAuction",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "tokenURI",
@@ -340,7 +404,7 @@ export interface SocialNFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawOffer",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(functionFragment: "NAME", data: BytesLike): Result;
@@ -368,6 +432,18 @@ export interface SocialNFTInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "createNft", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getAllAuctionIdFromNftId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getAllNftIdFromSender",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getAllOffers",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getApproved",
     data: BytesLike
@@ -408,15 +484,31 @@ export interface SocialNFTInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "resetSellingStatus",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "s_auctionId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "s_auctionIdToGasAuction",
+    functionFragment: "s_nftIdStatus",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "s_nftIdStatus",
+    functionFragment: "s_nftIdToAuctionId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "s_nftIdToAuctionIdSellingAuctionOffers",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "s_nftIdToAuctionIdToSellingAuction",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "s_nftIdToCurrentAuctionId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -425,14 +517,6 @@ export interface SocialNFTInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "s_nftIdToRoyalties",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "s_nftIdToSellingAuction",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "s_nftIdToSellingAuctionOffers",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -596,6 +680,7 @@ export interface SocialNFT extends BaseContract {
 
     _getLastOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber, string]>;
 
@@ -633,6 +718,22 @@ export interface SocialNFT extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    getAllAuctionIdFromNftId(
+      nftId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber[]]>;
+
+    getAllNftIdFromSender(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber[]]>;
+
+    getAllOffers(
+      nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[SocialNFT.Selling_AuctionOffersStructOutput[]]>;
+
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -640,6 +741,7 @@ export interface SocialNFT extends BaseContract {
 
     getLastOfferFromSender(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       owner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber]>;
@@ -679,6 +781,7 @@ export interface SocialNFT extends BaseContract {
 
     makeOfferAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -690,20 +793,12 @@ export interface SocialNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    s_auctionId(overrides?: CallOverrides): Promise<[BigNumber]>;
+    resetSellingStatus(
+      nftId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
-    s_auctionIdToGasAuction(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, BigNumber, BigNumber, BigNumber] & {
-        payer: string;
-        debtor: string;
-        gasInitial: BigNumber;
-        gasEnd: BigNumber;
-        cost: BigNumber;
-      }
-    >;
+    s_auctionId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     s_nftIdStatus(
       arg0: PromiseOrValue<BigNumberish>,
@@ -715,6 +810,58 @@ export interface SocialNFT extends BaseContract {
         ownedSince: BigNumber;
       }
     >;
+
+    s_nftIdToAuctionId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    s_nftIdToAuctionIdSellingAuctionOffers(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      arg2: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, string, BigNumber, boolean, boolean] & {
+        amount: BigNumber;
+        owner: string;
+        date: BigNumber;
+        refunded: boolean;
+        processed: boolean;
+      }
+    >;
+
+    s_nftIdToAuctionIdToSellingAuction(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        boolean,
+        string,
+        BigNumber,
+        string,
+        boolean
+      ] & {
+        id: BigNumber;
+        initialPrice: BigNumber;
+        minIncrement: BigNumber;
+        refundable: boolean;
+        currency: string;
+        deadline: BigNumber;
+        owner: string;
+        royaltiesProcessed: boolean;
+      }
+    >;
+
+    s_nftIdToCurrentAuctionId(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     s_nftIdToPastOwners(
       arg0: PromiseOrValue<BigNumberish>,
@@ -732,32 +879,6 @@ export interface SocialNFT extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string, number] & { owner: string; percentage: number }>;
-
-    s_nftIdToSellingAuction(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, boolean, string, BigNumber] & {
-        id: BigNumber;
-        initialPrice: BigNumber;
-        minIncrement: BigNumber;
-        refundable: boolean;
-        currency: string;
-        deadline: BigNumber;
-      }
-    >;
-
-    s_nftIdToSellingAuctionOffers(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, string, boolean] & {
-        amount: BigNumber;
-        owner: string;
-        refunded: boolean;
-      }
-    >;
 
     s_nftIdToSellingFixedPrice(
       arg0: PromiseOrValue<BigNumberish>,
@@ -830,6 +951,7 @@ export interface SocialNFT extends BaseContract {
 
     terminateAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -847,6 +969,7 @@ export interface SocialNFT extends BaseContract {
 
     withdrawOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -859,6 +982,7 @@ export interface SocialNFT extends BaseContract {
 
   _getLastOffer(
     nftId: PromiseOrValue<BigNumberish>,
+    auctionId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<[BigNumber, string]>;
 
@@ -896,6 +1020,22 @@ export interface SocialNFT extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getAllAuctionIdFromNftId(
+    nftId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber[]>;
+
+  getAllNftIdFromSender(
+    owner: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber[]>;
+
+  getAllOffers(
+    nftId: PromiseOrValue<BigNumberish>,
+    auctionId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<SocialNFT.Selling_AuctionOffersStructOutput[]>;
+
   getApproved(
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -903,6 +1043,7 @@ export interface SocialNFT extends BaseContract {
 
   getLastOfferFromSender(
     nftId: PromiseOrValue<BigNumberish>,
+    auctionId: PromiseOrValue<BigNumberish>,
     owner: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<[BigNumber, BigNumber]>;
@@ -942,6 +1083,7 @@ export interface SocialNFT extends BaseContract {
 
   makeOfferAuction(
     nftId: PromiseOrValue<BigNumberish>,
+    auctionId: PromiseOrValue<BigNumberish>,
     amount: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -953,20 +1095,12 @@ export interface SocialNFT extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
-  s_auctionId(overrides?: CallOverrides): Promise<BigNumber>;
+  resetSellingStatus(
+    nftId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
-  s_auctionIdToGasAuction(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [string, string, BigNumber, BigNumber, BigNumber] & {
-      payer: string;
-      debtor: string;
-      gasInitial: BigNumber;
-      gasEnd: BigNumber;
-      cost: BigNumber;
-    }
-  >;
+  s_auctionId(overrides?: CallOverrides): Promise<BigNumber>;
 
   s_nftIdStatus(
     arg0: PromiseOrValue<BigNumberish>,
@@ -978,6 +1112,58 @@ export interface SocialNFT extends BaseContract {
       ownedSince: BigNumber;
     }
   >;
+
+  s_nftIdToAuctionId(
+    arg0: PromiseOrValue<BigNumberish>,
+    arg1: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  s_nftIdToAuctionIdSellingAuctionOffers(
+    arg0: PromiseOrValue<BigNumberish>,
+    arg1: PromiseOrValue<BigNumberish>,
+    arg2: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, string, BigNumber, boolean, boolean] & {
+      amount: BigNumber;
+      owner: string;
+      date: BigNumber;
+      refunded: boolean;
+      processed: boolean;
+    }
+  >;
+
+  s_nftIdToAuctionIdToSellingAuction(
+    arg0: PromiseOrValue<BigNumberish>,
+    arg1: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<
+    [
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      boolean,
+      string,
+      BigNumber,
+      string,
+      boolean
+    ] & {
+      id: BigNumber;
+      initialPrice: BigNumber;
+      minIncrement: BigNumber;
+      refundable: boolean;
+      currency: string;
+      deadline: BigNumber;
+      owner: string;
+      royaltiesProcessed: boolean;
+    }
+  >;
+
+  s_nftIdToCurrentAuctionId(
+    arg0: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   s_nftIdToPastOwners(
     arg0: PromiseOrValue<BigNumberish>,
@@ -995,32 +1181,6 @@ export interface SocialNFT extends BaseContract {
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<[string, number] & { owner: string; percentage: number }>;
-
-  s_nftIdToSellingAuction(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber, boolean, string, BigNumber] & {
-      id: BigNumber;
-      initialPrice: BigNumber;
-      minIncrement: BigNumber;
-      refundable: boolean;
-      currency: string;
-      deadline: BigNumber;
-    }
-  >;
-
-  s_nftIdToSellingAuctionOffers(
-    arg0: PromiseOrValue<BigNumberish>,
-    arg1: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, string, boolean] & {
-      amount: BigNumber;
-      owner: string;
-      refunded: boolean;
-    }
-  >;
 
   s_nftIdToSellingFixedPrice(
     arg0: PromiseOrValue<BigNumberish>,
@@ -1093,6 +1253,7 @@ export interface SocialNFT extends BaseContract {
 
   terminateAuction(
     nftId: PromiseOrValue<BigNumberish>,
+    auctionId: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1110,6 +1271,7 @@ export interface SocialNFT extends BaseContract {
 
   withdrawOffer(
     nftId: PromiseOrValue<BigNumberish>,
+    auctionId: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1122,6 +1284,7 @@ export interface SocialNFT extends BaseContract {
 
     _getLastOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber, string]>;
 
@@ -1159,6 +1322,22 @@ export interface SocialNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    getAllAuctionIdFromNftId(
+      nftId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
+
+    getAllNftIdFromSender(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
+
+    getAllOffers(
+      nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<SocialNFT.Selling_AuctionOffersStructOutput[]>;
+
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1166,6 +1345,7 @@ export interface SocialNFT extends BaseContract {
 
     getLastOfferFromSender(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       owner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber]>;
@@ -1205,6 +1385,7 @@ export interface SocialNFT extends BaseContract {
 
     makeOfferAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -1216,20 +1397,12 @@ export interface SocialNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    s_auctionId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    s_auctionIdToGasAuction(
-      arg0: PromiseOrValue<BigNumberish>,
+    resetSellingStatus(
+      nftId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<
-      [string, string, BigNumber, BigNumber, BigNumber] & {
-        payer: string;
-        debtor: string;
-        gasInitial: BigNumber;
-        gasEnd: BigNumber;
-        cost: BigNumber;
-      }
-    >;
+    ): Promise<void>;
+
+    s_auctionId(overrides?: CallOverrides): Promise<BigNumber>;
 
     s_nftIdStatus(
       arg0: PromiseOrValue<BigNumberish>,
@@ -1241,6 +1414,58 @@ export interface SocialNFT extends BaseContract {
         ownedSince: BigNumber;
       }
     >;
+
+    s_nftIdToAuctionId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    s_nftIdToAuctionIdSellingAuctionOffers(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      arg2: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, string, BigNumber, boolean, boolean] & {
+        amount: BigNumber;
+        owner: string;
+        date: BigNumber;
+        refunded: boolean;
+        processed: boolean;
+      }
+    >;
+
+    s_nftIdToAuctionIdToSellingAuction(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        boolean,
+        string,
+        BigNumber,
+        string,
+        boolean
+      ] & {
+        id: BigNumber;
+        initialPrice: BigNumber;
+        minIncrement: BigNumber;
+        refundable: boolean;
+        currency: string;
+        deadline: BigNumber;
+        owner: string;
+        royaltiesProcessed: boolean;
+      }
+    >;
+
+    s_nftIdToCurrentAuctionId(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     s_nftIdToPastOwners(
       arg0: PromiseOrValue<BigNumberish>,
@@ -1258,32 +1483,6 @@ export interface SocialNFT extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string, number] & { owner: string; percentage: number }>;
-
-    s_nftIdToSellingAuction(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, boolean, string, BigNumber] & {
-        id: BigNumber;
-        initialPrice: BigNumber;
-        minIncrement: BigNumber;
-        refundable: boolean;
-        currency: string;
-        deadline: BigNumber;
-      }
-    >;
-
-    s_nftIdToSellingAuctionOffers(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, string, boolean] & {
-        amount: BigNumber;
-        owner: string;
-        refunded: boolean;
-      }
-    >;
 
     s_nftIdToSellingFixedPrice(
       arg0: PromiseOrValue<BigNumberish>,
@@ -1356,6 +1555,7 @@ export interface SocialNFT extends BaseContract {
 
     terminateAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1373,6 +1573,7 @@ export interface SocialNFT extends BaseContract {
 
     withdrawOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -1433,6 +1634,7 @@ export interface SocialNFT extends BaseContract {
 
     _getLastOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1470,6 +1672,22 @@ export interface SocialNFT extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    getAllAuctionIdFromNftId(
+      nftId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getAllNftIdFromSender(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getAllOffers(
+      nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1477,6 +1695,7 @@ export interface SocialNFT extends BaseContract {
 
     getLastOfferFromSender(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       owner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1516,6 +1735,7 @@ export interface SocialNFT extends BaseContract {
 
     makeOfferAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1527,14 +1747,38 @@ export interface SocialNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    resetSellingStatus(
+      nftId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     s_auctionId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    s_auctionIdToGasAuction(
+    s_nftIdStatus(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    s_nftIdStatus(
+    s_nftIdToAuctionId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    s_nftIdToAuctionIdSellingAuctionOffers(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      arg2: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    s_nftIdToAuctionIdToSellingAuction(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    s_nftIdToCurrentAuctionId(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1547,17 +1791,6 @@ export interface SocialNFT extends BaseContract {
 
     s_nftIdToRoyalties(
       arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    s_nftIdToSellingAuction(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    s_nftIdToSellingAuctionOffers(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1632,6 +1865,7 @@ export interface SocialNFT extends BaseContract {
 
     terminateAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1649,6 +1883,7 @@ export interface SocialNFT extends BaseContract {
 
     withdrawOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -1662,6 +1897,7 @@ export interface SocialNFT extends BaseContract {
 
     _getLastOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1699,6 +1935,22 @@ export interface SocialNFT extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    getAllAuctionIdFromNftId(
+      nftId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getAllNftIdFromSender(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getAllOffers(
+      nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1706,6 +1958,7 @@ export interface SocialNFT extends BaseContract {
 
     getLastOfferFromSender(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       owner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1745,6 +1998,7 @@ export interface SocialNFT extends BaseContract {
 
     makeOfferAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -1756,14 +2010,38 @@ export interface SocialNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    resetSellingStatus(
+      nftId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     s_auctionId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    s_auctionIdToGasAuction(
+    s_nftIdStatus(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    s_nftIdStatus(
+    s_nftIdToAuctionId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    s_nftIdToAuctionIdSellingAuctionOffers(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      arg2: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    s_nftIdToAuctionIdToSellingAuction(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    s_nftIdToCurrentAuctionId(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1776,17 +2054,6 @@ export interface SocialNFT extends BaseContract {
 
     s_nftIdToRoyalties(
       arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    s_nftIdToSellingAuction(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    s_nftIdToSellingAuctionOffers(
-      arg0: PromiseOrValue<BigNumberish>,
-      arg1: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1861,6 +2128,7 @@ export interface SocialNFT extends BaseContract {
 
     terminateAuction(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1878,6 +2146,7 @@ export interface SocialNFT extends BaseContract {
 
     withdrawOffer(
       nftId: PromiseOrValue<BigNumberish>,
+      auctionId: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

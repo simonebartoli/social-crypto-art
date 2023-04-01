@@ -12,7 +12,7 @@ import {AUTH_ERROR, DATA_ERROR} from "../../errors";
 import Web3Account from "../../models/Web3Account";
 import {SecretType} from "../types";
 import SecretModel from "../../models/token/encryption/Secret"
-import {sendEmail} from "../../../common/SendEmail";
+import Email from "../../models/email/Email";
 
 @Resolver()
 export class AccessResolver {
@@ -51,18 +51,32 @@ export class AccessResolver {
         const jwt = await recoveryToken.createJwt()
         const requestToken = (await recoveryToken.getRequestToken()).token
         const url = `http://localhost:3000/verify?token=${requestToken}&new_account=false`
-        await sendEmail({
-            from: "noreply@socialcryptoart.com",
+        const date = DateTime.now()
+
+        const newEmail = new Email()
+        await newEmail.init()
+        await newEmail.sendEmail({
             to: email,
-            subject: "Login in your account now",
-            text: `This is the url to click ${url}`
+            subject: `Authorize the Session - ${date.toLocaleString(DateTime.DATETIME_FULL)}`,
+            info: {
+                ACCESS: {
+                    nickname: nickname,
+                    date: date.toLocaleString(DateTime.DATETIME_FULL),
+                    ua: ua,
+                    ip: ip,
+                    link: url
+                }
+            }
         })
+
         ctx.response.cookie("recovery_token", jwt)
         return true
     }
 
     @Mutation(() => Boolean)
-    async enableToken(@Arg("data") {token, isNewAccount} : Input_RequestToken): Promise<Boolean>{
+    async enableToken(
+        @Arg("data") {token, isNewAccount} : Input_RequestToken
+    ): Promise<Boolean>{
         const result = await prisma.access_requests.findUnique({
             include: {
                 tokens: true
@@ -130,7 +144,9 @@ export class AccessResolver {
     }
 
     @Mutation(() => Date)
-    async getAccessToken_RecoveryToken(@Ctx() ctx: Context): Promise<Date>{
+    async getAccessToken_RecoveryToken(
+        @Ctx() ctx: Context
+    ): Promise<Date>{
         const {request, response} = ctx
         const token: string | undefined = request.cookies["recovery_token"]
         if(token === undefined){

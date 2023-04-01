@@ -17,6 +17,7 @@ import ModifyNft from "@/components/library/post/interactions/modify-nft";
 import ActionRequireWeb3Account from "@/components/library/auth/action-require-web3-account";
 import {usePostContext} from "@/contexts/post-info";
 import AuctionSelling from "@/components/library/post/interactions/auction/auction-selling";
+import {NftInfoType} from "@/components/library/post/nft.type";
 
 type Props = {
     post_id: string
@@ -43,6 +44,9 @@ const PostInteractions: NextPage<Props> = ({post_id, interactions, nft_id, comme
     const [optionSelected, setOptionSelected] = useState<"UPVOTE" | "DOWNVOTE">()
     const [upvoteSelected, setUpvoteSelected] = useState<boolean>(personalInfo ? interactions.upvoteUsers.includes(personalInfo.nickname) : false)
     const [downvoteSelected, setDownvoteSelected] = useState<boolean>(personalInfo ? interactions.downvoteUsers.includes(personalInfo.nickname) : false)
+
+    const [nftInfoFixed, setNftInfoFixed] = useState<NftInfoType<"FIXED">>()
+    const [nftInfoAuction, setNftInfoAuction] = useState<NftInfoType<"AUCTION">>()
 
     const [addUpvoteDownvote] = useMutation(ADD_UPVOTE_DOWNVOTE, {
         onError: (error) => {
@@ -146,6 +150,23 @@ const PostInteractions: NextPage<Props> = ({post_id, interactions, nft_id, comme
             setOptionSelected(undefined)
         }
     }, [open])
+    useEffect(() => {
+        if(nftInfo){
+            if(nftInfo.fixedPrice){
+                setNftInfoFixed({
+                    ...nftInfo,
+                    fixedPrice: nftInfo.fixedPrice,
+                    auction: undefined
+                })
+            }else if(nftInfo.auction){
+                setNftInfoAuction({
+                    ...nftInfo,
+                    fixedPrice: undefined,
+                    auction: nftInfo.auction
+                })
+            }
+        }
+    }, [nftInfo])
 
     return (
         <div className="mt-8 text-white w-full flex flex-col gap-3">
@@ -156,28 +177,30 @@ const PostInteractions: NextPage<Props> = ({post_id, interactions, nft_id, comme
                     />
             }
             {
-                (interactions.nft && interactions.selling && nftInfo && nftInfo.fixedPrice && nft_id) &&
+                (interactions.nft && interactions.selling && nftInfoFixed && nft_id) &&
                 <div onClick={() => setShowSections({...showSections, selling: true})}
                      className="cursor-pointer hover:bg-white hover:text-black transition border-black border-[1px] shadow-lg p-4 text-xl bg-black rounded-lg w-full flex flex-col items-center justify-center">
                     {
                         showSections.selling &&
                         <ActionRequireLogin callback={() => showModal(
                             <ActionRequireWeb3Account
-                                specificNotAccount={nftInfo.currentOwner}
-                                callback={() => showModal(<FixedPriceSelling nftId={nft_id} nftInfo={nftInfo}/>)}
-                            />
+                                specificNotAccount={nftInfoFixed.currentOwner}>
+                                <FixedPriceSelling nftId={nft_id} nftInfo={nftInfoFixed}/>
+                            </ActionRequireWeb3Account>
                         )}/>
                     }
                     <span>Check Further Info / Make Offer</span>
                 </div>
             }
             {
-                (interactions.nft && interactions.selling && nftInfo && nftInfo.auction && nft_id) &&
+                (interactions.nft && interactions.selling && nftInfoAuction && nft_id) &&
                 <div onClick={() => setShowSections({...showSections, selling: true})}
                      className="cursor-pointer hover:bg-white hover:text-black transition border-black border-[1px] shadow-lg p-4 text-xl bg-black rounded-lg w-full flex flex-col items-center justify-center">
                     {
                         showSections.selling &&
-                        <ActionRequireLogin callback={() => showModal(<AuctionSelling nftId={nft_id} nftInfo={nftInfo}/>)}/>
+                        <ActionRequireLogin callback={() => showModal(
+                            <AuctionSelling nftId={nft_id} nftInfo={nftInfoAuction}/>
+                        )}/>
                     }
                     <span>Check Further Info / Make Offer</span>
                 </div>
@@ -194,7 +217,9 @@ const PostInteractions: NextPage<Props> = ({post_id, interactions, nft_id, comme
                                 callback={() => showModal(
                                     <ModifyNft
                                         callback={() => {
-                                            if(setLoadingWeb3Changes) setLoadingWeb3Changes(true)
+                                            if(setLoadingWeb3Changes) {
+                                                setLoadingWeb3Changes(true)
+                                            }
                                         }}
                                         nftInfo={nftInfo}
                                         nft_id={nft_id}

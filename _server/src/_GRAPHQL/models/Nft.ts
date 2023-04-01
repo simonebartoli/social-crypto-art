@@ -1,4 +1,4 @@
-import {prisma, PROVIDER, SOCIAL_NFT_ADDRESS, SocialNFTAbi} from "../../globals";
+import {prisma, PROVIDER, SOCIAL_NFT_ADDRESS, SOCIAL_NFT_CONTRACT, SocialNFTAbi} from "../../globals";
 import {AUTH_ERROR, DATA_ERROR, INTERNAL_ERROR} from "../errors";
 import ErrorCode from "../enums/ErrorCode";
 import {ethers} from "ethers";
@@ -8,7 +8,6 @@ class Nft {
     private readonly postContentId: number[]
     private readonly ipfs: string
     private readonly nftId: string | undefined = undefined
-    private static socialNftContract = new ethers.Contract(SOCIAL_NFT_ADDRESS, SocialNFTAbi(), PROVIDER) as SocialNFT
 
     private constructor(ipfs: string, nftId: string | undefined, postContentId: number[]) {
         this.ipfs = ipfs
@@ -48,7 +47,7 @@ class Nft {
     public async checkIfNftVerified() {
         let nftId: string
         try{
-            nftId = (await Nft.socialNftContract.getNftId(this.ipfs)).toString()
+            nftId = (await SOCIAL_NFT_CONTRACT.getNftId(this.ipfs)).toString()
         }catch (e) {
             throw new DATA_ERROR("The NFT has not been verified", ErrorCode.ERR_403_005)
         }

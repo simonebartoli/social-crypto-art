@@ -1,25 +1,39 @@
 import React, {createContext, ReactNode, useEffect, useRef, useState} from 'react';
 import {NextPage} from "next";
 import {LazyQueryExecFunction, useLazyQuery} from "@apollo/client";
-import {Exact, Get_PostsQuery, MediaType, InputMaybe, Input_GetPosts, Get_Post_From_UserQuery} from "@/__generated__/graphql";
+import {
+    Get_Post_From_UserQuery,
+    Get_PostsQuery,
+    Input_GetPosts,
+    MediaType,
+    PostTypeFilter
+} from "@/__generated__/graphql";
 import {useLogin} from "@/contexts/login";
 import {PostInteractionType, PostType} from "@/components/library/post/post.type";
 import {GET_POST_FROM_USER, GET_POSTS} from "@/graphql/post";
 import {toast} from "react-toastify";
 import {PostContentTypeEnum} from "@/enums/global/post-enum";
+import {DateTime} from "luxon";
+import {useEthers} from "@usedapp/core";
 
 export type ContextType = {
-    getPosts: LazyQueryExecFunction<Get_PostsQuery, Exact<{data?: InputMaybe<Input_GetPosts> | undefined}>>
+    getPosts: LazyQueryExecFunction<Get_PostsQuery, any>
     refetch_getPosts: () => void
     loading_getPosts: boolean
 
-    getPostFromUser: LazyQueryExecFunction<Get_Post_From_UserQuery, Exact<{nickname: string, data?: InputMaybe<Input_GetPosts> | undefined}>>
+    getPostFromUser: LazyQueryExecFunction<Get_Post_From_UserQuery, any>
     refetch_getPostFromUser: () => void
     loading_getPostFromUser: boolean
 
     posts: PostType[]
     modifyPost: {
         modifyInteraction: (post_id: string, interactions: PostInteractionType) => void
+    }
+    resetStatus: () => void
+
+    variablesFetch: {
+        value: Input_GetPosts & {nickname?: string}
+        set: React.Dispatch<React.SetStateAction<Input_GetPosts & {nickname?: string}>>
     }
 }
 const fetchingPostsContext = createContext<undefined | ContextType>(undefined)
@@ -30,21 +44,31 @@ type Props = {
 
 export const FetchingPostsContext: NextPage<Props> = ({children}) => {
     const {personalInfo} = useLogin()
+    const {account} = useEthers()
+
     const responseRef = useRef<string>("")
+    const filterTypeRef = useRef<PostTypeFilter | undefined>(PostTypeFilter.All)
     const threshold = useRef<HTMLDivElement>(null)
 
     const [ready, setReady] = useState(false)
-    const [variablesFetch, setVariablesFetch] = useState({
+    const [variablesFetch, setVariablesFetch] = useState<Input_GetPosts & {nickname?: string}>({
+        nickname: undefined,
+        address: account,
+        type: PostTypeFilter.All,
         maxPosts: 5,
         dateMax: new Date()
     })
+
     const [posts, setPosts] = useState<PostType[]>([])
     const [stopFetching, setStopFetching] = useState(false)
 
     const [getPosts, {loading: loading_getPosts, refetch: refetch_getPosts}] = useLazyQuery(GET_POSTS, {
         fetchPolicy: "cache-and-network",
         variables: {
-            data: variablesFetch
+            data: {
+                ...variablesFetch,
+                nickname: undefined
+            }
         },
         onError: () => {
             setReady(true)
@@ -52,6 +76,9 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
         },
         onCompleted: (data) => {
             setReady(true)
+            if(filterTypeRef.current !== variablesFetch.type){
+                responseRef.current = ""
+            }
             formatPosts({
                 getPosts: data,
                 getPostFromUser: undefined
@@ -61,8 +88,11 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
     const [getPostFromUser, {loading: loading_getPostFromUser, refetch: refetch_getPostFromUser}] = useLazyQuery(GET_POST_FROM_USER, {
         fetchPolicy: "cache-and-network",
         variables: {
-            nickname: personalInfo?.nickname ?? "",
-            data: variablesFetch
+            nickname: variablesFetch.nickname ?? personalInfo?.nickname ?? "",
+            data: {
+                ...variablesFetch,
+                nickname: undefined
+            }
         },
         onError: () => {
             setReady(true)
@@ -70,6 +100,9 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
         },
         onCompleted: (data) => {
             setReady(true)
+            if(filterTypeRef.current !== variablesFetch.type){
+                responseRef.current = ""
+            }
             formatPosts({
                 getPosts: undefined,
                 getPostFromUser: data
@@ -91,7 +124,7 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
         setPosts(copy)
     }
     const formatPosts = ({getPosts, getPostFromUser}: {getPosts?: Get_PostsQuery, getPostFromUser?: Get_Post_From_UserQuery}) => {
-        const data = getPosts?.getPosts ?? getPostFromUser?.getPostFromUser
+        const data = responseRef.current !== "" ? getPosts?.getPosts.slice(1) ?? getPostFromUser?.getPostFromUser.slice(1) : getPosts?.getPosts ?? getPostFromUser?.getPostFromUser
         if(data){
             const postsCopy: PostType[] = data.map(_ => {
                 let isNft = false
@@ -152,24 +185,37 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
                     } : undefined
                 }
             })
-            if(responseRef.current === JSON.stringify(postsCopy)){
+            if(responseRef.current === JSON.stringify([...posts, ...postsCopy])){
                 setStopFetching(true)
             }else{
                 setStopFetching(false)
             }
-            responseRef.current = JSON.stringify(postsCopy)
-            setPosts(postsCopy)
+            if(filterTypeRef.current === variablesFetch.type){
+                responseRef.current = JSON.stringify([...posts, ...postsCopy])
+                setPosts([...posts, ...postsCopy])
+            }else{
+                responseRef.current = JSON.stringify([...postsCopy])
+                setPosts([...postsCopy])
+            }
+            filterTypeRef.current = variablesFetch.type
         }
     }
+    const resetStatus = () => {
+        setPosts([])
+        responseRef.current = ""
+        filterTypeRef.current = PostTypeFilter.All
+    }
+
     useEffect(() => {
         if(threshold.current){
             const observer = new IntersectionObserver(entries => {
                 for(const _ of entries){
-                    if(_.isIntersecting && !stopFetching){
+                    if(_.isIntersecting && !stopFetching && posts.length > 0){
                         setStopFetching(true)
                         setVariablesFetch({
-                            dateMax: variablesFetch.dateMax,
-                            maxPosts: variablesFetch.maxPosts + 5
+                            ...variablesFetch,
+                            dateMax: DateTime.fromISO(posts[posts.length - 1].header.date).toJSDate(),
+                            maxPosts: variablesFetch.maxPosts
                         })
                     }
                 }
@@ -177,7 +223,7 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
             observer.observe(threshold.current)
             return () => observer.disconnect()
         }
-    }, [loading_getPosts, loading_getPostFromUser])
+    }, [loading_getPosts, loading_getPostFromUser, posts])
 
     const value: ContextType = {
         getPosts,
@@ -189,6 +235,11 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
         posts,
         modifyPost: {
             modifyInteraction
+        },
+        resetStatus,
+        variablesFetch: {
+            value: variablesFetch,
+            set: setVariablesFetch
         }
     }
     return (

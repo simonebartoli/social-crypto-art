@@ -26,16 +26,17 @@ contract Test is SocialNFT, PaymentHolder{
     function test_modifyNftSellingTypeStatus(uint256 nftId, SellingType sellingType) public {
         s_nftIdStatus[nftId].sellingType = sellingType;
     }
-    function test_modifyNftIdToSellingAuctionOffers(uint256 nftId, uint256 amount, address owner, bool refunded) public {
-        s_nftIdToSellingAuctionOffers[nftId].push(Selling_AuctionOffers({
+    function test_modifyNftIdToSellingAuctionOffers(uint256 nftId, uint256 auctionId, uint256 amount, address owner, bool refunded) public {
+        s_nftIdToAuctionIdSellingAuctionOffers[nftId][auctionId].push(Selling_AuctionOffers({
             amount: amount,
             owner: owner,
             date: block.timestamp,
-            refunded: refunded
+            refunded: refunded,
+            processed: false
         }));
     }
-    function test_modifyNftIdToSellingAuctionOffersWithEmptySpace(uint256 nftId, uint256 index) public {
-        delete s_nftIdToSellingAuctionOffers[nftId][index];
+    function test_modifyNftIdToSellingAuctionOffersWithEmptySpace(uint256 nftId, uint256 auctionId, uint256 index) public {
+        delete s_nftIdToAuctionIdSellingAuctionOffers[nftId][auctionId][index];
     }
 
     function test_setPastOwners(uint256 nftId, address pastOwner) public {

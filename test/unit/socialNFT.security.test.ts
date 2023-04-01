@@ -42,8 +42,8 @@ import {beforeEach} from "mocha";
             player3 = signers[3]
         })
         describe("Re-entrancy Attack", () => {
-            it("SocialNFT - withdrawOffer")
-            it("SocialNFT - terminateAuction")
-            it("SocialNFT - buyNftSellingFixedPrice")
+            // it("SocialNFT - withdrawOffer")
+            // it("SocialNFT - terminateAuction")
+            // it("SocialNFT - buyNftSellingFixedPrice")
         })
     })

@@ -36,7 +36,7 @@ const Confirmation: NextPage<Props> = ({changeTab}) => {
     useEffect(() => {
         if(success){
             setTimeout(() => {
-                router.push("/settings")
+                router.push("/home")
             }, 3000)
         }
     }, [success])

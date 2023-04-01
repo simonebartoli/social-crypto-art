@@ -83,61 +83,54 @@ contract PaymentHolder is Utils {
         });
     }
 
+
+
     /*
-        @dev terminate an auction paying the receiver and refunding all the other offers
+        @dev terminate an auction paying the auction creator
         @param sender it is the winner of the auction
         @param receiver the person that created the auction
         @param auction_id the id of the auction
     */
-    function executePayment(address sender, address receiver, uint256 auction_id, address creator, uint8 royaltyPercentage) public onlySocialNftContract {
+    function executePayment(address sender, address receiver, uint256 auction_id, uint256 amount) public payable onlySocialNftContract {
         Value memory payment = s_address_to_payment_hold[sender][auction_id];
-        if(!payment.created || payment.refunded){
+        if(!payment.created || payment.refunded || amount > payment.amount){
             revert ERR_PAYMENT_HOLD_NOT_FOUND();
         }
-        delete s_address_to_payment_hold[sender][auction_id];
-        uint256 amountCreator = payment.amount * royaltyPercentage / 100;
-        uint256 amountReceiver = payment.amount - amountCreator;
-
+        s_address_to_payment_hold[sender][auction_id].amount -= amount;
         if(payment.currency == ZERO_ADDRESS){
-            (bool successReceiver, ) = payable(receiver).call{value: amountReceiver}("");
-            (bool successCreator, ) = payable(creator).call{value: amountCreator}("");
-
+            (bool successReceiver, ) = payable(receiver).call{value: amount}("");
             if(!successReceiver){
-                s_address_to_outstanding_balances[receiver] += amountReceiver;
-            }
-            if(!successCreator){
-                s_address_to_outstanding_balances[creator] += amountCreator;
+                s_address_to_outstanding_balances[receiver] += amount;
             }
         }else{
             IERC20 erc20 = IERC20(payment.currency);
-            erc20.transfer(receiver, amountReceiver);
-            erc20.transfer(creator, amountCreator);
+            erc20.transfer(receiver, amount);
         }
-        cancelPayments(auction_id);
     }
 
     /*
         @dev refund all the people that made an offer for an auction - except the winner
         @param auction_id the id of the auction
     */
-    function cancelPayments(uint256 auction_id) public { // TODO CHANGE TO PRIVATE - JUST TESTING
+    function cancelPayment(uint256 auction_id, address owner) public { // TODO CHANGE TO PRIVATE - JUST TESTING
         address[] memory refundAddresses = s_auction_to_addresses[auction_id];
-        delete s_auction_to_addresses[auction_id];
         for(uint256 i = 0; i < refundAddresses.length; i++){
-            address refundAddress = refundAddresses[i];
-            Value memory payment = s_address_to_payment_hold[refundAddress][auction_id];
-            delete s_address_to_payment_hold[refundAddress][auction_id];
+            if(refundAddresses[i] == owner){
+                Value memory payment = s_address_to_payment_hold[refundAddresses[i]][auction_id];
+                delete s_address_to_payment_hold[refundAddresses[i]][auction_id];
 
-            if(payment.created && !payment.refunded){
-                if(payment.currency == ZERO_ADDRESS){
-                    (bool success, ) = payable(refundAddress).call{value: payment.amount}("");
-                    if(!success){
-                        s_address_to_outstanding_balances[refundAddress] += payment.amount;
+                if(payment.created && !payment.refunded){
+                    if(payment.currency == ZERO_ADDRESS){
+                        (bool success, ) = payable(refundAddresses[i]).call{value: payment.amount}("");
+                        if(!success){
+                            s_address_to_outstanding_balances[refundAddresses[i]] += payment.amount;
+                        }
+                    }else{
+                        IERC20 erc20 = IERC20(payment.currency);
+                        erc20.transfer(refundAddresses[i], payment.amount);
                     }
-                }else{
-                    IERC20 erc20 = IERC20(payment.currency);
-                    erc20.transfer(refundAddress, payment.amount);
                 }
+                break;
             }
         }
     }

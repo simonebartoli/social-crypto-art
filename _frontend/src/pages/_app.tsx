@@ -15,6 +15,8 @@ import {ReactElement, ReactNode} from "react";
 import {Config, DAppProvider, Goerli, Hardhat, Mainnet, MetamaskConnector} from "@usedapp/core";
 import {LayoutContext} from "@/contexts/layout";
 import {ModalContext} from "@/contexts/modal";
+import Web3Account from "@/components/library/web3-account";
+import {SearchBarContext} from "@/contexts/search-bar";
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
     getLayout?: (page: ReactElement) => ReactNode
@@ -83,7 +85,11 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
                         <LoginContext>
                             <DAppProvider config={config}>
                                 <ModalContext>
-                                    {getLayout(<Component {...pageProps} />)}
+                                    <SearchBarContext>
+                                        <Web3Account>
+                                            {getLayout(<Component {...pageProps} />)}
+                                        </Web3Account>
+                                    </SearchBarContext>
                                 </ModalContext>
                             </DAppProvider>
                         </LoginContext>

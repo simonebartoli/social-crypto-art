@@ -6,8 +6,10 @@ import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import Link from "next/link";
 import {useRouter} from "next/router";
+import {useSearchBar} from "@/contexts/search-bar";
 
 const Navbar = () => {
+    const {setOpen} = useSearchBar()
     const [reference, setReference] = useState({
         "/home": false,
         "/search": false,
@@ -33,7 +35,7 @@ const Navbar = () => {
             <Link href="/home" className={`${reference["/home"] ? "bg-white text-black" : "hover:bg-white hover:text-black"} w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 transition rounded-full`}>
                 <CameraOutdoorOutlinedIcon className="!text-3xl"/>
             </Link>
-            <div className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
+            <div onClick={() => setOpen(true)} className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
                 <SearchOutlinedIcon className="!text-3xl"/>
             </div>
             <div className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">

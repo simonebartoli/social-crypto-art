@@ -2,7 +2,7 @@ import {Visibility} from "../../enums/Visibility";
 import {DateTime} from "luxon";
 import {MediaType} from "../../enums/MediaType";
 import PostContentModel from "./PostContentModel";
-import {NFT_STORAGE_API_KEY, prisma} from "../../../globals";
+import {NFT_STORAGE_API_KEY, prisma, SOCIAL_NFT_CONTRACT} from "../../../globals";
 import {AUTH_ERROR, DATA_ERROR, INTERNAL_ERROR} from "../../errors";
 import ErrorCode from "../../enums/ErrorCode";
 import {PostContentType, PostType} from "../../schema/types";
@@ -11,10 +11,11 @@ import Interaction from "./interaction/Interaction";
 import {NewContent} from "./ContentModel";
 import CommentModel from "./interaction/CommentModel";
 import {Input_AddNewPost} from "../../schema/args&inputs";
-import {NftSellingType} from "../../enums/NftSellingType";
 import {File, NFTStorage} from "nft.storage";
 import * as Crypto from "crypto";
 import * as Path from "path";
+import {PostTypeFilter} from "../../enums/PostTypeFilter";
+import type {posts, post_contents, restricted_posts, nft_backup} from "@prisma/client"
 
 
 // ---------------- LOCAL TYPE DECLARATION ---------------- //
@@ -42,6 +43,8 @@ type CreateNewPostConstructor = {
     ipfs?: string
 }
 type PostFilters = {
+    address?: string
+    type: PostTypeFilter
     exclude?: string[]
     maxPosts: number
     dateMax: Date
@@ -248,26 +251,112 @@ class PostModel {
         }
         return post
     }
-    public static async loadPostByNickname(nickname: string, auth?: string, filter?: PostFilters) : Promise<PostModel[]> {
-        const {dateMin, dateMax, maxPosts, exclude} = filter || {}
-        let result = await prisma.posts.findMany({
-            where: {
-                nickname: nickname,
-                created_at: {
-                    lte: dateMax ? dateMax : new Date(),
-                    gte: dateMin
+    public static async loadNftCreated(nickname: string, auth?: string, filter?: PostFilters): Promise<string[]> {
+        const {address} = filter || {}
+        const nftId: string[] = []
+        if(address){
+            const event = SOCIAL_NFT_CONTRACT.filters.NewNftCreated(null, address)
+            const result = await SOCIAL_NFT_CONTRACT.queryFilter(event)
+            nftId.push(...result.map(_ => _.args._nft_id.toString()))
+        }
+        return nftId
+    }
+    public static async loadNftOwned(nickname: string, auth?: string, filter?: PostFilters): Promise<string[]> {
+        const {address} = filter || {}
+        const nftId: string[] = []
+        if(address){
+            const result = await SOCIAL_NFT_CONTRACT.getAllNftIdFromSender(address)
+            nftId.push(...result.map(_ => _.toString()))
+        }
+        return nftId
+    }
+
+    public static async loadPostByNickname(nickname: string, nftIdList: string[], auth?: string, filter?: PostFilters) : Promise<PostModel[]> {
+        const {dateMin, dateMax, maxPosts, exclude, type} = filter || {}
+        let result: (posts & {post_contents: post_contents[], restricted_posts: restricted_posts[], nft_backup: nft_backup | null})[] = []
+        if(type === PostTypeFilter.ALL){
+            result = await prisma.posts.findMany({
+                where: {
+                    OR: [
+                        {
+                            nickname: nickname,
+                        },
+                        {
+                            post_contents: {
+                                some: {
+                                    nft_id: {
+                                        in: nftIdList
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    created_at: {
+                        lte: dateMax ? dateMax : new Date(),
+                        gte: dateMin
+                    },
+                },
+                take: maxPosts ? maxPosts : 10,
+                include: {
+                    post_contents: true,
+                    restricted_posts: true,
+                    nft_backup: true
+                },
+                orderBy: {
+                    created_at: "desc"
                 }
-            },
-            take: maxPosts ? maxPosts : 10,
-            include: {
-                post_contents: true,
-                restricted_posts: true,
-                nft_backup: true
-            },
-            orderBy: {
-                created_at: "desc"
-            }
-        })
+            })
+        }else if(type === PostTypeFilter.POST_ONLY){
+            result = await prisma.posts.findMany({
+                where: {
+                    nickname: nickname,
+                    post_contents: {
+                        every: {
+                            is_nft: false
+                        }
+                    },
+                    created_at: {
+                        lte: dateMax ? dateMax : new Date(),
+                        gte: dateMin
+                    },
+                },
+                take: maxPosts ? maxPosts : 10,
+                include: {
+                    post_contents: true,
+                    restricted_posts: true,
+                    nft_backup: true
+                },
+                orderBy: {
+                    created_at: "desc"
+                }
+            })
+        }else{
+            result = await prisma.posts.findMany({
+                where: {
+                    post_contents: {
+                        some: {
+                            nft_id: {
+                                in: nftIdList
+                            }
+                        }
+                    },
+                    created_at: {
+                        lte: dateMax ? dateMax : new Date(),
+                        gte: dateMin
+                    },
+                },
+                take: maxPosts ? maxPosts : 10,
+                include: {
+                    post_contents: true,
+                    restricted_posts: true,
+                    nft_backup: true
+                },
+                orderBy: {
+                    created_at: "desc"
+                }
+            })
+        }
+
         if(auth !== undefined){
             result = result.filter(_ => {
                 if(_.visibility === Visibility.PRIVATE){

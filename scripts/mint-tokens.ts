@@ -6,7 +6,7 @@ const mintTokens = async () => {
     const erc20: Erc20 = await ethers.getContract("Erc20", deployer)
 
     console.log(`BEFORE: Balance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 - ${await erc20.balanceOf(deployer)}`)
-    await erc20.mint("0xB1DC64EE0133377ab6BE5b4917668d532bd8e35A", ethers.utils.parseEther("25"))
+    await erc20.mint("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", ethers.utils.parseEther("25"))
     console.log(`AFTER: Balance 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 - ${await erc20.balanceOf(deployer)}`)
 }
 

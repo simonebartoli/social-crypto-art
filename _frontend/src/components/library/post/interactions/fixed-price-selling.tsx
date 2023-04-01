@@ -3,8 +3,7 @@ import {BigNumber, ethers} from "ethers";
 import {NftInfoType} from "@/components/library/post/nft.type";
 import {NextPage} from "next";
 import {CurrencyEnum} from "@/enums/global/nft-enum";
-import {ZERO_ADDRESS} from "@/globals";
-import {socialNFTAddress} from "@/contracts";
+import {SOCIAL_NFT_ADDRESS, ZERO_ADDRESS} from "@/globals";
 import {Contract_getERC20TokenBalance, Contract_getERC20TokenBalance_CallbackType} from "@/contexts/contract";
 import {useEthers} from "@usedapp/core";
 import Metamask from "@/components/settings/buttons/metamask";
@@ -147,7 +146,7 @@ const FixedPriceSelling: NextPage<Props> = ({nftId, nftInfo}) => {
                 }</span>
                 <span className="col-span-3 w-full border-t-[1px] border-custom-grey"/>
                 <span>TX CONTRACT (SocialNFT):</span>
-                <span className="col-span-2 text-lg font-bold">{socialNFTAddress}</span>
+                <span className="col-span-2 text-lg font-bold">{SOCIAL_NFT_ADDRESS}</span>
             </div>
             {
                 (balance && BigNumber.from(balance).lt(BigNumber.from(nftInfo.fixedPrice.amount))) &&

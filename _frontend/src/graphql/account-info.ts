@@ -23,3 +23,11 @@ export const GET_USER = gql(`
         }
     }
 `)
+
+export const GET_LIST_OF_USERS = gql(`
+    query GET_LIST_OF_USERS($data: Input_SearchForUsers!) {
+        getListOfUsers(data: $data) {
+            nickname
+        }
+    }
+`)

@@ -14,7 +14,7 @@ import {Contract_getMessageHash, Contract_getMessageHash_CallbackType} from "@/c
 import {JsonRpcProvider} from "@ethersproject/providers";
 import {ethers} from "ethers";
 import {useRouter} from "next/router";
-import {useLoader} from "@/contexts/loader";
+import Loader from "@/components/library/loader";
 
 type Props = {
     changeTab: (selected: LoginEnum) => void
@@ -22,7 +22,7 @@ type Props = {
 
 const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
     const {account, deactivate, library} = useEthers()
-    const {changeLoading} = useLoader()
+    const [loading, setLoading] = useState(false)
     const router = useRouter()
 
     const {} = useQuery(GET_IP_ADDRESS, {
@@ -31,15 +31,15 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
     })
     const [getAccessToken_Web3Account] = useMutation(GET_ACCESS_TOKEN_WEB3_ACCOUNT, {
         onError: (error) => {
-            changeLoading(false)
+            setLoading(false)
             setDisabled(false)
             toast.error(error.message)
         },
         onCompleted: async () => {
             setDisabled(false)
             toast.success("Good, You're logged in!")
-            await router.push("/settings")
-            changeLoading(false)
+            await router.push("/home")
+            setLoading(false)
         },
 
     })
@@ -79,7 +79,7 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
     }, [ip, account])
     useEffect(() => {
         if(signature !== null && account){
-            changeLoading(true)
+            setLoading(true)
             getAccessToken_Web3Account({
                 variables: {
                     data: {
@@ -95,6 +95,9 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
 
     return (
         <>
+            {
+                loading && <Loader/>
+            }
             {
                 (getHash && account && ip !== null) &&
                 <Contract_getMessageHash account={account} ip={ip} callback={getMessageHashCallback}/>

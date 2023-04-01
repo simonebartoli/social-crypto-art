@@ -22,28 +22,14 @@ import type {
 
 export interface VerifySignatureInterface extends utils.Interface {
   functions: {
-    "getAddressFromSignature(address,address,string,string,bytes)": FunctionFragment;
     "getMessageHash(address,address,string,string)": FunctionFragment;
     "verifySignature(address,address,string,string,bytes)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic:
-      | "getAddressFromSignature"
-      | "getMessageHash"
-      | "verifySignature"
+    nameOrSignatureOrTopic: "getMessageHash" | "verifySignature"
   ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "getAddressFromSignature",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>
-    ]
-  ): string;
   encodeFunctionData(
     functionFragment: "getMessageHash",
     values: [
@@ -64,10 +50,6 @@ export interface VerifySignatureInterface extends utils.Interface {
     ]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "getAddressFromSignature",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getMessageHash",
     data: BytesLike
@@ -107,15 +89,6 @@ export interface VerifySignature extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    getAddressFromSignature(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _date: PromiseOrValue<string>,
-      _ip: PromiseOrValue<string>,
-      sig: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
     getMessageHash(
       _from: PromiseOrValue<string>,
       _to: PromiseOrValue<string>,
@@ -133,15 +106,6 @@ export interface VerifySignature extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
   };
-
-  getAddressFromSignature(
-    _from: PromiseOrValue<string>,
-    _to: PromiseOrValue<string>,
-    _date: PromiseOrValue<string>,
-    _ip: PromiseOrValue<string>,
-    sig: PromiseOrValue<BytesLike>,
-    overrides?: CallOverrides
-  ): Promise<string>;
 
   getMessageHash(
     _from: PromiseOrValue<string>,
@@ -161,15 +125,6 @@ export interface VerifySignature extends BaseContract {
   ): Promise<boolean>;
 
   callStatic: {
-    getAddressFromSignature(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _date: PromiseOrValue<string>,
-      _ip: PromiseOrValue<string>,
-      sig: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
     getMessageHash(
       _from: PromiseOrValue<string>,
       _to: PromiseOrValue<string>,
@@ -191,15 +146,6 @@ export interface VerifySignature extends BaseContract {
   filters: {};
 
   estimateGas: {
-    getAddressFromSignature(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _date: PromiseOrValue<string>,
-      _ip: PromiseOrValue<string>,
-      sig: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getMessageHash(
       _from: PromiseOrValue<string>,
       _to: PromiseOrValue<string>,
@@ -219,15 +165,6 @@ export interface VerifySignature extends BaseContract {
   };
 
   populateTransaction: {
-    getAddressFromSignature(
-      _from: PromiseOrValue<string>,
-      _to: PromiseOrValue<string>,
-      _date: PromiseOrValue<string>,
-      _ip: PromiseOrValue<string>,
-      sig: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getMessageHash(
       _from: PromiseOrValue<string>,
       _to: PromiseOrValue<string>,

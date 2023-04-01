@@ -10,9 +10,10 @@ import {PostContext} from "@/contexts/post-info";
 const Home = () => {
     const {logged} = useLogin()
     const [ready, setReady] = useState(false)
-    const {posts, getPosts, refetch_getPosts: refetch, loading_getPosts: loading} = useFetchingPostsContext()
+    const {posts, resetStatus, getPosts, refetch_getPosts: refetch, loading_getPosts: loading} = useFetchingPostsContext()
 
     useEffect(() => {
+        resetStatus()
         getPosts()
         setReady(true)
     }, [logged])
@@ -29,6 +30,12 @@ const Home = () => {
                         <Post refetch={refetch}/>
                     </PostContext>
                 )
+            }
+            {
+                posts.length === 0 &&
+                <div className="h-[calc(90vh-4rem)] flex flex-col items-center justify-center">
+                    <span className="text-white text-4xl uppercase">No Posts Have Been Published, yet...</span>
+                </div>
             }
         </div>
     );

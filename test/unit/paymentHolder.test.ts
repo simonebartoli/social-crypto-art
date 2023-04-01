@@ -235,25 +235,45 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers"
                         currency
                     )
                 })
-                it("Should Refund Everyone", async () => {
+                it("Should Refund Everyone NATIVE", async () => {
                     const deployerBalanceBefore = await deployer.getBalance()
                     const player1BalanceBefore = await player1.getBalance()
                     const player2BalanceBefore = await player2.getBalance()
                     const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
 
-                    const txResponse = await paymentHolderDeployer.cancelPayments(auctionId)
-                    const tx = await txResponse.wait(1)
-                    const gasUsed = tx.gasUsed
-                    const gasCost = gasUsed.mul(tx.effectiveGasPrice)
+                    const txResponse_deployer = await paymentHolderDeployer.cancelPayment(auctionId, await deployer.getAddress())
+                    const txResponse_player1 = await paymentHolderPlayer1.cancelPayment(auctionId, await player1.getAddress())
+                    const txResponse_player2 = await paymentHolderPlayer2.cancelPayment(auctionId, await player2.getAddress())
+
+                    const tx_deployer = await txResponse_deployer.wait(1)
+                    const tx_player1 = await txResponse_player1.wait(1)
+                    const tx_player2 = await txResponse_player2.wait(1)
+
+                    const gasUsed_deployer = tx_deployer.gasUsed
+                    const gasCost_deployer = gasUsed_deployer.mul(tx_deployer.effectiveGasPrice)
+
+                    const gasUsed_player1 = tx_player1.gasUsed
+                    const gasCost_player1 = gasUsed_player1.mul(tx_player1.effectiveGasPrice)
+
+                    const gasUsed_player2 = tx_player2.gasUsed
+                    const gasCost_player2 = gasUsed_player2.mul(tx_player2.effectiveGasPrice)
 
                     const deployerBalanceAfter = await deployer.getBalance()
                     const player1BalanceAfter = await player1.getBalance()
                     const player2BalanceAfter = await player2.getBalance()
                     const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
 
-                    assert.equal(deployerBalanceAfter.toString(), deployerBalanceBefore.add(amountTest1).sub(gasCost).toString())
-                    assert.equal(player1BalanceAfter.toString(), player1BalanceBefore.add(amountTest2).toString())
-                    assert.equal(player2BalanceAfter.toString(), player2BalanceBefore.add(amountTest3).toString())
+                    // console.log("balanceBefore: ", ethers.utils.formatEther(player1BalanceBefore))
+                    // console.log("balanceAfter : ", ethers.utils.formatEther(player1BalanceAfter))
+                    // console.log("Result       : ", ethers.utils.formatEther(player1BalanceAfter.add(gasCost_player1).sub(amountTest2).sub(player1BalanceBefore)))
+                    //
+                    // console.log("amount       : ", ethers.utils.formatEther(amountTest2))
+                    // console.log("gasCost      : ", ethers.utils.formatEther(gasCost_player1))
+
+
+                    assert.equal(deployerBalanceAfter.toString(), deployerBalanceBefore.add(amountTest1).sub(gasCost_deployer).toString())
+                    assert.equal(player1BalanceAfter.toString(), player1BalanceBefore.add(amountTest2).sub(gasCost_player1).toString())
+                    assert.equal(player2BalanceAfter.toString(), player2BalanceBefore.add(amountTest3).sub(gasCost_player2).toString())
                     assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.sub(amountTest1).sub(amountTest2).sub(amountTest3).toString())
                 })
             })
@@ -295,13 +315,15 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers"
                         currency
                     )
                 })
-                it("Should Refund Everyone", async () => {
+                it("Should Refund Everyone ERC20", async () => {
                     const deployerBalanceBefore = await erc20.balanceOf(await deployer.getAddress())
                     const player1BalanceBefore = await erc20.balanceOf(await player1.getAddress())
                     const player2BalanceBefore = await erc20.balanceOf(await player2.getAddress())
                     const paymentHolderBalanceBefore = await erc20.balanceOf(paymentHolder.address)
 
-                    await paymentHolderDeployer.cancelPayments(auctionId)
+                    await paymentHolderDeployer.cancelPayment(auctionId, await deployer.getAddress())
+                    await paymentHolderPlayer1.cancelPayment(auctionId, await player1.getAddress())
+                    await paymentHolderPlayer2.cancelPayment(auctionId, await player2.getAddress())
 
                     const deployerBalanceAfter = await erc20.balanceOf(await deployer.getAddress())
                     const player1BalanceAfter =  await erc20.balanceOf(await player1.getAddress())
@@ -320,7 +342,6 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers"
                 paymentHolder: PaymentHolder, creator: Signer,
                 paymentHolderDeployer: PaymentHolder, paymentHolderPlayer1: PaymentHolder, paymentHolderPlayer2: PaymentHolder, paymentHolderPlayer3: PaymentHolder
             const auctionId = 1
-            const royalties = "25"
             beforeEach(async () => {
                 creator = player3
                 erc20Deployer = erc20.connect(deployer)
@@ -339,115 +360,77 @@ import * as helpers from "@nomicfoundation/hardhat-network-helpers"
             describe("Payment using Native Currency", () => {
                 let currency: string
                 const initialOffer = ethers.utils.parseEther("1")
-
-                let amountTest1: BigNumber, amountTest2: BigNumber
+                let amountTest1: BigNumber
                 beforeEach(async () => {
                     currency = await test.getTokenAddress(CurrecyAddress.ETH)
-
                     amountTest1 = initialOffer.mul(Math.ceil(Math.random()*100) + 100).div(100)
-                    amountTest2 = initialOffer.mul(Math.ceil(Math.random()*100) + 100).div(100)
-
                     const sendMoneyPlayer1 = {
                         to: paymentHolder.address,
                         value: amountTest1
                     }
-                    const sendMoneyPlayer2 = {
-                        to: paymentHolder.address,
-                        value: amountTest2
-                    }
-
                     await player1.sendTransaction(sendMoneyPlayer1)
-                    await player2.sendTransaction(sendMoneyPlayer2)
-
                     await paymentHolderPlayer1.addNewHoldPayment_Auction(
                         auctionId,
                         await player1.getAddress(),
                         amountTest1,
                         currency
                     )
-                    await paymentHolderPlayer2.addNewHoldPayment_Auction(
-                        auctionId,
-                        await player2.getAddress(),
-                        amountTest2,
-                        currency
-                    )
                 })
-                it("Should Pay the creator, the owner and refunds the others", async () => {
+                it("Should Pay the address passed with the correct amount", async () => {
                     const deployerBalanceBefore = await deployer.getBalance()
-                    const winnerBalanceBefore = await player1.getBalance()
-                    const player2BalanceBefore = await player2.getBalance()
-                    const creatorBalanceBefore = await creator.getBalance()
+                    const player1BalanceBefore = await player1.getBalance()
                     const paymentHolderBalanceBefore = await ethers.provider.getBalance(paymentHolder.address)
 
-                    const txResponse = await paymentHolderDeployer.executePayment(await player1.getAddress(), await deployer.getAddress(), auctionId, await creator.getAddress(), royalties)
+                    const txResponse = await paymentHolderDeployer.executePayment(await player1.getAddress(), await deployer.getAddress(), auctionId, amountTest1)
                     const txReceipt = await txResponse.wait(1)
                     const gasUsed = txReceipt.gasUsed
                     const gasCost = gasUsed.mul(txReceipt.effectiveGasPrice)
 
-
                     const deployerBalanceAfter = await deployer.getBalance()
-                    const winnerBalanceAfter =  await player1.getBalance()
-                    const player2BalanceAfter = await player2.getBalance()
-                    const creatorBalanceAfter = await creator.getBalance()
+                    const player1BalanceAfter =  await player1.getBalance()
                     const paymentHolderBalanceAfter = await ethers.provider.getBalance(paymentHolder.address)
 
-                    assert.equal(deployerBalanceAfter.toString(), deployerBalanceBefore.add(amountTest1.mul(100 - Number(royalties)).div(100)).sub(gasCost).toString(), "Deployer Balance is not correct")
-                    assert.equal(winnerBalanceAfter.toString(), winnerBalanceBefore.toString(), "Winner Balance is not correct")
-                    assert.equal(player2BalanceAfter.toString(), player2BalanceBefore.add(amountTest2).toString(), "Player 2 Balance is not correct")
-                    assert.equal(creatorBalanceAfter.toString(), creatorBalanceBefore.add(amountTest1.mul(royalties).div(100)).toString(), "Creator Balance is not correct")
-                    assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.sub(amountTest1).sub(amountTest2).toString(), "Payment Holder Balance is not correct")
+                    const s_address_to_payment_hold = await paymentHolder.s_address_to_payment_hold(await player1.getAddress(), auctionId)
+
+                    assert.equal(s_address_to_payment_hold.amount.toString(), "0", "s_address_to_payment_hold Balance is not correct")
+                    assert.equal(deployerBalanceAfter.toString(), deployerBalanceBefore.add(amountTest1).sub(gasCost).toString(), "Deployer Balance is not correct")
+                    assert.equal(player1BalanceAfter.toString(), player1BalanceBefore.toString(), "Winner Balance is not correct")
+                    assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.sub(amountTest1).toString(), "Payment Holder Balance is not correct")
                 })
             })
             describe("Payment using ERC20", () => {
                 let currency: string
                 const initialOffer = ethers.utils.parseEther("1")
 
-                let amountTest1: BigNumber, amountTest2: BigNumber
+                let amountTest1: BigNumber
                 beforeEach(async () => {
                     currency = await test.getTokenAddress(CurrecyAddress.DAI)
-
                     amountTest1 = initialOffer.mul(Math.ceil(Math.random()*100) + 100).div(100)
-                    amountTest2 = initialOffer.mul(Math.ceil(Math.random()*100) + 100).div(100)
-
                     await erc20Deployer.mint(await player1.getAddress(), amountTest1)
-                    await erc20Deployer.mint(await player2.getAddress(), amountTest2)
-
                     await erc20Player1.transfer(paymentHolder.address, amountTest1)
-                    await erc20Player2.transfer(paymentHolder.address, amountTest2)
-
                     await paymentHolderPlayer1.addNewHoldPayment_Auction(
                         auctionId,
                         await player1.getAddress(),
                         amountTest1,
                         currency
                     )
-                    await paymentHolderPlayer2.addNewHoldPayment_Auction(
-                        auctionId,
-                        await player2.getAddress(),
-                        amountTest2,
-                        currency
-                    )
                 })
                 it("Should Pay the creator, the owner and refunds the others - ERC20", async () => {
                     const deployerBalanceBefore = await erc20.balanceOf(await deployer.getAddress())
-                    const winnerBalanceBefore = await erc20.balanceOf(await player1.getAddress())
-                    const player2BalanceBefore = await erc20.balanceOf(await player2.getAddress())
-                    const creatorBalanceBefore = await erc20.balanceOf(await creator.getAddress())
+                    const player1BalanceBefore = await erc20.balanceOf(await player1.getAddress())
                     const paymentHolderBalanceBefore = await erc20.balanceOf(paymentHolder.address)
 
-                    await paymentHolderDeployer.executePayment(await player1.getAddress(), await deployer.getAddress(), auctionId, await creator.getAddress(), royalties)
+                    await paymentHolderDeployer.executePayment(await player1.getAddress(), await deployer.getAddress(), auctionId, amountTest1)
 
                     const deployerBalanceAfter = await erc20.balanceOf(await deployer.getAddress())
-                    const winnerBalanceAfter =  await erc20.balanceOf(await player1.getAddress())
-                    const player2BalanceAfter = await erc20.balanceOf(await player2.getAddress())
-                    const creatorBalanceAfter = await erc20.balanceOf(await creator.getAddress())
+                    const player1BalanceAfter =  await erc20.balanceOf(await player1.getAddress())
                     const paymentHolderBalanceAfter = await erc20.balanceOf(paymentHolder.address)
+                    const s_address_to_payment_hold = await paymentHolder.s_address_to_payment_hold(await player1.getAddress(), auctionId)
 
-                    assert.equal(deployerBalanceAfter.toString(), deployerBalanceBefore.add(amountTest1.mul(100 - Number(royalties)).div(100)).toString(), "Deployer Balance is not correct")
-                    assert.equal(winnerBalanceAfter.toString(), winnerBalanceBefore.toString(), "Winner Balance is not correct")
-                    assert.equal(player2BalanceAfter.toString(), player2BalanceBefore.add(amountTest2).toString(), "Player 2 Balance is not correct")
-                    assert.equal(creatorBalanceAfter.toString(), creatorBalanceBefore.add(amountTest1.mul(royalties).div(100)).toString(), "Creator Balance is not correct")
-                    assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.sub(amountTest1).sub(amountTest2).toString(), "Payment Holder Balance is not correct")
+                    assert.equal(s_address_to_payment_hold.amount.toString(), "0", "s_address_to_payment_hold Balance is not correct")
+                    assert.equal(deployerBalanceAfter.toString(), deployerBalanceBefore.add(amountTest1).toString(), "Deployer Balance is not correct")
+                    assert.equal(player1BalanceAfter.toString(), player1BalanceBefore.toString(), "Player1 Balance is not correct")
+                    assert.equal(paymentHolderBalanceAfter.toString(), paymentHolderBalanceBefore.sub(amountTest1).toString(), "Payment Holder Balance is not correct")
                 })
             })
         })

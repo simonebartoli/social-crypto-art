@@ -4,7 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import {useRouter} from "next/router";
 type ContextType = {
     open: boolean
-    showModal: (e: JSX.Element) => void
+    showModal: (e: JSX.Element, manualClose?: boolean) => void
     closeModal: () => void
 }
 
@@ -18,12 +18,17 @@ export const ModalContext: NextPage<Props> = ({children}) => {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [element, setElement] = useState<JSX.Element | null>(null)
+    const [manualClose, setManualClose] = useState(true)
 
-    const showModal = (e: JSX.Element) => {
+    const showModal = (e: JSX.Element, manualClose?: boolean) => {
+        if(manualClose !== undefined){
+            setManualClose(manualClose)
+        }
         setElement(e)
         setOpen(true)
     }
     const closeModal = () => {
+        setManualClose(true)
         setOpen(false)
     }
 
@@ -35,7 +40,9 @@ export const ModalContext: NextPage<Props> = ({children}) => {
             {
                 open &&
                 <div className="font-main h-[75vh] rounded-lg p-3 fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 z-50 bg-white shadow-lg w-1/2">
-                    <CloseIcon onClick={() => setOpen(false)} className="cursor-pointer !text-3xl absolute right-[1%] top-[2.5%]"/>
+                    {
+                        manualClose && <CloseIcon onClick={() => setOpen(false)} className="cursor-pointer !text-3xl absolute right-[1%] top-[2.5%]"/>
+                    }
                     <div className="overflow-y-scroll flex flex-col items-center justify-start w-[calc(100%-1.5rem)] absolute top-[10%] h-[calc(90%-0.75rem)] left-[0.75rem] p-4">
                         {
                             element !== null &&

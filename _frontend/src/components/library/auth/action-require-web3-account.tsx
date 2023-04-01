@@ -12,12 +12,11 @@ type Props = {
 }
 
 const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccount, children, callback}) => {
-    const {showModal, closeModal} = useModal()
+    const {showModal} = useModal()
     const {account} = useEthers()
 
     useEffect(() => {
         // TODO FIX BUG HERE - NOT UPDATING ACCOUNT
-        closeModal()
         if(specificAccount){
             if(account && account === specificAccount){
                 if (callback) {

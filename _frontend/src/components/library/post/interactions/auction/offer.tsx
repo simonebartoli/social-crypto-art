@@ -2,6 +2,8 @@ import React from 'react';
 import Image from "next/image";
 import TEST from "../../../../../../public/test.webp";
 import {NextPage} from "next";
+import {DateTime} from "luxon";
+import {ethers} from "ethers";
 
 type Props = {
     bidder: string
@@ -26,9 +28,9 @@ const Offer: NextPage<Props> = ({bidder, amount, date, currency}) => {
             <div className="flex flex-col gap-4 items-start justify-center w-full">
                 <div className="flex flex-row gap-4 text-lg font-bold">
                     <span>AMOUNT OFFERED:</span>
-                    <span>{`${amount} ${currency}`}</span>
+                    <span>{`${ethers.utils.formatEther(amount)} ${currency}`}</span>
                 </div>
-                <span>Offer Made on 17/08/2023 at 14:53</span>
+                <span>Offer Made on {DateTime.fromSeconds(Number(date)).toLocaleString(DateTime.DATETIME_FULL)}</span>
             </div>
         </div>
     );

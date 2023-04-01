@@ -5,6 +5,7 @@ import {ArrayMinSize, IsEthereumAddress, IsInt, IsNotEmpty, Min} from "class-val
 import {ArrayOneOrMore} from "../../../types";
 import {Interaction} from "../../enums/Interaction";
 import {NftSellingType} from "../../enums/NftSellingType";
+import {PostTypeFilter} from "../../enums/PostTypeFilter";
 
 // -------------------- NOT EXPORTED --------------------
 @InputType()
@@ -74,6 +75,13 @@ export class Input_AddNewPost {
 export class Input_GetPosts {
     @Field(() => [String], {nullable: true})
     exclude?: string[]
+
+    @Field(() => PostTypeFilter, {defaultValue: PostTypeFilter.ALL})
+    type: PostTypeFilter
+
+    @Field(() => String, {nullable: true})
+    @IsEthereumAddress()
+    address?: string
 
     @Field(() => Int, {defaultValue: 10})
     @IsInt()
