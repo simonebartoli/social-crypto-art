@@ -1,4 +1,5 @@
 node_modules
 /public
+_mail_builder
 # Keep environment variables out of version control
 .env

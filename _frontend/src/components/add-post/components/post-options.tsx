@@ -6,14 +6,14 @@ import {AddPostTypeEnum} from "@/enums/local/add-post-enum";
 import Selling from "@/components/add-post/components/options/selling";
 import {useAddPostInfo} from "@/contexts/add-post-info";
 import {useModal} from "@/contexts/modal";
-import {useEthers} from "@usedapp/core";
 import RequireWeb3Account from "@/components/library/auth/require-web3-account";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 
 const PostOptions = () => {
     const [selectedBeforeAccount, setSelectedBeforeAccount] = useState<string>(AddPostTypeEnum[AddPostTypeEnum.POST])
 
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
     const {showModal, closeModal} = useModal()
     const {postType} = useAddPostInfo()
     const [showExtraInfo, setShowExtraInfo] = useState(false)

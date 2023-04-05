@@ -5,7 +5,6 @@ import {NextPage} from "next";
 import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {SOCIAL_NFT_ADDRESS, ZERO_ADDRESS} from "@/globals";
 import {Contract_getERC20TokenBalance, Contract_getERC20TokenBalance_CallbackType} from "@/contexts/contract";
-import {useEthers} from "@usedapp/core";
 import Metamask from "@/components/settings/buttons/metamask";
 import WalletConnect from "@/components/settings/buttons/wallet-connect";
 import IncreaseAllowanceErc20BlockchainInteractions
@@ -17,6 +16,7 @@ import Button from "@/components/login/button";
 import BuyFixedPriceBlockchainInteractions
     from "@/components/library/blockchain-operations/buy-fixed-price-blockchain-interaction";
 import {toast} from "react-toastify";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     nftId: string
@@ -25,7 +25,7 @@ type Props = {
 
 const FixedPriceSelling: NextPage<Props> = ({nftId, nftInfo}) => {
     const {closeModal} = useModal()
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
 
     const [balance, setBalance] = useState<string>()
     const [allowance, setAllowance] = useState<string>()

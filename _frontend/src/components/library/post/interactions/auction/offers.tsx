@@ -13,10 +13,10 @@ import MakeOfferAuctionBlockchainInteraction
 import {BlockchainCallbackContext} from "@/contexts/blockchain-callback";
 import BlockchainWrapper from "@/components/library/blockchain-wrapper";
 import {toast} from "react-toastify";
-import {useEthers} from "@usedapp/core";
 import {usePostContext} from "@/contexts/post-info";
 import IncreaseAllowanceErc20BlockchainInteraction
     from "@/components/library/blockchain-operations/increase-allowance-erc20-blockchain-interaction";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 
 type Props = {
@@ -29,7 +29,7 @@ type Props = {
 }
 
 const Offers: NextPage<Props> = ({nftId, nftInfo, offers, erc20Balance, erc20Allowance, goBack}) => {
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
     const {setLoadingWeb3Changes} = usePostContext() || {}
 
     const form = useRef<HTMLFormElement>(null)

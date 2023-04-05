@@ -44,7 +44,7 @@ const Navbar = () => {
             <Link href="/account" className={`${reference["/account"] ? "bg-white text-black" : "hover:bg-white hover:text-black"} w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 transition rounded-full`}>
                 <PersonOutlineOutlinedIcon className="!text-3xl"/>
             </Link>
-            <Link href="/settings" className={`${reference["/settings"] ? "bg-white text-black" : "hover:bg-white hover:text-black"} w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 transition rounded-full`}>
+            <Link href="/settings/personal" className={`${reference["/settings"] ? "bg-white text-black" : "hover:bg-white hover:text-black"} w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 transition rounded-full`}>
                 <SettingsOutlinedIcon className="!text-3xl"/>
             </Link>
         </div>

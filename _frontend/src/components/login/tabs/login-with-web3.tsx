@@ -15,13 +15,15 @@ import {JsonRpcProvider} from "@ethersproject/providers";
 import {ethers} from "ethers";
 import {useRouter} from "next/router";
 import Loader from "@/components/library/loader";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     changeTab: (selected: LoginEnum) => void
 }
 
 const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
-    const {account, deactivate, library} = useEthers()
+    const {library} = useEthers()
+    const {account, disconnect} = useWeb3Info()
     const [loading, setLoading] = useState(false)
     const router = useRouter()
 
@@ -118,7 +120,7 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
                 <div className="p-4 bg-custom-light-grey rounded-lg flex flex-col items-center justify-center gap-3">
                     <span>You&apos;re about to use the following address:</span>
                     <span className="font-bold">{account}</span>
-                    <button onClick={deactivate} className="hover:bg-white hover:text-black transition shadow-lg border-[1px] border-black w-full p-2 bg-black text-white rounded-lg">Disconnect</button>
+                    <button onClick={disconnect} className="hover:bg-white hover:text-black transition shadow-lg border-[1px] border-black w-full p-2 bg-black text-white rounded-lg">Disconnect</button>
                 </div>
             }
             <div className="w-full flex flex-col gap-3 items-center">

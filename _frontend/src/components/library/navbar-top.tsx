@@ -3,10 +3,10 @@ import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNone
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import {useLogin} from "@/contexts/login";
 import Link from "next/link";
-import {useEthers} from "@usedapp/core";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 const NavbarTop = () => {
-    const {account, activateBrowserWallet} = useEthers()
+    const {account} = useWeb3Info()
     const {personalInfo, logout} = useLogin()
 
 
@@ -25,9 +25,9 @@ const NavbarTop = () => {
                                 <span className="text-xl">
                                     Connected to <span className="text-xl p-2 rounded-lg bg-black text-white">{account}</span>
                                 </span>:
-                                <button onClick={() => activateBrowserWallet({type: "metamask"})} className="hover:bg-white hover:text-black transition border-[1px] shadow-lg border-black rounded-lg p-2 bg-black text-white text-center">
+                                <Link href="/settings/web3/connected" className="hover:bg-white hover:text-black transition border-[1px] shadow-lg border-black rounded-lg p-2 bg-black text-white text-center">
                                     Connect Now
-                                </button>
+                                </Link>
                         }
                     </> :
                     <>

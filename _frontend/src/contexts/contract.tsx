@@ -7,6 +7,7 @@ import {DateTime} from "luxon";
 import {NftSellingStatusEnum} from "@/enums/global/nft-enum";
 import {SOCIAL_NFT_ADDRESS, VERIFY_SIGNATURE_ADDRESS, ZERO_ADDRESS} from "@/globals";
 import {ethers} from "ethers";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 // VIEW FUNCTIONS
 
@@ -300,7 +301,8 @@ type Contract_createNft_Props = {
     onError: (message: string) => void
 }
 export const Contract_createNft: NextPage<Contract_createNft_Props> = ({execute, URI, onError, callback}) => {
-    const {send, events, state} = useContractFunction(socialNFTContract, "createNft")
+    const {signer} = useWeb3Info()
+    const {send, events, state} = useContractFunction(socialNFTContract, "createNft", signer ? {signer: signer} : undefined)
     useEffect(() => {
         if(execute){
             send(URI)
@@ -333,7 +335,8 @@ type Contract_setRoyalties_Props = {
     onError: (message: string) => void
 }
 export const Contract_setRoyalties: NextPage<Contract_setRoyalties_Props> = ({execute, nft_id, percentage, onError, callback}) => {
-    const {send, events, state} = useContractFunction(socialNFTContract, "setRoyalties")
+    const {signer} = useWeb3Info()
+    const {send, events, state} = useContractFunction(socialNFTContract, "setRoyalties", signer ? {signer: signer} : undefined)
 
     useEffect(() => {
         if(execute){
@@ -366,7 +369,8 @@ type Contract_resetSellingStatus_Props = {
     nft_id: string
 }
 export const Contract_resetSellingStatus: NextPage<Contract_resetSellingStatus_Props> = ({execute, nft_id, onError, callback}) => {
-    const {send, events, state} = useContractFunction(socialNFTContract, "resetSellingStatus")
+    const {signer} = useWeb3Info()
+    const {send, events, state} = useContractFunction(socialNFTContract, "resetSellingStatus", signer ? {signer: signer} : undefined)
 
     useEffect(() => {
         if(execute){
@@ -401,7 +405,8 @@ type Contract_setSellingFixedPrice_Props = {
     currency: string
 }
 export const Contract_setSellingFixedPrice: NextPage<Contract_setSellingFixedPrice_Props> = ({execute, nft_id, amount, currency, onError, callback}) => {
-    const {send, events, state} = useContractFunction(socialNFTContract, "setSellingFixedPrice")
+    const {signer} = useWeb3Info()
+    const {send, events, state} = useContractFunction(socialNFTContract, "setSellingFixedPrice", signer ? {signer: signer} : undefined)
 
     useEffect(() => {
         if(execute){
@@ -440,7 +445,8 @@ type Contract_setSellingAuction_Props = {
 }
 export const Contract_setSellingAuction: NextPage<Contract_setSellingAuction_Props> =
     ({execute, nft_id, currency, deadline, minIncrement, refundable,initialPrice, onError, callback}) => {
-    const {send, events, state} = useContractFunction(socialNFTContract, "setSellingAuction")
+    const {signer} = useWeb3Info()
+    const {send, events, state} = useContractFunction(socialNFTContract, "setSellingAuction", signer ? {signer: signer} : undefined)
 
     useEffect(() => {
         if(execute){
@@ -474,12 +480,13 @@ type Contract_buyNftSellingFixedPrice_Props = {
 }
 export const Contract_buyNftSellingFixedPrice: NextPage<Contract_buyNftSellingFixedPrice_Props> =
     ({execute, nft_id, onError, callback}) => {
+    const {signer} = useWeb3Info()
     const {value, error} = useCall({
         contract: socialNFTContract,
         method: "s_nftIdToSellingFixedPrice",
         args: [nft_id]
     }) ?? {}
-    const {send, state, events} = useContractFunction(socialNFTContract, "buyNftSellingFixedPrice")
+    const {send, state, events} = useContractFunction(socialNFTContract, "buyNftSellingFixedPrice", signer ? {signer: signer} : undefined)
 
     useEffect(() => {
         if(value){
@@ -534,36 +541,37 @@ type Contract_makeOfferAuction_Props = {
 }
 export const Contract_makeOfferAuction: NextPage<Contract_makeOfferAuction_Props> =
     ({execute, nft_id, auction_id, amount, type, onError, callback}) => {
-        const {send, state, events} = useContractFunction(socialNFTContract, "makeOfferAuction")
+    const {signer} = useWeb3Info()
+    const {send, state, events} = useContractFunction(socialNFTContract, "makeOfferAuction", signer ? {signer: signer} : undefined)
 
-        useEffect(() => {
-            if(execute){
-                if(type === "NATIVE"){
-                    send(nft_id, auction_id, amount, {value: amount})
-                }else{
-                    send(nft_id, auction_id, amount)
-                }
+    useEffect(() => {
+        if(execute){
+            if(type === "NATIVE"){
+                send(nft_id, auction_id, amount, {value: amount})
+            }else{
+                send(nft_id, auction_id, amount)
             }
-        }, [execute])
-        useEffect(() => {
-            if(execute){
-                if(state.errorMessage){
-                    onError(state.errorMessage)
-                }
+        }
+    }, [execute])
+    useEffect(() => {
+        if(execute){
+            if(state.errorMessage){
+                onError(state.errorMessage)
             }
-        }, [state])
-        useEffect(() => {
-            if(execute){
-                if (events) {
-                    callback()
-                }
+        }
+    }, [state])
+    useEffect(() => {
+        if(execute){
+            if (events) {
+                callback()
             }
-        }, [events])
+        }
+    }, [events])
 
-        return (
-            <></>
-        )
-    }
+    return (
+        <></>
+    )
+}
 
 type Contract_increaseAllowancesErc20_Props = {
     execute: boolean
@@ -573,7 +581,8 @@ type Contract_increaseAllowancesErc20_Props = {
     onError: (message: string) => void
 }
 export const Contract_increaseAllowancesErc20: NextPage<Contract_increaseAllowancesErc20_Props> = ({execute, amount, address, onError, callback}) => {
-    const {send, events, state} = useContractFunction(new ethers.Contract(address, IERC20Interface, HardhatProvider) as IERC20, "approve")
+    const {signer} = useWeb3Info()
+    const {send, events, state} = useContractFunction(new ethers.Contract(address, IERC20Interface, HardhatProvider) as IERC20, "approve", signer ? {signer: signer} : undefined)
 
     useEffect(() => {
         if(execute){

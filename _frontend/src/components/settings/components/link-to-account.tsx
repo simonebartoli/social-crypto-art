@@ -10,6 +10,7 @@ import {useModal} from "@/contexts/modal";
 import {useLoader} from "@/contexts/loader";
 import {ethers} from "ethers";
 import {NextPage} from "next";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     callback: () => void
@@ -43,7 +44,8 @@ const LinkToAccount: NextPage<Props> = ({callback}) => {
 
     const [disabled, setDisabled] = useState(true)
     const [getContract, setGetContract] = useState(false)
-    const {account, library} = useEthers()
+    const {library} = useEthers()
+    const {account} = useWeb3Info()
 
     const onFormSubmit = async () => {
         setGetContract(true)

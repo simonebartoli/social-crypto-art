@@ -45,6 +45,7 @@ model users {
   post_upvotes                      post_upvotes[]
   posts                             posts[]
   restricted_posts                  restricted_posts[]
+  secure_salts                      secure_salts[]
   tokens                            tokens[]
 }
 
@@ -162,6 +163,13 @@ model nft_backup {
   nft     Int[]
   ipfs    String @unique(map: "nft_backup_uk") @db.VarChar(127)
   posts   posts  @relation(fields: [post_id], references: [post_id], onDelete: Cascade, map: "nft_backup_posts_fk")
+}
+
+model secure_salts {
+  id       String  @id(map: "secure_salts_pk") @db.VarChar(127)
+  salt     String  @unique(map: "secure_salts_pk2") @db.VarChar(255)
+  nickname String? @db.VarChar(127)
+  users    users?  @relation(fields: [nickname], references: [nickname], onDelete: NoAction, onUpdate: NoAction, map: "secure_salts_users_nickname_fk")
 }
 
 enum content_type {

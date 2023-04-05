@@ -2,8 +2,8 @@ import React from 'react';
 import Metamask from "@/components/settings/buttons/metamask";
 import WalletConnect from "@/components/settings/buttons/wallet-connect";
 import {NextPage} from "next";
-import {useEthers} from "@usedapp/core";
 import Button from "@/components/login/button";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     specificAccount?: string
@@ -11,7 +11,9 @@ type Props = {
 }
 
 const RequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccount}) => {
-    const {deactivate, account} = useEthers()
+    const {disconnect} = useWeb3Info()
+    const {account} = useWeb3Info()
+
     return (
         <div className="flex flex-col gap-8 items-center justify-center h-full w-2/3">
             <h1 className="text-2xl font-bold text-center">
@@ -44,7 +46,7 @@ const RequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccoun
                 <Button
                     text={"Disconnect"}
                     disabled={false}
-                    onClick={() => deactivate()}
+                    onClick={disconnect}
                 />
             }
         </div>

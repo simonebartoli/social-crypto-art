@@ -7,15 +7,34 @@ import {DateTime} from "luxon";
 import AccessToken from "../../models/token/access/AccessToken";
 import {RequireAccessToken} from "../decorators/RequireAccessToken";
 import CommunicationSocket from "../../models/CommunicationSocket";
-import {Input_EmailSocket, Input_RequestToken, Input_Web3Account} from "../args&inputs";
+import {Input_EmailSocket, Input_RequestToken, Input_SecureSalt, Input_Web3Account} from "../args&inputs";
 import {AUTH_ERROR, DATA_ERROR} from "../../errors";
 import Web3Account from "../../models/Web3Account";
-import {SecretType} from "../types";
+import {SecretType, SecureSaltType} from "../types";
 import SecretModel from "../../models/token/encryption/Secret"
 import Email from "../../models/email/Email";
+import * as Crypto from "crypto";
 
 @Resolver()
 export class AccessResolver {
+    @Mutation(() => SecureSaltType)
+    @RequireAccessToken()
+    async createNewSalt(@Ctx() ctx: ContextAuth): Promise<SecureSaltType> {
+        const id = Crypto.randomBytes(32).toString("base64")
+        const salt = Crypto.randomBytes(32).toString("base64")
+        await prisma.secure_salts.create({
+            data: {
+                id: id,
+                salt: salt,
+                nickname: ctx.nickname
+            }
+        })
+        return {
+            id,
+            salt
+        }
+    }
+
     @Mutation(() => Boolean)
     async createNewLoginInstance_Email(
         @Ctx() ctx: Context,
@@ -234,6 +253,21 @@ export class AccessResolver {
     logout(@Ctx() ctx: Context): boolean {
         ctx.response.clearCookie("access_token")
         return true
+    }
+
+    @Query(() => SecureSaltType)
+    async getSalt(
+        @Arg("data", () => Input_SecureSalt) data: Input_SecureSalt
+    ): Promise<SecureSaltType> {
+        const result = await prisma.secure_salts.findUnique({
+            where: {
+                id: data.id
+            }
+        })
+        if(result){
+            return result
+        }
+        throw new DATA_ERROR("The Salt ID provided does not exists", ErrorCode.ERR_404_002)
     }
 
     @Query(() => SecretType)

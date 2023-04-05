@@ -5,9 +5,9 @@ import {ethers} from "ethers";
 import {NextPage} from "next";
 import {Contract_increaseAllowancesErc20} from "@/contexts/contract";
 import {useBlockchainCallbackPostsContext} from "@/contexts/blockchain-callback";
-import {useEthers} from "@usedapp/core";
 import {IERC20} from "@/__typechain";
 import {SOCIAL_NFT_ADDRESS} from "@/globals";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     amount: string
@@ -16,7 +16,7 @@ type Props = {
 }
 
 const IncreaseAllowanceErc20BlockchainInteractions: NextPage<Props> = ({amount, address, onFinish}) => {
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
 
     const {operations, setOperations, shiftIndex, setShiftIndex, indexAllowed, setIndexAllowed} = useBlockchainCallbackPostsContext()
     const [alreadySet, setAlreadySet] = useState(false)

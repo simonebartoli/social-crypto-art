@@ -5,7 +5,7 @@ import {ethers} from "ethers";
 import {NextPage} from "next";
 import {Contract_setRoyalties} from "@/contexts/contract";
 import {useBlockchainCallbackPostsContext} from "@/contexts/blockchain-callback";
-import {useEthers} from "@usedapp/core";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     nft_id: string
@@ -14,7 +14,7 @@ type Props = {
 }
 
 const SetRoyaltiesBlockchainInteractions: NextPage<Props> = ({nft_id, percentage, onFinish}) => {
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
 
     const {operations, setOperations, shiftIndex, setShiftIndex, indexAllowed, setIndexAllowed} = useBlockchainCallbackPostsContext()
     const [alreadySet, setAlreadySet] = useState(false)

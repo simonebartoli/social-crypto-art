@@ -2,6 +2,7 @@ import React, {createContext, ReactNode, useEffect, useState} from 'react';
 import {NextPage} from "next";
 import {useRouter} from "next/router";
 import SearchBar from "@/components/library/search-bar/search-bar";
+
 type ContextType = {
     open: boolean
     setOpen: React.Dispatch<React.SetStateAction<boolean>>

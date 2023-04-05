@@ -1,4 +1,4 @@
-import { gql } from "@/__generated__/gql"
+import {gql} from "@/__generated__/gql"
 
 export const VERIFY_TOKEN = gql(`
     mutation VERIFY_TOKEN($data: Input_RequestToken!) {
@@ -40,5 +40,22 @@ export const GET_IP_ADDRESS = gql(`
 export const LOGOUT = gql(`
     mutation LOGOUT{
         logout
+    }
+`)
+
+export const CREATE_NEW_SALT = gql(`
+    mutation CREATE_NEW_SALT{
+        createNewSalt {
+            id
+            salt
+        }
+    }
+`)
+
+export const GET_SALT = gql(`
+    query GET_SALT($data: Input_SecureSalt!){
+        getSalt(data: $data) {
+            salt
+        }
     }
 `)

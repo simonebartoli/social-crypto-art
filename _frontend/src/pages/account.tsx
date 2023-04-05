@@ -9,10 +9,10 @@ import {PostContext} from "@/contexts/post-info";
 import Post from "@/components/library/post/post";
 import {PostTypeFilter} from "@/__generated__/graphql";
 import {useRouter} from "next/router";
-import {useEthers} from "@usedapp/core";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 const Account = () => {
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
     const {logged} = useLogin()
     const router = useRouter()
 

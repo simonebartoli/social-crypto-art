@@ -6,7 +6,7 @@ import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {NextPage} from "next";
 import {Contract_setSellingAuction} from "@/contexts/contract";
 import {useBlockchainCallbackPostsContext} from "@/contexts/blockchain-callback";
-import {useEthers} from "@usedapp/core";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     nft_id: string
@@ -19,7 +19,7 @@ type Props = {
 }
 
 const AuctionSellingBlockchainInteraction: NextPage<Props> = ({nft_id, initialPrice, refundable, minIncrement, currency, deadline, onFinish}) => {
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
 
     const {operations, setOperations, shiftIndex, setShiftIndex, indexAllowed, setIndexAllowed} = useBlockchainCallbackPostsContext()
 

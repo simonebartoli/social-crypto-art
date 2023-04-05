@@ -1,10 +1,10 @@
 import React from 'react';
 import Image from "next/image";
 import WalletConnectImage from "/public/wallet-connect.svg"
-import {useEthers} from "@usedapp/core";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 const WalletConnect = () => {
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
 
     const onClick = async () => {
 

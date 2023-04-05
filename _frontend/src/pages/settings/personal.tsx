@@ -1,9 +1,10 @@
-import React from 'react';
+import React, {ReactElement} from 'react';
+import RequireLogin from "@/components/library/auth/require-login";
+import Navbar from "@/components/settings/navbar";
 import Image from "next/image";
-
-import TEST from "/public/test.webp"
+import TEST from "../../../public/test.webp";
+import PermIdentityOutlinedIcon from "@mui/icons-material/PermIdentityOutlined";
 import MailOutlineOutlinedIcon from "@mui/icons-material/MailOutlineOutlined";
-import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
 import {useLogin} from "@/contexts/login";
 
 const Personal = () => {
@@ -46,5 +47,18 @@ const Personal = () => {
         </div>
     );
 };
+
+Personal.getLayout = function getLayout(page: ReactElement) {
+    return (
+        <RequireLogin>
+            <div className="w-full flex flex-row min-h-screen bg-custom-grey font-main">
+                <Navbar/>
+                <div className="relative top-0 left-[25%] w-3/4 p-8 bg-custom-grey">
+                    {page}
+                </div>
+            </div>
+        </RequireLogin>
+    )
+}
 
 export default Personal;

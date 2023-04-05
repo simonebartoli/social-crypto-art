@@ -111,7 +111,7 @@ export class UserResolver {
             await prisma.account_packets.create({
                 data: {
                     packet: packet,
-                    address: address
+                    address: address.toLowerCase()
                 }
             })
         }
@@ -242,4 +242,6 @@ export class UserResolver {
         }
         return result
     }
+
+
 }

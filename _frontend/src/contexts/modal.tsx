@@ -2,6 +2,7 @@ import React, {createContext, ReactNode, useEffect, useState} from 'react';
 import {NextPage} from "next";
 import CloseIcon from '@mui/icons-material/Close';
 import {useRouter} from "next/router";
+
 type ContextType = {
     open: boolean
     showModal: (e: JSX.Element, manualClose?: boolean) => void

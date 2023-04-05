@@ -7,9 +7,9 @@ import {SOCIAL_NFT_ADDRESS, ZERO_ADDRESS} from "@/globals";
 import {
     Contract_getAuctionOffers,
     Contract_getAuctionOffers_CallbackType,
-    Contract_getERC20TokenBalance, Contract_getERC20TokenBalance_CallbackType
+    Contract_getERC20TokenBalance,
+    Contract_getERC20TokenBalance_CallbackType
 } from "@/contexts/contract";
-import {useEthers} from "@usedapp/core";
 import Metamask from "@/components/settings/buttons/metamask";
 import WalletConnect from "@/components/settings/buttons/wallet-connect";
 import Button from "@/components/login/button";
@@ -17,6 +17,7 @@ import {toast} from "react-toastify";
 import {DateTime} from "luxon";
 import Offers from "@/components/library/post/interactions/auction/offers";
 import {SocialNFT} from "@/__typechain";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     nftId: string
@@ -24,7 +25,7 @@ type Props = {
 }
 
 const AuctionSelling: NextPage<Props> = ({nftId, nftInfo}) => {
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
     const [tabToShow, setTabToShow] = useState<"MAIN" | "OFFERS">("MAIN")
 
     const [offers, setOffers] = useState<SocialNFT.Selling_AuctionOffersStructOutput[]>()

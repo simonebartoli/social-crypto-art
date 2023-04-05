@@ -2,8 +2,8 @@ import '@/styles/globals.css'
 import '@/styles/loader.css'
 import "react-toastify/dist/ReactToastify.css";
 
-import type { AppProps } from 'next/app'
-import { Saira, Rajdhani } from '@next/font/google'
+import type {AppProps} from 'next/app'
+import {Rajdhani, Saira} from '@next/font/google'
 import {ApolloClient, ApolloProvider, createHttpLink, InMemoryCache} from "@apollo/client";
 
 import {API_URL} from "@/globals";
@@ -17,6 +17,7 @@ import {LayoutContext} from "@/contexts/layout";
 import {ModalContext} from "@/contexts/modal";
 import Web3Account from "@/components/library/web3-account";
 import {SearchBarContext} from "@/contexts/search-bar";
+import {Web3Info} from "@/contexts/web3-info";
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
     getLayout?: (page: ReactElement) => ReactNode
@@ -32,7 +33,7 @@ const link = createHttpLink({
     uri: API_URL,
     credentials: 'include'
 });
-const client = new ApolloClient({
+export const apolloClient = new ApolloClient({
     link,
     cache: new InMemoryCache(),
 });
@@ -49,14 +50,13 @@ const config: Config = {
         // [Goerli.chainId]: "https://goerli.infura.io/v3/257845b2fe3e409a95d49b37958d8f74",
     },
     connectors: {
-        metamask: new MetamaskConnector()
+        metamask: new MetamaskConnector(),
     },
     autoConnect: true
 }
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
     const getLayout = Component.getLayout ?? ((page) => page)
-
     return (
         <>
             <style jsx global>
@@ -67,7 +67,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
                   }
                 `}
             </style>
-            <ApolloProvider client={client}>
+            <ApolloProvider client={apolloClient}>
                 <ToastContainer
                     position="top-right"
                     autoClose={5000}
@@ -84,13 +84,15 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
                     <LoaderContext>
                         <LoginContext>
                             <DAppProvider config={config}>
-                                <ModalContext>
-                                    <SearchBarContext>
-                                        <Web3Account>
-                                            {getLayout(<Component {...pageProps} />)}
-                                        </Web3Account>
-                                    </SearchBarContext>
-                                </ModalContext>
+                                <Web3Info>
+                                    <ModalContext>
+                                        <SearchBarContext>
+                                            <Web3Account>
+                                                {getLayout(<Component {...pageProps} />)}
+                                            </Web3Account>
+                                        </SearchBarContext>
+                                    </ModalContext>
+                                </Web3Info>
                             </DAppProvider>
                         </LoginContext>
                     </LoaderContext>

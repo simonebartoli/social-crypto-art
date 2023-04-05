@@ -14,7 +14,7 @@ import {GET_POST_FROM_USER, GET_POSTS} from "@/graphql/post";
 import {toast} from "react-toastify";
 import {PostContentTypeEnum} from "@/enums/global/post-enum";
 import {DateTime} from "luxon";
-import {useEthers} from "@usedapp/core";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 export type ContextType = {
     getPosts: LazyQueryExecFunction<Get_PostsQuery, any>
@@ -44,7 +44,7 @@ type Props = {
 
 export const FetchingPostsContext: NextPage<Props> = ({children}) => {
     const {personalInfo} = useLogin()
-    const {account} = useEthers()
+    const {account} = useWeb3Info()
 
     const responseRef = useRef<string>("")
     const filterTypeRef = useRef<PostTypeFilter | undefined>(PostTypeFilter.All)

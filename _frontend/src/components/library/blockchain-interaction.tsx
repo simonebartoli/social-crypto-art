@@ -1,8 +1,10 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {NextPage} from "next";
-import {useEthers} from "@usedapp/core";
 import Metamask from "@/components/settings/buttons/metamask";
 import WalletConnect from "@/components/settings/buttons/wallet-connect";
+import {useWeb3Info} from "@/contexts/web3-info";
+import {BigNumber, ethers} from "ethers";
+import {HardhatProvider} from "@/contracts";
 
 export type BlockchainOperationType = {
     name: string
@@ -34,7 +36,8 @@ type Props = {
 
 const BlockchainInteraction: NextPage<Props> =
     ({operations, finished, args}) => {
-    const {account} = useEthers()
+    const [balance, setBalance] = useState(BigNumber.from(0))
+    const {account} = useWeb3Info()
 
     const estimate = async () => {
         for(const _ of operations){
@@ -43,6 +46,12 @@ const BlockchainInteraction: NextPage<Props> =
     }
 
     useEffect(() => {
+        const getBalance = async () => {
+            if(account){
+                setBalance(await HardhatProvider.getBalance(account))
+            }
+        }
+        getBalance()
         estimate()
     }, [operations])
 
@@ -64,9 +73,9 @@ const BlockchainInteraction: NextPage<Props> =
                 <>
                     <div className="flex flex-col gap-3 items-center justify-center">
                         <h2 className="text-3xl font-bold">Last Step...</h2>
-                        <p className="text-lg">To create your NFT we need some authorization from you.</p>
+                        <p className="text-lg">To perform these operations we need some authorization from you.</p>
                         <p className="text-sm italic">
-                            Don&apos;t exit before terminating this process as your NFT will not be created
+                            Don&apos;t exit before terminating this process as your operations will not be created
                         </p>
                     </div>
                     <div className="w-full flex flex-col items-center justify-center gap-6">
@@ -111,26 +120,33 @@ const BlockchainInteraction: NextPage<Props> =
                     </div>
                     {
                         account ?
-                            <div className="mb-8 flex flex-col gap-4 w-full">
-                                {
-                                    operations.map((_, index) => {
-                                        if(index === 0){
-                                            return (
-                                                <React.Fragment key={index}>
-                                                    <button disabled={_.disabled.value}
-                                                            onClick={() => {
-                                                                _.disabled.set(true)
-                                                                _.execute.set(true)
-                                                            }}
-                                                            className="disabled:bg-custom-light-grey disabled:cursor-not-allowed disabled:text-black hover:bg-white hover:text-black transition text-lg bg-black text-white border-[1px] border-black p-4 w-full rounded-lg">
-                                                        {_.name}
-                                                    </button>
-                                                </React.Fragment>
-                                            )
-                                        }
-                                    })
-                                }
-                            </div> :
+                            <>
+                                <div>
+                                    <span>
+                                        {`BALANCE AVAILABLE: ${ethers.utils.formatEther(balance)}`}
+                                    </span>
+                                </div>
+                                <div className="mb-8 flex flex-col gap-4 w-full">
+                                    {
+                                        operations.map((_, index) => {
+                                            if(index === 0){
+                                                return (
+                                                    <React.Fragment key={index}>
+                                                        <button disabled={_.disabled.value}
+                                                                onClick={() => {
+                                                                    _.disabled.set(true)
+                                                                    _.execute.set(true)
+                                                                }}
+                                                                className="disabled:bg-custom-light-grey disabled:cursor-not-allowed disabled:text-black hover:bg-white hover:text-black transition text-lg bg-black text-white border-[1px] border-black p-4 w-full rounded-lg">
+                                                            {_.name}
+                                                        </button>
+                                                    </React.Fragment>
+                                                )
+                                            }
+                                        })
+                                    }
+                                </div>
+                            </> :
                             <div className="flex flex-col gap-4 w-full">
                                 <Metamask/>
                                 <WalletConnect/>

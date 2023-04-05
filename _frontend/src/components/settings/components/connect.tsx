@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import Metamask from "@/components/settings/buttons/metamask";
 import WalletConnect from "@/components/settings/buttons/wallet-connect";
-import {useEthers} from "@usedapp/core";
 import {useModal} from "@/contexts/modal";
 import LinkToAccount from "@/components/settings/components/link-to-account";
 import {NextPage} from "next";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     accounts: {
@@ -16,7 +16,7 @@ type Props = {
 }
 
 const Connect: NextPage<Props> = ({accounts, refetch}) => {
-    const {account, deactivate} = useEthers()
+    const {account, disconnect} = useWeb3Info()
     const [alreadySet, setAlreadySet] = useState(false)
     const {showModal} = useModal()
 
@@ -64,7 +64,7 @@ const Connect: NextPage<Props> = ({accounts, refetch}) => {
                 account &&
                 <div className="rounded-lg flex flex-col items-center justify-center gap-6 p-6 bg-custom-light-grey w-full">
                     <span>If you want to connect another account, Please disconnect first.</span>
-                    <button onClick={deactivate} className="shadow-lg py-2 px-6 rounded-lg bg-black text-white text-xl hover:bg-white hover:text-black transition">Disconnect</button>
+                    <button onClick={disconnect} className="shadow-lg py-2 px-6 rounded-lg bg-black text-white text-xl hover:bg-white hover:text-black transition">Disconnect</button>
                 </div>
             }
             <div className="w-1/2 flex flex-col gap-6">

@@ -1,7 +1,7 @@
 import React, {createContext, ReactNode, useState} from 'react';
 import {NextPage} from "next";
-import {LazyQueryExecFunction, useLazyQuery, useMutation} from "@apollo/client";
-import {Get_UserQuery, Exact} from "@/__generated__/graphql";
+import {ApolloQueryResult, LazyQueryExecFunction, useLazyQuery, useMutation} from "@apollo/client";
+import {Exact, Get_UserQuery} from "@/__generated__/graphql";
 import {GET_USER} from "@/graphql/account-info";
 import {LOGOUT} from "@/graphql/access";
 import {toast} from "react-toastify";
@@ -11,6 +11,7 @@ export type ContextType = {
     logged: boolean | null
     logout: () => void
     getUser: LazyQueryExecFunction<Get_UserQuery, Exact<{ [key: string]: never; }>>
+    refetch: (variables?: (Partial<Exact<{[p: string]: never}>> | undefined)) => Promise<ApolloQueryResult<Get_UserQuery>>
     loading: boolean
     personalInfo: PersonalInfoType | null
 }
@@ -35,7 +36,7 @@ export const LoginContext: NextPage<Props> = ({children}) => {
 
     const [personalInfo, setPersonalInfo] = useState<PersonalInfoType | null>(null)
     const [logged, setLogged] = useState<boolean | null>(null)
-    const [getUser, {loading}] = useLazyQuery(GET_USER, {
+    const [getUser, {loading, refetch}] = useLazyQuery(GET_USER, {
         fetchPolicy: "no-cache",
         onCompleted: (data) => {
             setLogged(true)
@@ -67,7 +68,7 @@ export const LoginContext: NextPage<Props> = ({children}) => {
         }
     })
 
-    const value = {logged, getUser, loading, personalInfo, logout}
+    const value = {logged, getUser, refetch, loading, personalInfo, logout}
     return (
         <loginContext.Provider value={value}>
             {children}
