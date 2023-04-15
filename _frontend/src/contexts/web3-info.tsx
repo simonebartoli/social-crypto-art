@@ -9,7 +9,7 @@ import {GET_SALT} from "@/graphql/access";
 import {ethers, Signer} from "ethers";
 import {HardhatProvider} from "@/contracts";
 
-type Level0DataType = {
+type DataType = {
     mnemonic: {
         locale: string
         path: string
@@ -19,17 +19,11 @@ type Level0DataType = {
     public_key: string
     address: string
 }
-type Level1DataType = {
+type EncDataType = {
     data: string
     tag: string
     iv: string
-    id: string
-}
-type Level2DataType = {
-    data: string
-    tag: string
-    iv: string
-    salt: string
+    secure: string
 }
 
 type WalletType = {
@@ -73,44 +67,36 @@ export const Web3Info: NextPage<Props> = ({children}) => {
         const hashKey = crypto.createHash("sha1").update(address).digest("base64")
         const packet = localStorage.getItem(hashKey)
         if(packet){
-            const encLevel1_Data = JSON.parse(Buffer.from(packet, "base64").toString("utf-8")) as Level2DataType
-            const securityKeyLevel1 = Crypto.pbkdf2Sync(password, encLevel1_Data.salt, 32, 32, "sha256")
-            const initVectorLevel1 = Buffer.from(encLevel1_Data.iv, "base64")
-            const tagLevel1 = Buffer.from(encLevel1_Data.tag, "base64")
+            const encData = JSON.parse(Buffer.from(packet, "base64").toString("utf-8")) as EncDataType
+            const initVector = Buffer.from(encData.iv, "base64")
+            const tag = Buffer.from(encData.tag, "base64")
+            const secure = encData.secure
+
+            const id = Crypto.pbkdf2Sync(password, secure, 32, 32, "sha256").toString("base64")
 
             try{
-                const decCypherLevel1 = Crypto.createDecipheriv("aes-256-gcm", securityKeyLevel1, initVectorLevel1)
-                decCypherLevel1.setAuthTag(tagLevel1)
-                let decLevel1_Data = decCypherLevel1.update(encLevel1_Data.data, "base64", "base64")
-                decLevel1_Data += decCypherLevel1.final("base64")
-
-                const level1_Data = JSON.parse(Buffer.from(decLevel1_Data, "base64").toString("utf-8")) as Level1DataType
-                const saltId = level1_Data.id
                 const response = await apolloClient.query({
                     query: GET_SALT,
+                    fetchPolicy: "no-cache",
                     variables: {
                         data: {
-                            id: saltId
+                            id: id
                         }
                     }
                 })
                 if(response.data.getSalt.salt){
-                    const securityKeyLevel0 = Crypto.pbkdf2Sync(password, response.data.getSalt.salt, 32, 32, "sha256")
-                    const initVectorLevel0 = Buffer.from(level1_Data.iv, "base64")
-                    const tagLevel0 = Buffer.from(level1_Data.tag, "base64")
-
-                    const decCypherLevel0 = Crypto.createDecipheriv("aes-256-gcm", securityKeyLevel0, initVectorLevel0)
-                    decCypherLevel0.setAuthTag(tagLevel0)
-                    let decLevel0_Data = decCypherLevel0.update(level1_Data.data, "base64", "base64")
-                    decLevel0_Data += decCypherLevel0.final("base64")
-
-                    const level0_Data = JSON.parse(Buffer.from(decLevel0_Data, "base64").toString("utf-8")) as Level0DataType
+                    const securityKey = Crypto.pbkdf2Sync(password, response.data.getSalt.salt, 32, 32, "sha256")
+                    const decCypher = Crypto.createDecipheriv("aes-256-gcm", securityKey, initVector)
+                    decCypher.setAuthTag(tag)
+                    let decryptedData = decCypher.update(encData.data, "base64", "base64")
+                    decryptedData += decCypher.final("base64")
+                    const data = JSON.parse(Buffer.from(decryptedData, "base64").toString("utf-8")) as DataType
 
                     setWallet({
-                        address: level0_Data.address.toLowerCase(),
-                        mnemonic: level0_Data.mnemonic.phrase,
-                        privateKey: level0_Data.private_key,
-                        publicKey: level0_Data.public_key
+                        address: data.address.toLowerCase(),
+                        mnemonic: data.mnemonic.phrase,
+                        privateKey: data.private_key,
+                        publicKey: data.public_key
                     })
                     deactivate()
 
@@ -125,6 +111,12 @@ export const Web3Info: NextPage<Props> = ({children}) => {
                     }
                 }
             }catch (e) {
+                if((e as Error).message.includes("Too Many Failed Attempts")){
+                    return {
+                        status: false,
+                        message: (e as Error).message
+                    }
+                }
                 return {
                     status: false,
                     message: "Password or Packet Not Valid"
@@ -144,6 +136,12 @@ export const Web3Info: NextPage<Props> = ({children}) => {
         if(accounts.length > 0){
             localStorage.clear()
         }
+
+        const addressMapKey = crypto.createHash("sha1").update("address-map-key").digest("base64")
+        const addressMap = Buffer.from(JSON.stringify(accounts.map(_ => _.address))).toString("base64")
+
+        localStorage.setItem(addressMapKey, addressMap)
+
         for(const acc of accounts){
             const packet = acc.packet as string
             const address = acc.address
@@ -167,7 +165,9 @@ export const Web3Info: NextPage<Props> = ({children}) => {
         }
     }, [accountExtension, wallet])
     useEffect(() => {
-        createLocalstoragePacket()
+        if(personalInfo?.accounts){
+            createLocalstoragePacket()
+        }
     }, [personalInfo?.accounts])
 
     const value: ContextType = {

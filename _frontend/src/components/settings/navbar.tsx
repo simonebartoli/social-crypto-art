@@ -67,7 +67,7 @@ const Navbar: NextPage = () => {
                     }
                 </div>
                 <div
-                    className={`${tabToShow === SettingsEnum.TRANSACTIONS && "font-bold w-full rounded-lg bg-white text-black"} p-4 w-full flex flex-row gap-6 items-center justify-start cursor-pointer`}>
+                    className={`${tabToShow === SettingsEnum.TRANSACTIONS && "font-bold w-full rounded-lg bg-white text-black"} !text-custom-grey cursor-not-allowed p-4 w-full flex flex-row gap-6 items-center justify-start`}>
 
                     <AccountBalanceWalletOutlinedIcon className="!text-4xl"/>
                     <span>Transactions</span>

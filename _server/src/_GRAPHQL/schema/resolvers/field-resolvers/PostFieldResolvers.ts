@@ -21,9 +21,19 @@ export class PostFieldResolvers implements ResolverInterface<PostType>{
             const comments = await postRecovered.loadComments()
             return {
                 downvote_total: downvotes.total,
-                downvote_users: downvotes.users,
+                downvote_users: downvotes.users.map(_ => {
+                    return {
+                        ..._,
+                        profile_pic: false
+                    }
+                }),
                 upvote_total: upvotes.total,
-                upvote_users: upvotes.users,
+                upvote_users: upvotes.users.map(_ => {
+                    return {
+                        ..._,
+                        profile_pic: false
+                    }
+                }),
                 comment_total: comments.length,
                 comments: comments.map(_ => _.getComment())
             }

@@ -16,6 +16,7 @@ import {ethers} from "ethers";
 import {useRouter} from "next/router";
 import Loader from "@/components/library/loader";
 import {useWeb3Info} from "@/contexts/web3-info";
+import CustomAccount from "@/components/settings/buttons/custom-account";
 
 type Props = {
     changeTab: (selected: LoginEnum) => void
@@ -23,7 +24,7 @@ type Props = {
 
 const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
     const {library} = useEthers()
-    const {account, disconnect} = useWeb3Info()
+    const {account, disconnect, signer} = useWeb3Info()
     const [loading, setLoading] = useState(false)
     const router = useRouter()
 
@@ -64,9 +65,9 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
         }else if(value){
             setGetHash(false)
             setDate(date)
-            const signer = (library as JsonRpcProvider).getSigner()
+            const messageSigner = signer ?? (library as JsonRpcProvider).getSigner()
             try{
-                const signedMessage = await signer.signMessage(ethers.utils.arrayify(value[0]))
+                const signedMessage = await messageSigner.signMessage(ethers.utils.arrayify(value[0]))
                 setSignature(signedMessage)
             }catch (e) {
                 setDisabled(false)
@@ -94,7 +95,6 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
         }
     }, [signature])
 
-
     return (
         <>
             {
@@ -113,6 +113,7 @@ const LoginWithWeb3: NextPage<Props> = ({changeTab}) => {
             </div>
             <div className="flex flex-col gap-4">
                 <Metamask/>
+                <CustomAccount/>
                 <WalletConnect/>
             </div>
             {

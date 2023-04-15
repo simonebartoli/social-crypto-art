@@ -34,22 +34,21 @@ const GenerateAccount: NextPage<Props> = ({accountName, password, setStep}) => {
     const [encWallet, setEncWallet] = useState<string>()
     const [downloadableTextFile, setDownloadableTextFile] = useState<string>()
 
-    const [firstSalt, setFirstSalt] = useState("")
-    const [secondSalt, setSecondSalt] = useState({
-        id: "",
-        salt: ""
-    })
+    const [salt, setSalt] = useState("")
+    const [secure] = useState(Crypto.randomBytes(32).toString("base64"))
 
     const {} = useQuery(GET_IP_ADDRESS, {
         onCompleted: (data) => setIp(data.getIpAddress),
         onError: () => toast.error("There is an error, Please refresh the page")
     })
     const [createNewSalt] = useMutation(CREATE_NEW_SALT, {
+        variables: {
+           data: {
+               id: Crypto.pbkdf2Sync(password, secure, 32, 32, "sha256").toString("base64")
+           }
+        },
         onCompleted: (data) => {
-            setSecondSalt({
-                id: data.createNewSalt.id,
-                salt: data.createNewSalt.salt
-            })
+            setSalt(data.createNewSalt.salt)
         },
         onError: (error) => {
             toast.error(error.message)
@@ -66,10 +65,6 @@ const GenerateAccount: NextPage<Props> = ({accountName, password, setStep}) => {
         }
     })
 
-    const generateSalt = () => {
-        const salt = Crypto.randomBytes(32).toString("base64")
-        setFirstSalt(salt)
-    }
     const generateWeb3Account = () => {
         const newWallet = ethers.Wallet.createRandom()
         console.log(newWallet)
@@ -92,39 +87,26 @@ const GenerateAccount: NextPage<Props> = ({accountName, password, setStep}) => {
         }
     }
     const encryptWallet = async () => {
-        const securityKeyLevel0 = Crypto.pbkdf2Sync(password, secondSalt.salt, 32, 32, "sha256")
-        const securityKeyLevel1 = Crypto.pbkdf2Sync(password, firstSalt, 32, 32, "sha256")
-        const initVectorLevel0 = Crypto.randomBytes(32)
-        const initVectorLevel1 = Crypto.randomBytes(32)
+        const securityKey = Crypto.pbkdf2Sync(password, salt, 32, 32, "sha256")
+        const initVector = Crypto.randomBytes(32)
 
         if(wallet){
-            const level0_Data = Buffer.from(JSON.stringify({
+            const data = Buffer.from(JSON.stringify({
                 mnemonic: wallet.mnemonic,
                 private_key: wallet.privateKey,
                 public_key: wallet.publicKey,
                 address: wallet.address
             })).toString("base64")
-            const encCypherLevel0 = Crypto.createCipheriv("aes-256-gcm", securityKeyLevel0, initVectorLevel0)
-            let encLevel0_Data = encCypherLevel0.update(level0_Data, "base64", "base64")
-            encLevel0_Data += encCypherLevel0.final("base64")
-            const tagLevel0 = encCypherLevel0.getAuthTag().toString("base64")
-
-            const level1_Data = Buffer.from(JSON.stringify({
-                data: encLevel0_Data,
-                tag: tagLevel0,
-                iv: Buffer.from(initVectorLevel0).toString("base64"),
-                id: secondSalt.id
-            })).toString("base64")
-            const encCypherLevel1 = Crypto.createCipheriv("aes-256-gcm", securityKeyLevel1, initVectorLevel1)
-            let encLevel1_Data = encCypherLevel1.update(level1_Data, "base64", "base64")
-            encLevel1_Data += encCypherLevel1.final("base64")
-            const tagLevel1 = encCypherLevel1.getAuthTag().toString("base64")
+            const encCypher = Crypto.createCipheriv("aes-256-gcm", securityKey, initVector)
+            let encData = encCypher.update(data, "base64", "base64")
+            encData += encCypher.final("base64")
+            const tag = encCypher.getAuthTag().toString("base64")
 
             const newEncWallet = Buffer.from(JSON.stringify({
-                data: encLevel1_Data,
-                tag: tagLevel1,
-                iv: Buffer.from(initVectorLevel1).toString("base64"),
-                salt: firstSalt
+                data: encData,
+                tag: tag,
+                iv: Buffer.from(initVector).toString("base64"),
+                secure: secure
             })).toString("base64")
             setEncWallet(newEncWallet)
         }
@@ -144,16 +126,15 @@ const GenerateAccount: NextPage<Props> = ({accountName, password, setStep}) => {
     }
 
     useEffect(() => {
-        generateSalt()
         createNewSalt()
         generateWeb3Account()
     }, [])
     useEffect(() => {
-        if(firstSalt !== "" && secondSalt.id !== "" && wallet && !encWallet){
+        if(salt !== "" && wallet && !encWallet){
             generateTextFile()
             encryptWallet()
         }
-    }, [firstSalt, secondSalt, wallet, encWallet])
+    }, [salt, wallet, encWallet])
     useEffect(() => {
         if(encWallet && wallet && date && signature && downloadableTextFile){
             addNewWeb3Account({

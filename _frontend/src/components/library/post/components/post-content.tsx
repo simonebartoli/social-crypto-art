@@ -1,8 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
 import Image from "next/image";
 import {NextPage} from "next";
-import {PostContentType} from "@/components/library/post/post.type";
+import {PostContentType} from "@/components/library/post/__post.type";
 import {PostContentTypeEnum} from "@/enums/global/post-enum";
+import DOMPurify from "dompurify";
 
 type Props = {
     post: PostContentType[]
@@ -35,13 +36,13 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
                                     return (
                                         <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
                                             <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
-                                            <div dangerouslySetInnerHTML={{__html: _.data}}/>
+                                            <div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(_.data)}}/>
                                         </div>
                                     )
                                 }else{
                                     return (
                                         <div className="w-full" key={index}>
-                                            <div dangerouslySetInnerHTML={{__html: _.data}}/>
+                                            <div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(_.data)}}/>
                                         </div>
                                     )
                                 }

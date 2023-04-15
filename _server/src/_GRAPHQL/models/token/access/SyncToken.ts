@@ -19,7 +19,7 @@ export default abstract class SyncToken extends Token {
     }
 
     override async createJwt(): Promise<string> {
-        const exp = DateTime.fromJSDate(this.tokenHeader.exp).toSeconds()
+        const exp = DateTime.fromISO(this.tokenHeader.exp).toSeconds()
         const encryptionKey = await Token.getEncryptionKey()
         const header = {alg: Token.ALG, ...this.tokenHeader}
         return await new jose.SignJWT({...this.tokenBody})

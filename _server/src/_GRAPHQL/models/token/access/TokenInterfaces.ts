@@ -2,7 +2,7 @@ export interface TokenHeader {
     tokenId: string
     ip: string
     ua: string
-    exp: Date
+    exp: string
     type: "ACCESS" | "SPECIAL" | "RECOVERY"
     securityPatch: string
 }
@@ -15,7 +15,7 @@ export interface TokenConstructor {
 }
 
 export interface AccessTokenType {
-    header: TokenHeader & {timeout: Date}
+    header: TokenHeader & {timeout: string}
     body: TokenBody
 }
 export interface NewAccessTokenConstructor {
@@ -23,7 +23,7 @@ export interface NewAccessTokenConstructor {
     body: TokenBody
 }
 export interface LoadAccessTokenConstructor {
-    header: Omit<TokenHeader, "securityPatch"> & {timeout: Date}
+    header: Omit<TokenHeader, "securityPatch"> & {timeout: string}
     body: TokenBody
 }
 

@@ -17,6 +17,8 @@ import {Input_SearchForUsers} from "../args&inputs/Input_User";
 import {distance} from "fastest-levenshtein";
 import Email from "../../models/email/Email";
 import {DateTime} from "luxon";
+import fs from "fs";
+import * as Path from "path";
 
 @Resolver()
 export class UserResolver {
@@ -168,7 +170,13 @@ export class UserResolver {
         const usersFormatted = userFormatted.filter(_ =>  _.distance < avgSimilarity)
         usersFormatted.sort((a, b) => a.distance > b.distance ? 1 : -1)
 
-        return usersFormatted.map(_ => _.user)
+        return usersFormatted.map(_ => {
+
+            return {
+                ..._.user,
+                profile_pic: false
+            }
+        })
     }
 
     @Query(() => [PostType])
@@ -179,15 +187,56 @@ export class UserResolver {
         @Arg("data", () => Input_GetPosts, {nullable: true}) data?: Input_GetPosts
     ): Promise<PostType[]> {
         let nftIdList: string[] = []
-        if(data && data.address){
+        let posts: PostModel[] = []
+        if(data){
+            const addressesLoaded = await prisma.accounts.findMany({
+                where: {
+                    nickname: nickname
+                }
+            })
+            const addresses = addressesLoaded.map(_ => _.address)
+
             if(data.type === PostTypeFilter.NFT_CREATED || data.type === PostTypeFilter.ALL) {
-                nftIdList = nftIdList.concat(await PostModel.loadNftCreated(nickname, ctx.nickname === null ? undefined : ctx.nickname, data))
+                nftIdList = nftIdList.concat(
+                    await PostModel.loadNftCreated(
+                        nickname,
+                        ctx.nickname === null ? undefined : ctx.nickname,
+                        {...data, address: addresses}
+                    )
+                )
             }
             if(data.type === PostTypeFilter.NFT_OWNED || data.type === PostTypeFilter.ALL){
-                nftIdList = nftIdList.concat(await PostModel.loadNftOwned(nickname, ctx.nickname === null ? undefined : ctx.nickname, data))
+                nftIdList = nftIdList.concat(
+                    await PostModel.loadNftOwned(
+                        nickname,
+                        ctx.nickname === null ? undefined : ctx.nickname,
+                        {...data, address: addresses}
+                    )
+                )
             }
+            if(data.type === PostTypeFilter.AUCTION_OFFERS || data.type === PostTypeFilter.ALL){
+                nftIdList = nftIdList.concat(
+                    await PostModel.loadAuctionOffersProposed(
+                        nickname,
+                        ctx.nickname === null ? undefined : ctx.nickname,
+                        {...data, address: addresses}
+                    )
+                )
+            }
+            posts = await PostModel.loadPostByNickname(
+                nickname,
+                nftIdList,
+                ctx.nickname === null ? undefined : ctx.nickname,
+                {...data, address: addresses}
+            )
+        }else{
+            posts = await PostModel.loadPostByNickname(
+                nickname,
+                nftIdList,
+                ctx.nickname === null ? undefined : ctx.nickname
+            )
         }
-        const posts = await PostModel.loadPostByNickname(nickname, nftIdList, ctx.nickname === null ? undefined : ctx.nickname, data)
+
         if(posts.length === 0) return []
         ctx["post"] = new Map()
         return posts.map((_) => {
@@ -240,7 +289,11 @@ export class UserResolver {
         if(result === null){
             throw new DATA_ERROR("The user does not exist.", ErrorCode.ERR_404_007)
         }
-        return result
+
+        return {
+            ...result,
+            profile_pic: false
+        }
     }
 
 

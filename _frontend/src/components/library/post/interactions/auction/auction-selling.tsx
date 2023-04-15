@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
-import {ethers} from "ethers";
-import {NftInfoType} from "@/components/library/post/nft.type";
+import {BigNumber, ethers} from "ethers";
+import {NftInfoType} from "@/components/library/post/__nft.type";
 import {NextPage} from "next";
 import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {SOCIAL_NFT_ADDRESS, ZERO_ADDRESS} from "@/globals";
@@ -10,8 +10,6 @@ import {
     Contract_getERC20TokenBalance,
     Contract_getERC20TokenBalance_CallbackType
 } from "@/contexts/contract";
-import Metamask from "@/components/settings/buttons/metamask";
-import WalletConnect from "@/components/settings/buttons/wallet-connect";
 import Button from "@/components/login/button";
 import {toast} from "react-toastify";
 import {DateTime} from "luxon";
@@ -37,8 +35,7 @@ const AuctionSelling: NextPage<Props> = ({nftId, nftInfo}) => {
         if(e.error){
             toast.error(e.error.message)
         }else if(e.value){
-            setOffers(e.value)
-            console.log(e.value)
+            setOffers(e.value.sort((a, b) => BigNumber.from(a.amount).lt(b.amount) ? 1 : -1))
         }
     }
     const onCallback_getERC20TokenBalance = (e: Contract_getERC20TokenBalance_CallbackType) => {
@@ -53,24 +50,13 @@ const AuctionSelling: NextPage<Props> = ({nftId, nftInfo}) => {
     const goBack = () => {
         setTabToShow("MAIN")
     }
-    if(!account){
-        return (
-            <div className="flex flex-col gap-4 w-3/4">
-                <span className="text-2xl font-bold mb-8">
-                    You need to connect to a Web3 Account to continue
-                </span>
-                <Metamask/>
-                <WalletConnect/>
-            </div>
-        )
-    }
 
     return (
         <>
             <Contract_getAuctionOffers nft_id={nftId} auction_id={nftInfo.auction.auctionId} callback={onCallback_getAuctionOffers}/>
             {
                 nftInfo.auction.currency !== CurrencyEnum.ETH &&
-                <Contract_getERC20TokenBalance owner={account} erc20Address={nftInfo.auction.currencyAddress} callback={onCallback_getERC20TokenBalance}/>
+                <Contract_getERC20TokenBalance owner={account!} erc20Address={nftInfo.auction.currencyAddress} callback={onCallback_getERC20TokenBalance}/>
             }
             {
                 tabToShow === "MAIN" ?

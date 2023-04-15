@@ -3,7 +3,7 @@ import {NextPage} from "next";
 import {useLogin} from "@/contexts/login";
 import Loader from "@/components/library/loader";
 import {useModal} from "@/contexts/modal";
-import RequireLogin from "@/components/library/modal/require-login";
+import LoginModal from "@/components/library/modal/login-modal";
 
 type Props = {
     children?: JSX.Element
@@ -24,7 +24,7 @@ const ActionRequireLogin: NextPage<Props> = ({children, callback}) => {
         if(logged && callback){
             callback()
         }else if(!logged){
-            showModal(<RequireLogin/>)
+            showModal(<LoginModal/>)
         }
     }, [logged])
 

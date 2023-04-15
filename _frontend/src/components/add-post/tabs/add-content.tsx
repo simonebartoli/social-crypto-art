@@ -5,7 +5,7 @@ import {PostContentTypeEnum} from "@/enums/global/post-enum";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
 import GifBoxOutlinedIcon from "@mui/icons-material/GifBoxOutlined";
 import AddText from "@/components/add-post/components/add-text";
-import AddImage from "@/components/add-post/components/add-image";
+import AddFile from "@/components/add-post/components/add-file";
 import PostOptions from "@/components/add-post/components/post-options";
 import {PostInfoType} from "@/components/add-post/add-post.type";
 import {NextPage} from "next";
@@ -198,32 +198,32 @@ const AddContent: NextPage<Props> = ({onFormSubmit}) => {
                             )
                         }else if(_.type === PostContentTypeEnum.PHOTO){
                             return (
-                                <AddImage onDragStart={onDragStart}
-                                          onDragEnter={onDragEnter}
-                                          onDrop={onDrop}
-                                          id={_.id}
-                                          nftEnabled={
+                                <AddFile onDragStart={onDragStart}
+                                         onDragEnter={onDragEnter}
+                                         onDrop={onDrop}
+                                         id={_.id}
+                                         nftEnabled={
                                               postType.value === AddPostTypeEnum.NFT ? true :
                                               postType.value === AddPostTypeEnum.POST ? false : undefined
                                           }
-                                          onClose={() => onContentDelete(_.id)}
-                                          type={PostContentTypeEnum.PHOTO} key={_.id}
-                                          onModifyContent={modifyContent}
+                                         onClose={() => onContentDelete(_.id)}
+                                         type={PostContentTypeEnum.PHOTO} key={_.id}
+                                         onModifyContent={modifyContent}
                                 />
                             )
                         }else if(_.type === PostContentTypeEnum.GIF){
                             return (
-                                <AddImage onDragStart={onDragStart}
-                                          onDragEnter={onDragEnter}
-                                          onDrop={onDrop}
-                                          id={_.id}
-                                          nftEnabled={
+                                <AddFile onDragStart={onDragStart}
+                                         onDragEnter={onDragEnter}
+                                         onDrop={onDrop}
+                                         id={_.id}
+                                         nftEnabled={
                                               postType.value === AddPostTypeEnum.NFT ? true :
                                               postType.value === AddPostTypeEnum.POST ? false : undefined
                                           }
-                                          onClose={() => onContentDelete(_.id)}
-                                          type={PostContentTypeEnum.GIF} key={_.id}
-                                          onModifyContent={modifyContent}
+                                         onClose={() => onContentDelete(_.id)}
+                                         type={PostContentTypeEnum.GIF} key={_.id}
+                                         onModifyContent={modifyContent}
                                 />
                             )
                         }

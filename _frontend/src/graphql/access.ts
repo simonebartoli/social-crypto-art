@@ -44,8 +44,8 @@ export const LOGOUT = gql(`
 `)
 
 export const CREATE_NEW_SALT = gql(`
-    mutation CREATE_NEW_SALT{
-        createNewSalt {
+    mutation CREATE_NEW_SALT($data: Input_SecureSalt!){
+        createNewSalt(data: $data) {
             id
             salt
         }

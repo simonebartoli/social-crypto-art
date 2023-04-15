@@ -2,7 +2,7 @@ import React from 'react';
 import {PostContext} from "@/contexts/post-info";
 import Post from "@/components/library/post/post";
 import {useFetchingPostsContext} from "@/contexts/fetching-posts";
-import {PostType} from "@/components/library/post/post.type";
+import {PostType} from "@/components/library/post/__post.type";
 import {NextPage} from "next";
 
 type Props = {

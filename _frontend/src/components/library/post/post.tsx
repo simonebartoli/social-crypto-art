@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
-import PostHeader from "@/components/library/post/header/post-header";
-import PostContent from "@/components/library/post/post-content";
-import PostInteractions from "@/components/library/post/post-interactions";
+import PostHeader from "@/components/library/post/components/header/post-header";
+import PostContent from "@/components/library/post/components/post-content";
+import PostInteractions from "@/components/library/post/components/post-interactions";
 import Comment from "@/components/library/comment/comment";
 import {NextPage} from "next";
 import {usePostContext} from "@/contexts/post-info";
@@ -38,6 +38,7 @@ const Post: NextPage<Props> = ({refetch, style}) => {
             <div style={style?.width} ref={postRef} className="flex flex-col w-1/2 p-8 bg-white text-black rounded-lg gap-4">
                 <PostHeader
                     refetch={refetch}
+                    visibility={post!.visibility}
                     ipfs={post!.nft?.ipfs}
                     verified={verified}
                     warningSync={verified === false ? true : post!.warningSync}

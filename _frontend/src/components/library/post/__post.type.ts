@@ -1,7 +1,9 @@
 import {PostContentTypeEnum} from "@/enums/global/post-enum";
+import {Visibility} from "@/__generated__/graphql";
 
 export type PostType = {
     post_id: string
+    visibility: Visibility
     header: PostHeaderType
     body: PostContentType[]
     interaction: PostInteractionType

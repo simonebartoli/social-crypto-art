@@ -28,7 +28,7 @@ export default class SpecialToken extends SyncToken{
             super({
                 header: {
                     ...castedData.header,
-                    exp: DateTime.now().plus({second: SpecialToken.EXP_DEFAULT_SPECIAL}).toJSDate()
+                    exp: DateTime.now().plus({second: SpecialToken.EXP_DEFAULT_SPECIAL}).toISO()
                 },
                 body: castedData.body,
                 socketId: data.socketId

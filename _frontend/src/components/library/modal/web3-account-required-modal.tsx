@@ -4,18 +4,19 @@ import WalletConnect from "@/components/settings/buttons/wallet-connect";
 import {NextPage} from "next";
 import Button from "@/components/login/button";
 import {useWeb3Info} from "@/contexts/web3-info";
+import CustomAccount from "@/components/settings/buttons/custom-account";
 
 type Props = {
     specificAccount?: string
     specificNotAccount?: string
 }
 
-const RequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccount}) => {
+const Web3AccountRequiredModal: NextPage<Props> = ({specificAccount, specificNotAccount}) => {
     const {disconnect} = useWeb3Info()
     const {account} = useWeb3Info()
 
     return (
-        <div className="flex flex-col gap-8 items-center justify-center h-full w-2/3">
+        <div className="flex flex-col gap-8 items-center justify-start h-full w-2/3">
             <h1 className="text-2xl font-bold text-center">
                 {
                     specificAccount ?
@@ -40,6 +41,7 @@ const RequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccoun
                 <div className="border-[1px] border-black rounded-lg">
                     <WalletConnect/>
                 </div>
+                <CustomAccount/>
             </div>
             {
                 account &&
@@ -53,4 +55,4 @@ const RequireWeb3Account: NextPage<Props> = ({specificAccount, specificNotAccoun
     );
 };
 
-export default RequireWeb3Account;
+export default Web3AccountRequiredModal;

@@ -4,6 +4,7 @@ import {PostType} from "./PostType";
 
 @ObjectType()
 export class UserType {
+
     @Field(() => String)
     nickname: string
 
@@ -12,6 +13,9 @@ export class UserType {
 
     @Field(() => Date)
     created_at: Date
+
+    @Field(() => Boolean, {defaultValue: false})
+    profile_pic: boolean
 
     @Field(() => [AccountType])
     accounts?: AccountType[]

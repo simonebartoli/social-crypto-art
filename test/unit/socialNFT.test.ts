@@ -132,11 +132,9 @@ import {beforeEach} from "mocha";
                     .revertedWithCustomError(socialNFT, "ERR_ROYALTIES_NOT_APPLICABLE")
             })
             it("Should revert if royalties are outside the range", async () => {
-                const MIN_ALLOWED = 1
+                const MIN_ALLOWED = 0
                 const MAX_ALLOWED = 25
 
-                await expect(testDeployer.setRoyalties(nftUniqueId, MIN_ALLOWED - 1)).to.be
-                    .revertedWithCustomError(socialNFT, "ERR_ROYALTIES_PERCENTAGE_NOT_IN_RANGE")
                 await expect(testDeployer.setRoyalties(nftUniqueId, MAX_ALLOWED + 1)).to.be
                     .revertedWithCustomError(socialNFT, "ERR_ROYALTIES_PERCENTAGE_NOT_IN_RANGE")
                 await expect(testDeployer.setRoyalties(nftUniqueId, MAX_ALLOWED)).to.not.be.reverted
@@ -238,8 +236,8 @@ import {beforeEach} from "mocha";
 
                 lengthArrayBefore = 3
                 ownedSince = (await testDeployer.s_nftIdStatus(nftUniqueId)).ownedSince.toString()
-                await testDeployer._transferNft(nftUniqueId, await player1.getAddress())
-                await testDeployer._postTransferNft(nftUniqueId, await deployer.getAddress(), ownedSince)
+                await testPlayer._transferNft(nftUniqueId, await player1.getAddress())
+                await testPlayer._postTransferNft(nftUniqueId, await deployer.getAddress(), ownedSince)
             })
             it("Should set 's_nftIdToPastOwners' correctly", async () => {
                 const status = await testDeployer.s_nftIdToPastOwners(nftUniqueId, 0)
@@ -255,7 +253,6 @@ import {beforeEach} from "mocha";
                 assert(Number(status.ownedSince) > currentTimestamp - 30 && Number(status.ownedSince) < currentTimestamp + 30)
             })
             it("Should remove the NFT from the list of owned NFT", async () => {
-                const lengthArrayAfter = Number(await testDeployer.test_getOwnerToNftIdLength(await deployer.getAddress())).toString()
                 const newArray = await testDeployer.test_getOwnerToNftIdArray(await deployer.getAddress())
                 let found = false
                 for (const element of newArray){
@@ -264,7 +261,9 @@ import {beforeEach} from "mocha";
                         break
                     }
                 }
-                assert.equal(lengthArrayAfter, lengthArrayAfter)
+                const lengthArrayAfter = newArray.filter(_ => _.toString() !== "0").length
+
+                assert.equal(lengthArrayBefore - 1, lengthArrayAfter)
                 assert.equal(found, false)
             })
         })

@@ -6,9 +6,13 @@ import Link from "next/link";
 import {useWeb3Info} from "@/contexts/web3-info";
 
 const NavbarTop = () => {
-    const {account} = useWeb3Info()
+    const {account, disconnect} = useWeb3Info()
     const {personalInfo, logout} = useLogin()
 
+    const logoutSession = () => {
+        disconnect()
+        logout()
+    }
 
     return (
         <div className="shadow-lg border-b-2 border-x-2 border-custom-grey flex z-50 flex-row font-main rounded-b-lg justify-between items-center gap-16 fixed top-0 left-[7.5%] bg-custom-light-grey w-[90%] py-3 px-8 h-[10vh]">
@@ -48,7 +52,7 @@ const NavbarTop = () => {
                         Add Post
                     </Link>
                     <NotificationsNoneOutlinedIcon className="!text-3xl"/>
-                    <LogoutOutlinedIcon onClick={() => logout()} className="!text-3xl ml-8 cursor-pointer hover:text-custom-red transition"/>
+                    <LogoutOutlinedIcon onClick={() => logoutSession()} className="!text-3xl ml-8 cursor-pointer hover:text-custom-red transition"/>
                 </div>
             }
         </div>

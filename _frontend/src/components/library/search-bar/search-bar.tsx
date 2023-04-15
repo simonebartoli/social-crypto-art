@@ -4,12 +4,14 @@ import EntryTab from "@/components/library/search-bar/entry-tab";
 import {useLazyQuery} from "@apollo/client";
 import {GET_LIST_OF_USERS} from "@/graphql/account-info";
 import {useSearchBar} from "@/contexts/search-bar";
+import {useLogin} from "@/contexts/login";
 
 type ListUserType = {
     nickname: string
 }
 
 const SearchBar = () => {
+    const {personalInfo} = useLogin()
     const {setOpen} = useSearchBar()
     const [query, setQuery] = useState("")
     const [listUsers, setListUsers] = useState<ListUserType[]>([])
@@ -28,7 +30,7 @@ const SearchBar = () => {
 
     const [getListOfUsers] = useLazyQuery(GET_LIST_OF_USERS, {
         onCompleted: (data) => {
-            setListUsers(data.getListOfUsers)
+            setListUsers(data.getListOfUsers.filter(_ => _.nickname !== personalInfo?.nickname))
         },
         onError: (error) => {
             console.log(error.message)

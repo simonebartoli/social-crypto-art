@@ -4,17 +4,17 @@ import "hardhat-gas-reporter"
 import "solidity-coverage"
 import "hardhat-deploy"
 import "hardhat-contract-sizer"
-import {COIN_MARKET_CAP_API_KEY, ETHERSCAN_API_KEY, GOERLI_PRIVATE_KEY, GOERLI_RPC_PROVIDER} from "./settings";
+import {COIN_MARKET_CAP_API_KEY, ETHERSCAN_API_KEY, SEPOLIA_PRIVATE_KEY, SEPOLIA_RPC_PROVIDER} from "./settings";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
-    goerli: {
-      url: GOERLI_RPC_PROVIDER,
+    sepolia: {
+      url: SEPOLIA_RPC_PROVIDER,
       accounts: [
-        GOERLI_PRIVATE_KEY
+        SEPOLIA_PRIVATE_KEY
       ],
-      chainId: 5
+      chainId: 11155111
     },
     hardhat: {
       allowUnlimitedContractSize: true

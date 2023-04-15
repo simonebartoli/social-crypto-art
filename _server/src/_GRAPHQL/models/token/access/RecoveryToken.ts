@@ -24,7 +24,7 @@ type CreateNewToken = {
 }
 
 export default class RecoveryToken extends SyncToken{
-    private static readonly EXP_DEFAULT_RECOVERY = 60*30
+    public static readonly EXP_DEFAULT_RECOVERY = 60*30
 
     constructor(data: NewSyncTokenConstructor | LoadSyncTokenConstructor, type: ConstructorType) {
         if(type === "NEW_TOKEN"){
@@ -32,7 +32,7 @@ export default class RecoveryToken extends SyncToken{
             super({
                 header: {
                     ...castedData.header,
-                    exp: DateTime.now().plus({second: RecoveryToken.EXP_DEFAULT_RECOVERY}).toJSDate()
+                    exp: DateTime.now().plus({second: RecoveryToken.EXP_DEFAULT_RECOVERY}).toISO()
                 },
                 body: castedData.body,
                 socketId: data.socketId

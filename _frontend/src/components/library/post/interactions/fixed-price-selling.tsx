@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {BigNumber, ethers} from "ethers";
-import {NftInfoType} from "@/components/library/post/nft.type";
+import {NftInfoType} from "@/components/library/post/__nft.type";
 import {NextPage} from "next";
 import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {SOCIAL_NFT_ADDRESS, ZERO_ADDRESS} from "@/globals";

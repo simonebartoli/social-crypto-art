@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {NextPage} from "next";
-import {useCall, useContractFunction} from "@usedapp/core";
+import {useCall, useContractFunction, useLogs} from "@usedapp/core";
 import {IERC20, SocialNFT, VerifySignature} from "@/__typechain";
 import {HardhatProvider, IERC20Interface, socialNFTContract, VerifySignatureContract} from "@/contracts";
 import {DateTime} from "luxon";
-import {NftSellingStatusEnum} from "@/enums/global/nft-enum";
+import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
 import {SOCIAL_NFT_ADDRESS, VERIFY_SIGNATURE_ADDRESS, ZERO_ADDRESS} from "@/globals";
 import {ethers} from "ethers";
 import {useWeb3Info} from "@/contexts/web3-info";
@@ -81,6 +81,7 @@ export const Contract_getVerification: NextPage<Contract_getVerification_Props> 
 
 export type Contract_getAllInfoNft_CallbackType = {
     value?: {
+        uri: string
         currentOwner: string
         sellingType: NftSellingStatusEnum,
         owner: string
@@ -108,6 +109,11 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
     const [auctionId, setAuctionId] = useState("0")
     const [fetchSelling, setFetchSelling] = useState<"FIXED" | "AUCTION" | "NO_SELLING">()
 
+    const {value: value_uri, error: error_uri} = useCall({
+        contract: socialNFTContract,
+        method: "tokenURI",
+        args: [nft_id]
+    }) ?? {}
     const {value: value_currentOwner, error: error_currentOwner} = useCall({
         contract: socialNFTContract,
         method: "ownerOf",
@@ -150,6 +156,7 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
             if(fetchSelling === "NO_SELLING"){
                 callback({
                     value: {
+                        uri: value_uri![0],
                         currentOwner: value_currentOwner![0].toString(),
                         owner: value_originalOwner![0].owner.toString(),
                         royalties: value_royalties!.percentage.toString(),
@@ -159,6 +166,7 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
             }else if(fetchSelling === "FIXED" && value_sellingFixedPrice){
                 callback({
                     value: {
+                        uri: value_uri![0],
                         currentOwner: value_currentOwner![0].toString(),
                         owner: value_originalOwner![0].owner.toString(),
                         royalties: value_royalties!.percentage.toString(),
@@ -172,6 +180,7 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
             }else if(fetchSelling === "AUCTION" && value_sellingAuction){
                 callback({
                     value: {
+                        uri: value_uri![0],
                         currentOwner: value_currentOwner![0].toString(),
                         owner: value_originalOwner![0].owner.toString(),
                         royalties: value_royalties!.percentage.toString(),
@@ -191,14 +200,14 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
     }, [
         fetchSelling,
         value_sellingStatus, value_originalOwner, value_royalties,
-        value_sellingFixedPrice, value_sellingAuction
+        value_sellingFixedPrice, value_sellingAuction, value_uri
     ])
     useEffect(() => {
-        if(error_sellingStatus || error_originalOwner || error_royalties || error_currentOwner || error_sellingFixedPrice || error_sellingAuction || error_currentAuctionId){
+        if(error_sellingStatus || error_originalOwner || error_royalties || error_currentOwner || error_sellingFixedPrice || error_sellingAuction || error_currentAuctionId || error_uri){
             callback({
-                error: error_sellingStatus ?? error_originalOwner ?? error_royalties ?? error_sellingFixedPrice ?? error_sellingAuction ?? error_currentOwner ?? error_currentAuctionId
+                error: error_sellingStatus ?? error_originalOwner ?? error_royalties ?? error_sellingFixedPrice ?? error_sellingAuction ?? error_currentOwner ?? error_currentAuctionId ?? error_uri
             })
-        }else if(value_sellingStatus && value_originalOwner && value_royalties && value_currentOwner && value_currentAuctionId){
+        }else if(value_sellingStatus && value_originalOwner && value_royalties && value_currentOwner && value_currentAuctionId && value_uri){
             setAuctionId(value_currentAuctionId.toString())
             if(value_sellingStatus.sellingType === NftSellingStatusEnum.SELLING_FIXED_PRICE){
                 setFetchSelling("FIXED")
@@ -209,8 +218,58 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
             }
         }
     }, [
-        value_sellingStatus, value_originalOwner, value_royalties, value_currentOwner, value_currentAuctionId,
-        error_sellingStatus, error_originalOwner, error_royalties, error_currentOwner, error_sellingFixedPrice, error_sellingAuction, error_currentAuctionId
+        value_sellingStatus, value_originalOwner, value_royalties, value_currentOwner, value_currentAuctionId, value_uri,
+        error_sellingStatus, error_originalOwner, error_royalties, error_currentOwner, error_sellingFixedPrice, error_sellingAuction, error_currentAuctionId, error_uri
+    ])
+    return <></>
+}
+
+export type Contract_getAuctionDetails_CallbackType = {
+    value?: {
+        id: string
+        initialPrice: string
+        minIncrement: string
+        refundable: boolean
+        currency: string
+        deadline: string
+        owner: string
+        royaltiesProcessed: string
+    }
+    error?: Error
+}
+type Contract_getAuctionDetails_Props = {
+    nft_id: string
+    auction_id: string
+    callback: (value: Contract_getAuctionDetails_CallbackType) => void
+}
+export const Contract_getAuctionDetails: NextPage<Contract_getAuctionDetails_Props> = ({nft_id, auction_id, callback}) => {
+    const {value, error} = useCall({
+        contract: socialNFTContract,
+        method: "s_nftIdToAuctionIdToSellingAuction",
+        args: [nft_id, auction_id]
+    }) ?? {}
+
+    useEffect(() => {
+        if(error){
+            callback({
+                error: error
+            })
+        }else if(value){
+            callback({
+                value: {
+                    id: auction_id,
+                    currency: CurrencyEnum[Number(value.currency)],
+                    deadline: value.deadline.toString(),
+                    initialPrice: value.initialPrice.toString(),
+                    refundable: value.refundable,
+                    minIncrement: value.minIncrement.toString(),
+                    owner: value.owner,
+                    royaltiesProcessed: value.royaltiesProcessed.toString()
+                }
+            })
+        }
+    }, [
+        value, error
     ])
     return <></>
 }
@@ -288,6 +347,40 @@ export const Contract_getERC20TokenBalance: NextPage<Contract_getERC20TokenBalan
         value_allowance, value_balanceOf,
         error_allowance, error_balanceOf
     ])
+    return <></>
+}
+
+export type Contract_getAuctionOffersEvent_CallbackType = {
+    value: { auctionId: string[] } | undefined
+    error: Error | undefined
+}
+type Contract_getAuctionOffersEvent_Props = {
+    account: string
+    nftId: string
+    callback: (value: Contract_getAuctionOffersEvent_CallbackType) => void
+}
+export const Contract_getAuctionOffersEvent: NextPage<Contract_getAuctionOffersEvent_Props> = ({account, nftId, callback}) => {
+    const {value, error} = useLogs({
+        contract: socialNFTContract,
+        args: [nftId, null, account],
+        event: "NewAuctionOffer"
+    }) || {}
+
+    useEffect(() => {
+        if(value || error){
+            let valueFinal: { auctionId: string[] } | undefined = undefined
+            if(value){
+                const formatted = value.map(_ => _.data).filter(__ => __._owner.toLowerCase() === account.toLowerCase())
+                valueFinal = {
+                    auctionId: Array.from(new Set(formatted.map(_ => _.auction_id.toString())))
+                }
+            }
+            callback({
+                value: valueFinal,
+                error: error
+            })
+        }
+    }, [value, error])
     return <></>
 }
 
@@ -587,6 +680,41 @@ export const Contract_increaseAllowancesErc20: NextPage<Contract_increaseAllowan
     useEffect(() => {
         if(execute){
             send(SOCIAL_NFT_ADDRESS, amount)
+        }
+    }, [execute])
+    useEffect(() => {
+        if(execute){
+            if(state.errorMessage){
+                onError(state.errorMessage)
+            }
+        }
+    }, [state])
+    useEffect(() => {
+        if(execute){
+            if (events) {
+                callback()
+            }
+        }
+    }, [events])
+    return (
+        <></>
+    )
+}
+
+type Contract_terminateAuction_Props = {
+    execute: boolean
+    nftId: string
+    auctionId: string
+    callback: () => void
+    onError: (message: string) => void
+}
+export const Contract_withdrawOffer: NextPage<Contract_terminateAuction_Props> = ({execute, nftId, auctionId, onError, callback}) => {
+    const {signer} = useWeb3Info()
+    const {send, events, state} = useContractFunction(socialNFTContract, "terminateAuction", signer ? {signer: signer} : undefined)
+
+    useEffect(() => {
+        if(execute){
+            send(nftId, auctionId)
         }
     }, [execute])
     useEffect(() => {

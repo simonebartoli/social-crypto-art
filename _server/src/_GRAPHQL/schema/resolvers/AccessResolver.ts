@@ -1,5 +1,5 @@
 import {Arg, Ctx, Mutation, Query, Resolver} from "type-graphql";
-import {Context, ContextAuth} from "../../../types";
+import {Context, ContextAuth, ContextWithLocking} from "../../../types";
 import {prisma} from "../../../globals";
 import ErrorCode from "../../enums/ErrorCode";
 import RecoveryToken from "../../models/token/access/RecoveryToken";
@@ -14,13 +14,17 @@ import {SecretType, SecureSaltType} from "../types";
 import SecretModel from "../../models/token/encryption/Secret"
 import Email from "../../models/email/Email";
 import * as Crypto from "crypto";
+import {RequireNotLockedRequest} from "../decorators/RequireNotLockedRequest";
 
 @Resolver()
 export class AccessResolver {
     @Mutation(() => SecureSaltType)
     @RequireAccessToken()
-    async createNewSalt(@Ctx() ctx: ContextAuth): Promise<SecureSaltType> {
-        const id = Crypto.randomBytes(32).toString("base64")
+    async createNewSalt(
+        @Ctx() ctx: ContextAuth,
+        @Arg("data") data: Input_SecureSalt
+    ): Promise<SecureSaltType> {
+        const id = data.id
         const salt = Crypto.randomBytes(32).toString("base64")
         await prisma.secure_salts.create({
             data: {
@@ -197,11 +201,11 @@ export class AccessResolver {
         const jwt = await accessToken.createJwt()
         response.clearCookie("recovery_token")
         response.cookie("access_token", jwt, {
-            expires: accessToken.getProperties().exp,
+            expires: DateTime.fromISO(accessToken.getProperties().exp).toJSDate(),
             httpOnly: true
         })
 
-        return accessToken.getProperties().exp
+        return DateTime.fromISO(accessToken.getProperties().exp).toJSDate()
     }
 
     @Mutation(() => Date)
@@ -235,15 +239,17 @@ export class AccessResolver {
         const jwt = await accessToken.createJwt()
 
         ctx.response.cookie("access_token", jwt, {
-            expires: accessToken.getProperties().exp,
+            expires: DateTime.fromISO(accessToken.getProperties().exp).toJSDate(),
             httpOnly: true
         })
-        return accessToken.getProperties().exp
+        return DateTime.fromISO(accessToken.getProperties().exp).toJSDate()
     }
 
     @Mutation(() => SecretType)
     @RequireAccessToken()
-    getNewSecret(@Ctx() ctx: ContextAuth): SecretType {
+    getNewSecret(
+        @Ctx() ctx: ContextAuth
+    ): SecretType {
         const nickname = ctx.nickname
         const secret = new SecretModel(nickname)
         return secret.getToken()
@@ -256,7 +262,9 @@ export class AccessResolver {
     }
 
     @Query(() => SecureSaltType)
+    @RequireNotLockedRequest()
     async getSalt(
+        @Ctx() ctx: ContextWithLocking,
         @Arg("data", () => Input_SecureSalt) data: Input_SecureSalt
     ): Promise<SecureSaltType> {
         const result = await prisma.secure_salts.findUnique({
@@ -265,9 +273,13 @@ export class AccessResolver {
             }
         })
         if(result){
+            ctx.lock.cancelCounter()
+            console.log(ctx.lock)
             return result
         }
-        throw new DATA_ERROR("The Salt ID provided does not exists", ErrorCode.ERR_404_002)
+        ctx.lock.increaseCounter()
+        console.log(ctx.lock)
+        throw new DATA_ERROR("The ID provided does not exists", ErrorCode.ERR_404_002)
     }
 
     @Query(() => SecretType)

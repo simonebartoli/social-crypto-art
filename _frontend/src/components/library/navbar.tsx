@@ -38,7 +38,7 @@ const Navbar = () => {
             <div onClick={() => setOpen(true)} className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
                 <SearchOutlinedIcon className="!text-3xl"/>
             </div>
-            <div className="w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
+            <div className="w-full !text-custom-grey relative pointer-events-none flex flex-row justify-center items-center gap-4 cursor-pointer p-3 hover:bg-white hover:text-black transition rounded-full">
                 <OndemandVideoOutlinedIcon className="!text-3xl"/>
             </div>
             <Link href="/account" className={`${reference["/account"] ? "bg-white text-black" : "hover:bg-white hover:text-black"} w-full relative flex flex-row justify-center items-center gap-4 cursor-pointer p-3 transition rounded-full`}>

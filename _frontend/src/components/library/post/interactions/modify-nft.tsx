@@ -15,7 +15,7 @@ import AuctionSellingBlockchainInteraction
     from "@/components/library/blockchain-operations/auction-selling-blockchain-interaction";
 import SetRoyaltiesBlockchainInteractions
     from "@/components/library/blockchain-operations/set-royalties-blockchain-interaction";
-import {NftInfoType} from "@/components/library/post/nft.type";
+import {NftInfoType} from "@/components/library/post/__nft.type";
 
 type Props = {
     nft_id: string
@@ -24,7 +24,6 @@ type Props = {
 }
 
 const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
-
     const [blockchainInteraction, setBlockchainInteraction] = useState(false)
     const [creator, setCreator] = useState("")
 
@@ -84,7 +83,7 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
     const onModifyClick = () => {
         const newInteractions: JSX.Element[] = []
 
-        if(royalties !== originalValuesRef.current.royalties){
+        if(royalties !== originalValuesRef.current.royalties && royalties !== ""){
             newInteractions.push(
                 <SetRoyaltiesBlockchainInteractions
                     nft_id={nft_id}
@@ -104,26 +103,36 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
                     )
                 }
                 if(sellingMode === "AUCTION SELLING"){
-                    newInteractions.push(
-                        <AuctionSellingBlockchainInteraction
-                            nft_id={nft_id}
-                            currency={CurrencyEnum[currency as keyof typeof CurrencyEnum]}
-                            deadline={String(Math.floor(DateTime.fromISO(deadline).toSeconds()))}
-                            minIncrement={minIncrement}
-                            refundable={refundable}
-                            initialPrice={ethers.utils.parseEther(amount).toString()}
-                            onFinish={() => onFinishBlockchainInteraction()}
-                        />
-                    )
+                    const date = DateTime.fromISO(deadline)
+                    const min = DateTime.now().plus({day: 5, minute: 30})
+                    const max = DateTime.now().plus({day: 29, hour: 23, minute: 30})
+
+                    const valid = date >= min && date <= max
+
+                    if(amount !== "" && Number(amount) !== 0 && Number(minIncrement) >= 1 && Number(minIncrement) <= 50 && valid){
+                        newInteractions.push(
+                            <AuctionSellingBlockchainInteraction
+                                nft_id={nft_id}
+                                currency={CurrencyEnum[currency as keyof typeof CurrencyEnum]}
+                                deadline={String(Math.floor(DateTime.fromISO(deadline).toSeconds()))}
+                                minIncrement={minIncrement}
+                                refundable={refundable}
+                                initialPrice={ethers.utils.parseEther(amount).toString()}
+                                onFinish={() => onFinishBlockchainInteraction()}
+                            />
+                        )
+                    }
                 }else if(sellingMode === "FIXED PRICE SELLING"){
-                    newInteractions.push(
-                        <FixedPriceSellingBlockchainInteraction
-                            nft_id={nft_id}
-                            currency={CurrencyEnum[currency as keyof typeof CurrencyEnum]}
-                            amount={ethers.utils.parseEther(amount).toString()}
-                            onFinish={() => onFinishBlockchainInteraction()}
-                        />
-                    )
+                    if(amount !== "" && Number(amount) !== 0){
+                        newInteractions.push(
+                            <FixedPriceSellingBlockchainInteraction
+                                nft_id={nft_id}
+                                currency={CurrencyEnum[currency as keyof typeof CurrencyEnum]}
+                                amount={ethers.utils.parseEther(amount).toString()}
+                                onFinish={() => onFinishBlockchainInteraction()}
+                            />
+                        )
+                    }
                 }
             }
         }
@@ -215,6 +224,8 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
                 <span className="col-span-2 text-lg font-bold">{nft_id}</span>
                 <span className="text-lg">CREATOR:</span>
                 <span className="col-span-2 text-lg font-bold">{creator}</span>
+                <span className="text-lg">URI:</span>
+                <span className="col-span-2 text-lg font-bold break-all">{nftInfo.uri}</span>
                 <span className="text-lg">ROYALTIES:</span>
                 <div className="col-span-2 text-lg font-bold flex flex-row items-center gap-4">
                     <input
@@ -225,16 +236,21 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
                     />
                     <span>%</span>
                 </div>
-                <span className="col-span-3 w-full border-t-[1px] border-custom-grey"/>
-                <span>SELLING MODE:</span>
-                <select className="col-span-2 text-lg bg-custom-grey p-2 text-white rounded-lg border-2 border-white font-bold"
-                        value={sellingMode}
-                        onChange={(e) => setSellingMode(e.target.value as typeof sellingMode)}
-                >
-                    <option>NO SELLING</option>
-                    <option>FIXED PRICE SELLING</option>
-                    <option>AUCTION SELLING</option>
-                </select>
+                {
+                    !nftInfo.auction &&
+                    <>
+                        <span className="col-span-3 w-full border-t-[1px] border-custom-grey"/>
+                        <span>SELLING MODE:</span>
+                        <select className="col-span-2 text-lg bg-custom-grey p-2 text-white rounded-lg border-2 border-white font-bold"
+                                value={sellingMode}
+                                onChange={(e) => setSellingMode(e.target.value as typeof sellingMode)}
+                        >
+                            <option>NO SELLING</option>
+                            <option>FIXED PRICE SELLING</option>
+                            <option>AUCTION SELLING</option>
+                        </select>
+                    </>
+                }
                 {
                     sellingMode === "FIXED PRICE SELLING" ?
                     <>
@@ -259,7 +275,7 @@ const ModifyNft: NextPage<Props> = ({nft_id, nftInfo, callback}) => {
                         </select>
                     </>
                         :
-                    sellingMode === "AUCTION SELLING" &&
+                    sellingMode === "AUCTION SELLING" && !nftInfo.auction &&
                     <>
                         <span>AMOUNT:</span>
                         <div className="col-span-2 flex flex-row gap-2 items-center">

@@ -9,7 +9,7 @@ import {
     PostTypeFilter
 } from "@/__generated__/graphql";
 import {useLogin} from "@/contexts/login";
-import {PostInteractionType, PostType} from "@/components/library/post/post.type";
+import {PostInteractionType, PostType} from "@/components/library/post/__post.type";
 import {GET_POST_FROM_USER, GET_POSTS} from "@/graphql/post";
 import {toast} from "react-toastify";
 import {PostContentTypeEnum} from "@/enums/global/post-enum";
@@ -53,7 +53,6 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
     const [ready, setReady] = useState(false)
     const [variablesFetch, setVariablesFetch] = useState<Input_GetPosts & {nickname?: string}>({
         nickname: undefined,
-        address: account,
         type: PostTypeFilter.All,
         maxPosts: 5,
         dateMax: new Date()
@@ -154,6 +153,7 @@ export const FetchingPostsContext: NextPage<Props> = ({children}) => {
 
                 return {
                     post_id: _.post_id,
+                    visibility: _.visibility,
                     header: {
                         type: isNft ? "NFT" : "POST",
                         date: _.created_at,

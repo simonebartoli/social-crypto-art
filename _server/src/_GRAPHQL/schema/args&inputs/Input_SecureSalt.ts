@@ -1,5 +1,5 @@
 import {Field, InputType} from "type-graphql";
-import {IsBase64} from "class-validator";
+import {IsBase64, IsByteLength} from "class-validator";
 
 @InputType()
 export class Input_SecureSalt {

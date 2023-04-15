@@ -1,10 +1,10 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {NextPage} from "next";
 import Metamask from "@/components/settings/buttons/metamask";
 import WalletConnect from "@/components/settings/buttons/wallet-connect";
 import {useWeb3Info} from "@/contexts/web3-info";
-import {BigNumber, ethers} from "ethers";
-import {HardhatProvider} from "@/contracts";
+import {ethers} from "ethers";
+import {useEtherBalance} from "@usedapp/core";
 
 export type BlockchainOperationType = {
     name: string
@@ -36,8 +36,9 @@ type Props = {
 
 const BlockchainInteraction: NextPage<Props> =
     ({operations, finished, args}) => {
-    const [balance, setBalance] = useState(BigNumber.from(0))
     const {account} = useWeb3Info()
+    const balance = useEtherBalance(account)
+
 
     const estimate = async () => {
         for(const _ of operations){
@@ -46,12 +47,6 @@ const BlockchainInteraction: NextPage<Props> =
     }
 
     useEffect(() => {
-        const getBalance = async () => {
-            if(account){
-                setBalance(await HardhatProvider.getBalance(account))
-            }
-        }
-        getBalance()
         estimate()
     }, [operations])
 
@@ -123,7 +118,7 @@ const BlockchainInteraction: NextPage<Props> =
                             <>
                                 <div>
                                     <span>
-                                        {`BALANCE AVAILABLE: ${ethers.utils.formatEther(balance)}`}
+                                        {`BALANCE AVAILABLE: ${balance ? ethers.utils.formatEther(balance) : "Loading..."}`}
                                     </span>
                                 </div>
                                 <div className="mb-8 flex flex-col gap-4 w-full">

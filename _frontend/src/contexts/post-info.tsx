@@ -1,7 +1,7 @@
 import React, {createContext, ReactNode, useEffect, useState} from 'react';
 import {NextPage} from "next";
-import {PostType} from "@/components/library/post/post.type";
-import {NftInfoType} from "@/components/library/post/nft.type";
+import {PostType} from "@/components/library/post/__post.type";
+import {NftInfoType} from "@/components/library/post/__nft.type";
 import {
     Contract_getAllInfoNft,
     Contract_getAllInfoNft_CallbackType,
@@ -35,6 +35,7 @@ export const PostContext: NextPage<Props> = ({children, post}) => {
     const [postFormatted, setPostFormatted] = useState(post)
     const [nftInfo, setNftInfo] = useState<NftInfoType>()
     const [verified, setVerified] = useState<boolean | undefined>(undefined)
+
     const [loadingWeb3Changes, setLoadingWeb3Changes] = useState<boolean>(!!(post.nft && !post.warningSync))
     const [reloadPost, setReloadPost] = useState(false)
 
@@ -51,6 +52,7 @@ export const PostContext: NextPage<Props> = ({children, post}) => {
             console.log(e.error)
         }else if(e.value){
             setNftInfo({
+                uri: e.value.uri,
                 currentOwner: e.value.currentOwner,
                 royalties: e.value.royalties,
                 originalOwner: e.value.owner,
@@ -99,7 +101,9 @@ export const PostContext: NextPage<Props> = ({children, post}) => {
         setPostFormatted(newPost)
     }, [post, verified, nftInfo, loadingWeb3Changes])
     useEffect(() => {
-        if(reloadPost && loadingWeb3Changes){
+        if(loadingWeb3Changes && !reloadPost){
+            setVerified(undefined)
+        }else if(loadingWeb3Changes && reloadPost){
             if(router.asPath.includes("/home")){
                 refetch_getPosts()
             }else{
@@ -108,11 +112,6 @@ export const PostContext: NextPage<Props> = ({children, post}) => {
             setReloadPost(false)
         }
     }, [reloadPost, loadingWeb3Changes])
-    useEffect(() => {
-        if(loadingWeb3Changes){
-            setVerified(undefined)
-        }
-    }, [loadingWeb3Changes])
 
     const value: ContextType = {
         post: postFormatted,

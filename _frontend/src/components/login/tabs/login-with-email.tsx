@@ -88,7 +88,7 @@ const LoginWithEmail: NextPage<Props> = ({changeTab}) => {
                        placeholder={"Insert your email here..."}/>
                 <Errors errors={errors}/>
             </div>
-            <Button onClick={onProceedClick} disabled={buttonDisabled || loading} text={"Proceed"} icon={<KeyboardDoubleArrowRightOutlinedIcon/>}/>
+            <Button trigger={true} onClick={onProceedClick} disabled={buttonDisabled || loading} text={"Proceed"} icon={<KeyboardDoubleArrowRightOutlinedIcon/>}/>
         </>
     );
 };

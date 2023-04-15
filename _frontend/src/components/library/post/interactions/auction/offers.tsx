@@ -1,5 +1,5 @@
 import React, {ChangeEvent, FormEvent, useEffect, useRef, useState} from 'react';
-import {NftInfoType} from "@/components/library/post/nft.type";
+import {NftInfoType} from "@/components/library/post/__nft.type";
 import {NextPage} from "next";
 import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import Offer from "@/components/library/post/interactions/auction/offer";
@@ -91,7 +91,7 @@ const Offers: NextPage<Props> = ({nftId, nftInfo, offers, erc20Balance, erc20All
     useEffect(() => {
         if(offers.length > 0){
             const maxOffer = offers.sort((a, b) => a.amount.lt(b.amount) ? 1 : -1)[0].amount
-            const alreadyOffered = offers.find(_ => _.owner === account)?.amount
+            const alreadyOffered = offers.find(_ => _.owner.toLowerCase() === account?.toLowerCase())?.amount
             if(alreadyOffered){
                 setMinimumOffer(maxOffer.mul(BigNumber.from(nftInfo.auction.minIncrement).add(100)).div(100).sub(alreadyOffered).toString())
             }else{

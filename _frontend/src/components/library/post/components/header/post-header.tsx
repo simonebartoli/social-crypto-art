@@ -1,24 +1,29 @@
 import React, {useEffect, useState} from 'react';
 import Image from "next/image";
-import TEST from "../../../../../public/test.webp";
+import TEST from "../../../../../../public/test.webp";
 import {NextPage} from "next";
-import NftInfo from "@/components/library/post/header/nft-info";
+import NftInfo from "@/components/library/post/components/header/components/nft-info";
 import {DateTime} from "luxon";
-import {PostHeaderType} from "@/components/library/post/post.type";
+import {PostHeaderType} from "@/components/library/post/__post.type";
 import {useLogin} from "@/contexts/login";
-import Warning from "@/components/library/post/header/warning";
+import Warning from "@/components/library/post/components/header/components/warning";
 import {usePostContext} from "@/contexts/post-info";
+import {useWeb3Info} from "@/contexts/web3-info";
+import MyOffer from "@/components/library/post/components/header/components/my-offer";
+import {Visibility} from "@/__generated__/graphql";
 
 type Props = {
     header: PostHeaderType
+    visibility: Visibility
     warningSync: boolean
     ipfs?: string
     verified?: boolean
     refetch?: () => void
 }
 
-const PostHeader: NextPage<Props> = ({header, warningSync, ipfs, verified, refetch}) => {
+const PostHeader: NextPage<Props> = ({header, visibility, warningSync, ipfs, verified, refetch}) => {
     const {nftInfo, loadingWeb3Changes} = usePostContext() || {}
+    const {account} = useWeb3Info()
     const {logged, personalInfo} = useLogin()
 
     const [date, setDate] = useState<string>("")
@@ -45,7 +50,7 @@ const PostHeader: NextPage<Props> = ({header, warningSync, ipfs, verified, refet
                 </div>
                 <div className="flex flex-row gap-6 items-center justify-center">
                     {
-                        header.type === "NFT" &&
+                        header.type === "NFT" ?
                         <div className="flex flex-row items-center justify-center gap-2">
                             <span className={`w-[10px] h-[10px] rounded-full ${verified === undefined ? "bg-custom-blue" : !verified ? "bg-custom-red" : "bg-custom-green"}`}/>
                             {
@@ -54,6 +59,14 @@ const PostHeader: NextPage<Props> = ({header, warningSync, ipfs, verified, refet
                                 !verified ?
                                 <span className="text-custom-red text-sm">Not Existing</span> :
                                 <span className="text-custom-green text-sm">Existing</span>
+                            }
+                        </div> :
+                        <div className="flex flex-row items-center justify-center gap-2">
+                            <span className={`w-[10px] h-[10px] rounded-full ${visibility === Visibility.Private ? "bg-custom-red" : "bg-custom-green"}`}/>
+                            {
+                                visibility === Visibility.Private ?
+                                <span className="text-custom-red text-sm">Private</span> :
+                                <span className="text-custom-green text-sm">Public</span>
                             }
                         </div>
                     }
@@ -74,6 +87,10 @@ const PostHeader: NextPage<Props> = ({header, warningSync, ipfs, verified, refet
             {
                 (header.type === "NFT" && nftInfo) &&
                 <NftInfo allNft={header.allNft}/>
+            }
+            {
+                (header.type === "NFT" && account) &&
+                <MyOffer/>
             }
         </div>
     );

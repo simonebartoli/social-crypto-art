@@ -20,12 +20,12 @@ type CreateNewToken = {
 }
 type ConstructorType = "NEW_TOKEN" | "LOAD_TOKEN"
 type AccessTokenHeader = {
-    timeout: Date
+    timeout: string
 }
 
 export default class AccessToken extends Token{
-    private static readonly EXP_DEFAULT: number = 60*60*24*5
-    private static readonly TIMEOUT_DEFAULT: number = 60*60*6
+    public static readonly EXP_DEFAULT: number = 60*60*24*5
+    public static readonly TIMEOUT_DEFAULT: number = 60*60*6
 
     private accessTokenHeader: AccessTokenHeader
 
@@ -35,12 +35,12 @@ export default class AccessToken extends Token{
             super({
                 header: {
                     ...castedData.header,
-                    exp: DateTime.now().plus({second: AccessToken.EXP_DEFAULT}).toJSDate(),
+                    exp: DateTime.now().plus({second: AccessToken.EXP_DEFAULT}).toISO(),
                 },
                 body: castedData.body
             });
             this.accessTokenHeader = {
-                timeout: DateTime.now().plus({second: AccessToken.TIMEOUT_DEFAULT}).toJSDate()
+                timeout: DateTime.now().plus({second: AccessToken.TIMEOUT_DEFAULT}).toISO()
             }
         }else{
             const castedData = data as LoadAccessTokenConstructor
@@ -77,9 +77,9 @@ export default class AccessToken extends Token{
         const castedHeader = header as AccessTokenHeader & TokenHeader
         const castedBody = body as TokenBody
         await AccessToken.checkDatabaseProperties(castedHeader.tokenId, castedBody.nickname)
-        const accessToken = new AccessToken({header: {...castedHeader}, body: {...castedBody}}, "LOAD_TOKEN")
-        accessToken.accessTokenHeader.timeout = DateTime.now().plus({second: AccessToken.TIMEOUT_DEFAULT}).toJSDate()
-        return accessToken
+        const newTimeout = DateTime.now().plus({second: AccessToken.TIMEOUT_DEFAULT}).toISO()
+
+        return new AccessToken({header: {...castedHeader, timeout: newTimeout}, body: {...castedBody}}, "LOAD_TOKEN")
     }
     private static async verifySignature(token: string, encryptionKey: KeyLike | Uint8Array): Promise<{header: any, body: any}>{
         try{
@@ -97,8 +97,8 @@ export default class AccessToken extends Token{
         if(header["securityPatch"] !== undefined && header["securityPatch"] === Token.SECURITY_PATCH){
             const castedHeader = header as AccessTokenType["header"]
             const type = castedHeader.type
-            const timeout = DateTime.fromISO(castedHeader.timeout.toString())
-            const exp = DateTime.fromISO(castedHeader.exp.toString())
+            const timeout = DateTime.fromISO(castedHeader.timeout)
+            const exp = DateTime.fromISO(castedHeader.exp)
 
             const ipToken = castedHeader.ip
             const uaToken = castedHeader.ua
@@ -141,7 +141,7 @@ export default class AccessToken extends Token{
     }
 
     override async createJwt(): Promise<string> {
-        const exp = DateTime.fromJSDate(this.tokenHeader.exp).toSeconds()
+        const exp = DateTime.fromISO(this.tokenHeader.exp).toSeconds()
         const encryptionKey = await Token.getEncryptionKey()
         return await new jose.SignJWT({...this.tokenBody})
             .setProtectedHeader({alg: Token.ALG, ...this.tokenHeader, ...this.accessTokenHeader})

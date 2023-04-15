@@ -4,6 +4,7 @@ import TEST from "../../../../../../public/test.webp";
 import {NextPage} from "next";
 import {DateTime} from "luxon";
 import {ethers} from "ethers";
+import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
     bidder: string
@@ -13,8 +14,10 @@ type Props = {
 }
 
 const Offer: NextPage<Props> = ({bidder, amount, date, currency}) => {
+    const {account} = useWeb3Info()
+
     return (
-        <div className="flex flex-col items-center justify-center gap-4 p-6 bg-custom-light-grey rounded-lg">
+        <div className={`${account?.toLowerCase() === bidder.toLowerCase() ? "bg-custom-blue" : "bg-custom-light-grey"} flex flex-col items-center justify-center gap-4 p-6 rounded-lg`}>
             <div className="flex flex-row items-center justify-center gap-4">
                 <div className="relative w-[50px] h-[50px] rounded-xl overflow-hidden">
                     <Image fill={true} style={{objectFit: "fill"}} src={TEST} alt={""}/>

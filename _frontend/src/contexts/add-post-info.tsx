@@ -2,9 +2,9 @@ import React, {createContext, ReactNode, useState} from 'react';
 import {NextPage} from "next";
 import {PostInfoType} from "@/components/add-post/add-post.type";
 import {AddPostTypeEnum} from "@/enums/local/add-post-enum";
-import {PostVisibilityEnum} from "@/enums/global/post-enum";
 import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
 import {DateTime} from "luxon";
+import {Visibility} from "@/__generated__/graphql";
 
 export type ContextType = {
     postInfo: {
@@ -58,7 +58,7 @@ type Props = {
 export const AddPostInfo: NextPage<Props> = ({children}) => {
     const [postInfo, setPostInfo] = useState<PostInfoType[]>([])
     const [postType, setPostType] = useState(AddPostTypeEnum.POST)
-    const [visibility, setVisibility] = useState<string>(PostVisibilityEnum[PostVisibilityEnum.PUBLIC])
+    const [visibility, setVisibility] = useState<string>(Visibility.Public)
     const [selling, setSelling] = useState<string>(NftSellingStatusEnum[NftSellingStatusEnum.NO_SELLING])
     const [minIncrement, setMinIncrement] = useState("10")
     const [deadline, setDeadline] = useState<Date>(DateTime.now().plus({day: 10}).toJSDate())

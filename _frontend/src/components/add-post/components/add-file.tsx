@@ -5,6 +5,7 @@ import {NextPage} from "next";
 import {PostContentTypeEnum} from "@/enums/global/post-enum";
 import IsNft from "@/components/add-post/components/is-nft";
 import {PostInfoType} from "@/components/add-post/add-post.type";
+import {toast} from "react-toastify";
 
 type Props = {
     id: number
@@ -18,8 +19,11 @@ type Props = {
     onModifyContent: (value: PostInfoType, type: "ADD" | "EDIT") => void
 }
 
-const AddImage: NextPage<Props> = ({type, onClose, id, nftEnabled, onDrop, onDragEnter, onDragStart, onModifyContent}) => {
+const AddFile: NextPage<Props> = ({type, onClose, id, nftEnabled, onDrop, onDragEnter, onDragStart, onModifyContent}) => {
     const nft = useRef<boolean>(false)
+    const imageTypeAllowed = useRef(["image/jpg", "image/png"])
+    const gifTypeAllowed = useRef(["image/gif"])
+
     const inputRef = useRef<HTMLInputElement>(null)
     const [file, setFile] = useState<File | null>(null)
 
@@ -31,7 +35,19 @@ const AddImage: NextPage<Props> = ({type, onClose, id, nftEnabled, onDrop, onDra
     const onFileSelected = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files ? e.target.files[0] : null
         if(file !== null){
-            setFile(file)
+            if(type === PostContentTypeEnum.PHOTO){
+                if(imageTypeAllowed.current.includes(file.type)){
+                    setFile(file)
+                }else{
+                    toast.error("This file is not accepted")
+                }
+            }else if(type === PostContentTypeEnum.GIF){
+                if(gifTypeAllowed.current.includes(file.type)){
+                    setFile(file)
+                }else{
+                    toast.error("This file is not accepted")
+                }
+            }
         }
     }
     const onNftStatusChange = (e: boolean) => {
@@ -74,7 +90,7 @@ const AddImage: NextPage<Props> = ({type, onClose, id, nftEnabled, onDrop, onDra
                             "Click Here to Change your Image"
                     }
                 </span>
-                <input onChange={onFileSelected} ref={inputRef} type="file" className="hidden"/>
+                <input accept={`${type === PostContentTypeEnum.GIF ? "image/gif" : "image/jpeg,image/png "}`} onChange={onFileSelected} ref={inputRef} type="file" className="hidden"/>
             </div>
             {
                 file !== null &&
@@ -85,4 +101,4 @@ const AddImage: NextPage<Props> = ({type, onClose, id, nftEnabled, onDrop, onDra
     );
 };
 
-export default AddImage;
+export default AddFile;

@@ -6,6 +6,7 @@ import {ArrayOneOrMore} from "../../../types";
 import {Interaction} from "../../enums/Interaction";
 import {NftSellingType} from "../../enums/NftSellingType";
 import {PostTypeFilter} from "../../enums/PostTypeFilter";
+import {DateTime} from "luxon";
 
 // -------------------- NOT EXPORTED --------------------
 @InputType()
@@ -79,15 +80,11 @@ export class Input_GetPosts {
     @Field(() => PostTypeFilter, {defaultValue: PostTypeFilter.ALL})
     type: PostTypeFilter
 
-    @Field(() => String, {nullable: true})
-    @IsEthereumAddress()
-    address?: string
-
     @Field(() => Int, {defaultValue: 10})
     @IsInt()
     maxPosts: number
 
-    @Field(() => Date, {defaultValue: new Date()})
+    @Field(() => Date, {defaultValue: DateTime.now().toJSDate()})
     dateMax: Date
 
     @Field(() => Date, {nullable: true})

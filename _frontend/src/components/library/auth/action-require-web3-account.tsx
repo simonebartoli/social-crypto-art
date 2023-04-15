@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import {NextPage} from "next";
 import {useModal} from "@/contexts/modal";
-import RequireWeb3Account from "@/components/library/auth/require-web3-account";
+import Web3AccountRequiredModal from "@/components/library/modal/web3-account-required-modal";
 import {useWeb3Info} from "@/contexts/web3-info";
 
 type Props = {
@@ -16,6 +16,7 @@ const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, specificNot
     const {account} = useWeb3Info()
 
     useEffect(() => {
+        console.log(account)
         // TODO FIX BUG HERE - NOT UPDATING ACCOUNT
         if(specificAccount){
             if(account && account.toLowerCase() === specificAccount.toLowerCase()){
@@ -23,7 +24,7 @@ const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, specificNot
                     callback()
                 }
             }else{
-                showModal(<RequireWeb3Account specificAccount={specificAccount}/>)
+                showModal(<Web3AccountRequiredModal specificAccount={specificAccount}/>)
             }
         }else if(specificNotAccount) {
             if(account && account.toLowerCase() !== specificNotAccount.toLowerCase()){
@@ -31,7 +32,7 @@ const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, specificNot
                     callback()
                 }
             }else{
-                showModal(<RequireWeb3Account specificNotAccount={specificNotAccount}/>)
+                showModal(<Web3AccountRequiredModal specificNotAccount={specificNotAccount}/>)
             }
         } else{
             if(account){
@@ -39,7 +40,7 @@ const ActionRequireWeb3Account: NextPage<Props> = ({specificAccount, specificNot
                     callback()
                 }
             }else{
-                showModal(<RequireWeb3Account specificAccount={specificAccount}/>)
+                showModal(<Web3AccountRequiredModal specificAccount={specificAccount}/>)
             }
         }
     }, [account])

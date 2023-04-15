@@ -38,7 +38,7 @@ class PostContentModel extends ContentModel{
             path = `${ContentModel.PATH_VIDEOS_NETWORK}${this.text}`
         }
         else if(this.type === MediaType.GIF){
-            path = `${ContentModel.PATH_GIF_LOCAL}${this.text}`
+            path = `${ContentModel.PATH_GIF_NETWORK}${this.text}`
         }
 
         return {

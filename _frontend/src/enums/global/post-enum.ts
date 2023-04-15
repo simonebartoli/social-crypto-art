@@ -3,9 +3,3 @@ export enum PostContentTypeEnum {
     "PHOTO",
     "GIF"
 }
-
-export enum PostVisibilityEnum {
-    "PUBLIC",
-    "RESTRICTED",
-    "PRIVATE"
-}

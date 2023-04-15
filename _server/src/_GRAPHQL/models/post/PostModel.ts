@@ -43,7 +43,7 @@ type CreateNewPostConstructor = {
     ipfs?: string
 }
 type PostFilters = {
-    address?: string
+    address?: string[]
     type: PostTypeFilter
     exclude?: string[]
     maxPosts: number
@@ -128,7 +128,7 @@ class PostModel {
         const result = await prisma.posts.findMany({
             where: {
                 created_at: {
-                    lte: dateMax ? dateMax : new Date(),
+                    lte: dateMax ? dateMax : DateTime.now().toJSDate(),
                     gte: dateMin
                 },
                 nickname: {
@@ -251,13 +251,16 @@ class PostModel {
         }
         return post
     }
+
     public static async loadNftCreated(nickname: string, auth?: string, filter?: PostFilters): Promise<string[]> {
         const {address} = filter || {}
         const nftId: string[] = []
         if(address){
-            const event = SOCIAL_NFT_CONTRACT.filters.NewNftCreated(null, address)
-            const result = await SOCIAL_NFT_CONTRACT.queryFilter(event)
-            nftId.push(...result.map(_ => _.args._nft_id.toString()))
+            for(const add of address){
+                const event = SOCIAL_NFT_CONTRACT.filters.NewNftCreated(null, add)
+                const result = await SOCIAL_NFT_CONTRACT.queryFilter(event)
+                nftId.push(...result.map(_ => _.args._nft_id.toString()))
+            }
         }
         return nftId
     }
@@ -265,8 +268,22 @@ class PostModel {
         const {address} = filter || {}
         const nftId: string[] = []
         if(address){
-            const result = await SOCIAL_NFT_CONTRACT.getAllNftIdFromSender(address)
-            nftId.push(...result.map(_ => _.toString()))
+            for(const add of address){
+                const result = await SOCIAL_NFT_CONTRACT.getAllNftIdFromSender(add)
+                nftId.push(...result.map(_ => _.toString()))
+            }
+        }
+        return nftId
+    }
+    public static async loadAuctionOffersProposed(nickname: string, auth?: string, filter?: PostFilters): Promise<string[]> {
+        const {address} = filter || {}
+        const nftId: string[] = []
+        if(address){
+            for(const add of address){
+                const event = SOCIAL_NFT_CONTRACT.filters.NewAuctionOffer(null, null, add)
+                const result = await SOCIAL_NFT_CONTRACT.queryFilter(event)
+                nftId.push(...result.map(_ => _.args._nft_id.toString()))
+            }
         }
         return nftId
     }
@@ -292,7 +309,7 @@ class PostModel {
                         }
                     ],
                     created_at: {
-                        lte: dateMax ? dateMax : new Date(),
+                        lte: dateMax ? dateMax : DateTime.now().toJSDate(),
                         gte: dateMin
                     },
                 },
@@ -316,7 +333,7 @@ class PostModel {
                         }
                     },
                     created_at: {
-                        lte: dateMax ? dateMax : new Date(),
+                        lte: dateMax ? dateMax : DateTime.now().toJSDate(),
                         gte: dateMin
                     },
                 },
@@ -341,7 +358,7 @@ class PostModel {
                         }
                     },
                     created_at: {
-                        lte: dateMax ? dateMax : new Date(),
+                        lte: dateMax ? dateMax : DateTime.now().toJSDate(),
                         gte: dateMin
                     },
                 },

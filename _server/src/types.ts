@@ -1,9 +1,16 @@
 import express from "express";
+import LockedRequest from "./_GRAPHQL/models/LockedRequest";
 
 export type Context = {
     request: express.Request
     response: express.Response
     nickname: null
+}
+export type ContextWithLocking = {
+    request: express.Request
+    response: express.Response
+    nickname: null
+    lock: LockedRequest
 }
 export type ContextAuth = {
     request: express.Request

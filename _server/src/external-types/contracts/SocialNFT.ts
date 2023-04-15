@@ -581,6 +581,7 @@ export interface SocialNFTInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
+    "NewAuctionOffer(uint256,uint256,address)": EventFragment;
     "NewNftCreated(uint256,address)": EventFragment;
     "RoyaltiesSet()": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
@@ -588,6 +589,7 @@ export interface SocialNFTInterface extends utils.Interface {
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "NewAuctionOffer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NewNftCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoyaltiesSet"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
@@ -616,6 +618,18 @@ export type ApprovalForAllEvent = TypedEvent<
 >;
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
+
+export interface NewAuctionOfferEventObject {
+  _nft_id: BigNumber;
+  auction_id: BigNumber;
+  _owner: string;
+}
+export type NewAuctionOfferEvent = TypedEvent<
+  [BigNumber, BigNumber, string],
+  NewAuctionOfferEventObject
+>;
+
+export type NewAuctionOfferEventFilter = TypedEventFilter<NewAuctionOfferEvent>;
 
 export interface NewNftCreatedEventObject {
   _nft_id: BigNumber;
@@ -1600,6 +1614,17 @@ export interface SocialNFT extends BaseContract {
       operator?: PromiseOrValue<string> | null,
       approved?: null
     ): ApprovalForAllEventFilter;
+
+    "NewAuctionOffer(uint256,uint256,address)"(
+      _nft_id?: PromiseOrValue<BigNumberish> | null,
+      auction_id?: PromiseOrValue<BigNumberish> | null,
+      _owner?: PromiseOrValue<string> | null
+    ): NewAuctionOfferEventFilter;
+    NewAuctionOffer(
+      _nft_id?: PromiseOrValue<BigNumberish> | null,
+      auction_id?: PromiseOrValue<BigNumberish> | null,
+      _owner?: PromiseOrValue<string> | null
+    ): NewAuctionOfferEventFilter;
 
     "NewNftCreated(uint256,address)"(
       _nft_id?: PromiseOrValue<BigNumberish> | null,

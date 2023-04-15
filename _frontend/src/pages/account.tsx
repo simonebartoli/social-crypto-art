@@ -4,7 +4,7 @@ import Layout from "@/components/library/layout";
 import {useLogin} from "@/contexts/login";
 import Loader from "@/components/library/loader";
 import {FetchingPostsContext, useFetchingPostsContext} from "@/contexts/fetching-posts";
-import {PostType} from "@/components/library/post/post.type";
+import {PostType} from "@/components/library/post/__post.type";
 import {PostContext} from "@/contexts/post-info";
 import Post from "@/components/library/post/post";
 import {PostTypeFilter} from "@/__generated__/graphql";
@@ -13,7 +13,7 @@ import {useWeb3Info} from "@/contexts/web3-info";
 
 const Account = () => {
     const {account} = useWeb3Info()
-    const {logged} = useLogin()
+    const {logged, personalInfo} = useLogin()
     const router = useRouter()
 
     const [ready, setReady] = useState(false)
@@ -28,15 +28,20 @@ const Account = () => {
     useEffect(() => {
         if(!ready && router.isReady){
             if(router.query.user){
-                setTypePage("SEARCH")
-                setAccountToSearch(router.query.user as string)
+                if(logged && personalInfo && router.query.user === personalInfo.nickname){
+                    setTypePage("PERSONAL")
+                    setAccountToSearch(undefined)
+                }else{
+                    setTypePage("SEARCH")
+                    setAccountToSearch(router.query.user as string)
+                }
             }else if(logged) {
                 setTypePage("PERSONAL")
                 setAccountToSearch(undefined)
             }
         }
 
-    }, [router.isReady, logged, ready])
+    }, [router.isReady, logged, ready, personalInfo])
     useEffect(() => {
         if(ready) {
             resetStatus()
@@ -49,13 +54,11 @@ const Account = () => {
             if(typePage === "PERSONAL"){
                 variablesFetch.set({
                     ...variablesFetch.value,
-                    address: account,
                     nickname: undefined
                 })
             }else if(typePage === "SEARCH" && accountToSearch){
                 variablesFetch.set({
                     ...variablesFetch.value,
-                    address: undefined,
                     nickname: accountToSearch
                 })
             }
@@ -67,7 +70,6 @@ const Account = () => {
             getPostFromUser()
         }
     }, [ready])
-
     useEffect(() => {
         setPostsFormatted(posts)
     }, [posts])
@@ -97,6 +99,12 @@ const Account = () => {
                     dateMax: new Date(),
                     type: PostTypeFilter.NftOwned
                 })
+            }else if(filterType === PostTypeFilter.AuctionOffers){
+                variablesFetch.set({
+                    ...variablesFetch.value,
+                    dateMax: new Date(),
+                    type: PostTypeFilter.AuctionOffers
+                })
             }
         }
     }, [filterType, ready])
@@ -119,6 +127,7 @@ const Account = () => {
                     <span onClick={() => setFilterType(PostTypeFilter.PostOnly)} className={`${filterType === PostTypeFilter.PostOnly ? "text-white bg-black" : "hover:text-white hover:bg-black"} p-2 cursor-pointer transition rounded-lg w-full`}>Post Only</span>
                     <span onClick={() => setFilterType(PostTypeFilter.NftOwned)} className={`${filterType === PostTypeFilter.NftOwned ? "text-white bg-black" : "hover:text-white hover:bg-black"} p-2 cursor-pointer transition rounded-lg w-full`}>NFT Owned</span>
                     <span onClick={() => setFilterType(PostTypeFilter.NftCreated)} className={`${filterType === PostTypeFilter.NftCreated ? "text-white bg-black" : "hover:text-white hover:bg-black"} p-2 cursor-pointer transition rounded-lg w-full`}>NFT Created</span>
+                    <span onClick={() => setFilterType(PostTypeFilter.AuctionOffers)} className={`${filterType === PostTypeFilter.AuctionOffers ? "text-white bg-black" : "hover:text-white hover:bg-black"} p-2 cursor-pointer transition rounded-lg w-full`}>Auction Offers</span>
                 </div>
                 <div className="flex flex-col items-center justify-center gap-12 w-full">
                     {

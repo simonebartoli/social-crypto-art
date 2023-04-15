@@ -5,7 +5,7 @@ import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlin
 import {NextPage} from "next";
 import {useModal} from "@/contexts/modal";
 import ActionRequireLogin from "@/components/library/auth/action-require-login";
-import {PostInteractionType} from "@/components/library/post/post.type";
+import {PostInteractionType} from "@/components/library/post/__post.type";
 import {useMutation} from "@apollo/client";
 import {ADD_UPVOTE_DOWNVOTE, REMOVE_UPVOTE_DOWNVOTE} from "@/graphql/post";
 import {toast} from "react-toastify";
@@ -17,7 +17,7 @@ import ModifyNft from "@/components/library/post/interactions/modify-nft";
 import ActionRequireWeb3Account from "@/components/library/auth/action-require-web3-account";
 import {usePostContext} from "@/contexts/post-info";
 import AuctionSelling from "@/components/library/post/interactions/auction/auction-selling";
-import {NftInfoType} from "@/components/library/post/nft.type";
+import {NftInfoType} from "@/components/library/post/__nft.type";
 
 type Props = {
     post_id: string
@@ -199,7 +199,9 @@ const PostInteractions: NextPage<Props> = ({post_id, interactions, nft_id, comme
                     {
                         showSections.selling &&
                         <ActionRequireLogin callback={() => showModal(
-                            <AuctionSelling nftId={nft_id} nftInfo={nftInfoAuction}/>
+                            <ActionRequireWeb3Account>
+                                <AuctionSelling nftId={nft_id} nftInfo={nftInfoAuction}/>
+                            </ActionRequireWeb3Account>
                         )}/>
                     }
                     <span>Check Further Info / Make Offer</span>
@@ -244,10 +246,10 @@ const PostInteractions: NextPage<Props> = ({post_id, interactions, nft_id, comme
                         onClick={() => addInteraction("DOWNVOTE")}
                         className={`${downvoteSelected ? "text-custom-blue" : "hover:text-custom-blue"} cursor-pointer transition !text-3xl`}/>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-2">
+                <div className="flex flex-row !text-custom-grey items-center justify-center gap-2">
                     <span>{interactions.commentTotal}</span>
-                    <QuestionAnswerOutlinedIcon onClick={() => comment.set(!comment.value)}
-                                                className={`${comment.value && "text-custom-blue"} cursor-pointer hover:text-custom-blue transition !text-3xl`}/>
+                    <QuestionAnswerOutlinedIcon onClick={() => {/*comment.set(!comment.value)*/}}
+                                                className={`${comment.value && "text-custom-blue"} !text-custom-grey cursor-not-allowed hover:text-custom-blue transition !text-3xl`}/>
                 </div>
             </div>
         </div>

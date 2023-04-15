@@ -7,7 +7,7 @@ import * as Path from "path";
 import * as crypto from "crypto";
 
 export default abstract class Token {
-    protected static readonly ALG: string = "HS256"
+    static readonly ALG: string = "HS256"
     protected static readonly SECURITY_PATCH = "1.0"
 
     protected tokenHeader: TokenHeader

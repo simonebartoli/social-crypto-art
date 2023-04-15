@@ -9,7 +9,7 @@ import {AddPostInfo, useAddPostInfo} from "@/contexts/add-post-info";
 import {useMutation} from "@apollo/client";
 import {ADD_POST} from "@/graphql/post";
 import {toast} from "react-toastify";
-import {PostContentTypeEnum, PostVisibilityEnum} from "@/enums/global/post-enum";
+import {PostContentTypeEnum} from "@/enums/global/post-enum";
 import {Input_Content, Input_NftInfo, MediaType, NftSellingType, Visibility} from "@/__generated__/graphql";
 import {API_URL_REST} from "@/globals";
 import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
@@ -28,6 +28,7 @@ import AuctionSellingBlockchainInteraction
     from "@/components/library/blockchain-operations/auction-selling-blockchain-interaction";
 import {BlockchainCallbackContext} from "@/contexts/blockchain-callback";
 import {NextPage} from "next";
+import DOMPurify from "dompurify";
 
 const AddPost = () => {
     const router = useRouter()
@@ -58,8 +59,20 @@ const AddPost = () => {
         }
     })
 
-    const uploadFiles = async (file: File) => {
+    const uploadImages = async (file: File) => {
         const URL = `${API_URL_REST}/upload-images`
+        const formData = new FormData()
+        formData.append("image", file)
+        const response = await fetch(URL, {
+            method: "POST",
+            credentials: "include",
+            body: formData
+        })
+        const result = await response.json()
+        return `${result.url}`
+    }
+    const uploadGif = async (file: File) => {
+        const URL = `${API_URL_REST}/upload-gif`
         const formData = new FormData()
         formData.append("image", file)
         const response = await fetch(URL, {
@@ -80,7 +93,16 @@ const AddPost = () => {
                     _.type === PostContentTypeEnum.PHOTO ? MediaType.Photo :
                     MediaType.Gif
                 if(_.file && _.type === PostContentTypeEnum.PHOTO){
-                    const filePosition = await uploadFiles(_.file)
+                    const filePosition = await uploadImages(_.file)
+                    content.push({
+                        type: type,
+                        is_nft: _.nft,
+                        text: filePosition,
+                        position: index
+                    })
+                    index += 1
+                }else if(_.file && _.type === PostContentTypeEnum.GIF){
+                    const filePosition = await uploadGif(_.file)
                     content.push({
                         type: type,
                         is_nft: _.nft,
@@ -92,7 +114,7 @@ const AddPost = () => {
                     content.push({
                         type: type,
                         is_nft: _.nft,
-                        text: _.data,
+                        text: DOMPurify.sanitize(_.data),
                         position: index
                     })
                     index += 1
@@ -127,10 +149,7 @@ const AddPost = () => {
                 const content = await formatData()
                 const nftInfo = postType.value === AddPostTypeEnum.POST
                     ? undefined : formatNftInfo()
-                const visible =
-                    visibility.value === PostVisibilityEnum[PostVisibilityEnum.PUBLIC] ? Visibility.Public :
-                        visibility.value === PostVisibilityEnum[PostVisibilityEnum.PRIVATE] ? Visibility.Private :
-                            Visibility.Restricted
+                const visible = visibility.value as Visibility
                 addPost({
                     variables: {
                         data: {

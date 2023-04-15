@@ -26,6 +26,9 @@ type AppPropsWithLayout = AppProps & {
     Component: NextPageWithLayout
 }
 
+// const testDate = DateTime.fromISO("2023-10-10").toMillis()
+// Settings.now = () => testDate
+
 const saira = Saira({subsets: ["latin"]})
 const rajdhani = Rajdhani({weight: ["300", "400", "500", "600", "700"], subsets: ["latin", "latin-ext"]})
 

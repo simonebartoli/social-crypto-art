@@ -37,6 +37,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
     error ERR_AUCTION_NOT_FOUND();
 
     event NewNftCreated(uint256 indexed _nft_id, address indexed _owner);
+    event NewAuctionOffer(uint256 indexed _nft_id, uint256 indexed auction_id, address indexed _owner);
     event RoyaltiesSet();
 
     enum SellingType {
@@ -231,7 +232,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
         if(pastOwners.length > 0){
             revert ERR_ROYALTIES_NOT_APPLICABLE();
         }
-        if(percentage < 1 || percentage > 25){
+        if(percentage < 0 || percentage > 25){
             revert ERR_ROYALTIES_PERCENTAGE_NOT_IN_RANGE();
         }
 
@@ -369,6 +370,7 @@ contract SocialNFT is ERC721URIStorage, Utils {
             i_paymentHolder.addNewHoldPayment_Auction(auction.id, msg.sender, finalAmount, auction.currency);
             erc20.transferFrom(msg.sender, address(i_paymentHolder), amount);
         }
+        emit NewAuctionOffer(nftId, auction.id, msg.sender);
     }
 
     /*

@@ -10,6 +10,7 @@ src/__typechain
 
 # testing
 /coverage
+/cypress
 
 # next.js
 /.next/

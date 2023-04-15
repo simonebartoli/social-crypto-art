@@ -10,10 +10,14 @@ import {PostContext} from "@/contexts/post-info";
 const Home = () => {
     const {logged} = useLogin()
     const [ready, setReady] = useState(false)
-    const {posts, resetStatus, getPosts, refetch_getPosts: refetch, loading_getPosts: loading} = useFetchingPostsContext()
+    const {posts, variablesFetch, resetStatus, getPosts, refetch_getPosts: refetch, loading_getPosts: loading} = useFetchingPostsContext()
 
     useEffect(() => {
         resetStatus()
+        variablesFetch.set({
+            ...variablesFetch.value,
+            dateMax: new Date()
+        })
         getPosts()
         setReady(true)
     }, [logged])

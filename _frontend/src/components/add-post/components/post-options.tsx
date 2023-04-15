@@ -6,7 +6,7 @@ import {AddPostTypeEnum} from "@/enums/local/add-post-enum";
 import Selling from "@/components/add-post/components/options/selling";
 import {useAddPostInfo} from "@/contexts/add-post-info";
 import {useModal} from "@/contexts/modal";
-import RequireWeb3Account from "@/components/library/auth/require-web3-account";
+import Web3AccountRequiredModal from "@/components/library/modal/web3-account-required-modal";
 import {useWeb3Info} from "@/contexts/web3-info";
 
 
@@ -24,7 +24,7 @@ const PostOptions = () => {
                 postType.set(AddPostTypeEnum[e.target.value as keyof typeof AddPostTypeEnum])
             }else{
                 setSelectedBeforeAccount(e.target.value)
-                showModal(<RequireWeb3Account/>)
+                showModal(<Web3AccountRequiredModal/>)
             }
         }else{
             postType.set(AddPostTypeEnum[e.target.value as keyof typeof AddPostTypeEnum])

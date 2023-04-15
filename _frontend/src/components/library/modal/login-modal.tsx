@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from "next/link";
 
-const RequireLogin = () => {
+const LoginModal = () => {
     return (
         <div className="w-full h-full flex flex-col gap-8 items-center justify-center">
             <h2 className="text-4xl font-bold">This Action Requires Login</h2>
@@ -16,4 +16,4 @@ const RequireLogin = () => {
     );
 };
 
-export default RequireLogin;
+export default LoginModal;

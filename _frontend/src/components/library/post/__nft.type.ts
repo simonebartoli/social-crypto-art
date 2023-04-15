@@ -1,6 +1,7 @@
 import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
 
 export type NftInfoType<T extends (void | "FIXED" | "AUCTION") = void> = {
+    uri: string
     originalOwner: string
     currentOwner: string
     royalties: string
