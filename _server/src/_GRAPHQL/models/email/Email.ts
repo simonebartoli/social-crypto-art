@@ -60,6 +60,9 @@ class Email {
             auth: {
                 user: this.username,
                 pass: this.password
+            },
+            tls: {
+                rejectUnauthorized: false
             }
         })
     }

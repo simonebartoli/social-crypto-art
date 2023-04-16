@@ -45,6 +45,6 @@ export const NFT_STORAGE_API_KEY = process.env["NFT_STORAGE_API_KEY"]!
 export const EMAIL_FROM = process.env["EMAIL_FROM"] as string
 export const EMAIL_HOST = process.env["EMAIL_HOST"] as string
 export const EMAIL_PORT = process.env["EMAIL_PORT"] as string
-export const EMAIL_SECURE = Boolean(process.env["EMAIL_SECURE"]) as boolean
+export const EMAIL_SECURE = process.env["EMAIL_SECURE"] !== "false"
 export const EMAIL_USERNAME = process.env["EMAIL_USERNAME"] as string
 export const EMAIL_PASSWORD = process.env["EMAIL_PASSWORD"] as string
