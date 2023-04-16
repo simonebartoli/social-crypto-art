@@ -19,7 +19,7 @@ import {setComplexity, setHttpPlugin} from "./_common/HttpPlugin";
 import {router} from "../_REST/MediaUpload";
 import * as Path from "path";
 import {cleanTempFiles} from "../scripts/__automated/CleanTempFiles";
-import {DOMAIN, FRONT_END_DOMAIN} from "../globals";
+import {DOMAIN, FRONT_END_DOMAIN, PORT} from "../globals";
 import {errorHandling} from "../_REST/ErrorHandling";
 
 
@@ -75,7 +75,7 @@ async function startApolloServer() {
         }
     }))
 
-    await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
+    await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
     console.log(`🚀 Server ready at ${DOMAIN}/graphql`);
 }
 

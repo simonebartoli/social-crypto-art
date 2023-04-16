@@ -30,6 +30,7 @@ export const BUILD_TYPE = process.env["NODE_ENV"] as "development" | "production
 
 export const DOMAIN = process.env["DOMAIN"]!
 export const FRONT_END_DOMAIN = process.env["FRONT_END_DOMAIN"]!
+export const PORT = process.env["PORT"]!
 
 
 // NFT CONFIGURATION -- GLOBAL VARIABLES --
