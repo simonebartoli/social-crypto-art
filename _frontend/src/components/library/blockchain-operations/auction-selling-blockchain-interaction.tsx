@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {BlockchainOperationType} from "@/components/library/blockchain-interaction";
-import {HardhatProvider, socialNFTContract} from "@/contracts";
+import {jsonRpcProvider, socialNFTContract} from "@/contracts";
 import {ethers} from "ethers";
 import {CurrencyEnum} from "@/enums/global/nft-enum";
 import {NextPage} from "next";
@@ -36,7 +36,7 @@ const AuctionSellingBlockchainInteraction: NextPage<Props> = ({nft_id, initialPr
 
     const getEstimate = async () => {
         try{
-            const result = (await socialNFTContract.connect(account!).estimateGas.setSellingAuction(nftId, initialPrice, refundable, minIncrement, currency, deadline)).mul(await HardhatProvider.getGasPrice())
+            const result = (await socialNFTContract.connect(account!).estimateGas.setSellingAuction(nftId, initialPrice, refundable, minIncrement, currency, deadline)).mul(await jsonRpcProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
             setEstimate("NOT CALCULABLE")

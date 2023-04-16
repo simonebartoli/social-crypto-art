@@ -7,7 +7,7 @@ import Crypto from "crypto";
 import {apolloClient} from "@/pages/_app";
 import {GET_SALT} from "@/graphql/access";
 import {ethers, Signer} from "ethers";
-import {HardhatProvider} from "@/contracts";
+import {jsonRpcProvider} from "@/contracts";
 
 type DataType = {
     mnemonic: {
@@ -156,7 +156,7 @@ export const Web3Info: NextPage<Props> = ({children}) => {
             setAccount(accountExtension)
         }else if(wallet){
             setAccount(wallet.address)
-            setCustomSigner(new ethers.Wallet(wallet.privateKey, HardhatProvider))
+            setCustomSigner(new ethers.Wallet(wallet.privateKey, jsonRpcProvider))
             deactivate()
         }else{
             setCustomSigner(undefined)

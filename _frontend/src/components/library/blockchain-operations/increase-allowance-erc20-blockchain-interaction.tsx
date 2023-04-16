@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {BlockchainOperationType} from "@/components/library/blockchain-interaction";
-import {HardhatProvider, IERC20Interface} from "@/contracts";
+import {jsonRpcProvider, IERC20Interface} from "@/contracts";
 import {ethers} from "ethers";
 import {NextPage} from "next";
 import {Contract_increaseAllowancesErc20} from "@/contexts/contract";
@@ -30,8 +30,8 @@ const IncreaseAllowanceErc20BlockchainInteractions: NextPage<Props> = ({amount, 
 
     const getEstimate = async () => {
         try{
-            const contract = new ethers.Contract(address, IERC20Interface, HardhatProvider) as IERC20
-            const result = (await contract.connect(account!).estimateGas.approve(SOCIAL_NFT_ADDRESS, amount)).mul(await HardhatProvider.getGasPrice())
+            const contract = new ethers.Contract(address, IERC20Interface, jsonRpcProvider) as IERC20
+            const result = (await contract.connect(account!).estimateGas.approve(SOCIAL_NFT_ADDRESS, amount)).mul(await jsonRpcProvider.getGasPrice())
             setEstimate(ethers.utils.formatEther(result))
         }catch (e) {
             console.log(e)

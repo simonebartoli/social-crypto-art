@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {BlockchainOperationType} from "@/components/library/blockchain-interaction";
-import {HardhatProvider, socialNFTContract} from "@/contracts";
+import {jsonRpcProvider, socialNFTContract} from "@/contracts";
 import {ethers} from "ethers";
 import {NextPage} from "next";
 import {Contract_makeOfferAuction} from "@/contexts/contract";
@@ -33,10 +33,10 @@ const MakeOfferAuctionBlockchainInteraction: NextPage<Props> = ({nft_id, auction
     const getEstimate = async () => {
         try{
             if(type === "NATIVE"){
-                const result = (await socialNFTContract.connect(account!).estimateGas.makeOfferAuction(nftId, auction_id, amount, {value: amount})).mul(await HardhatProvider.getGasPrice())
+                const result = (await socialNFTContract.connect(account!).estimateGas.makeOfferAuction(nftId, auction_id, amount, {value: amount})).mul(await jsonRpcProvider.getGasPrice())
                 setEstimate(ethers.utils.formatEther(result))
             }else{
-                const result = (await socialNFTContract.connect(account!).estimateGas.makeOfferAuction(nftId, auction_id, amount)).mul(await HardhatProvider.getGasPrice())
+                const result = (await socialNFTContract.connect(account!).estimateGas.makeOfferAuction(nftId, auction_id, amount)).mul(await jsonRpcProvider.getGasPrice())
                 setEstimate(ethers.utils.formatEther(result))
             }
         }catch (e) {

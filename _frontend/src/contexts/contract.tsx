@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {NextPage} from "next";
 import {useCall, useContractFunction, useLogs} from "@usedapp/core";
 import {IERC20, SocialNFT, VerifySignature} from "@/__typechain";
-import {HardhatProvider, IERC20Interface, socialNFTContract, VerifySignatureContract} from "@/contracts";
+import {jsonRpcProvider, IERC20Interface, socialNFTContract, VerifySignatureContract} from "@/contracts";
 import {DateTime} from "luxon";
 import {CurrencyEnum, NftSellingStatusEnum} from "@/enums/global/nft-enum";
 import {SOCIAL_NFT_ADDRESS, VERIFY_SIGNATURE_ADDRESS, ZERO_ADDRESS} from "@/globals";
@@ -152,25 +152,25 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
     }) ?? {}
 
     useEffect(() => {
-        if(fetchSelling){
+        if(fetchSelling && value_sellingStatus && value_originalOwner && value_royalties && value_sellingFixedPrice && value_sellingAuction && value_uri){
             if(fetchSelling === "NO_SELLING"){
                 callback({
                     value: {
-                        uri: value_uri![0],
-                        currentOwner: value_currentOwner![0].toString(),
-                        owner: value_originalOwner![0].owner.toString(),
-                        royalties: value_royalties!.percentage.toString(),
-                        sellingType: value_sellingStatus!.sellingType
+                        uri: value_uri[0],
+                        currentOwner: value_currentOwner?.[0].toString() ?? value_originalOwner[0].owner.toString(),
+                        owner: value_originalOwner[0].owner.toString(),
+                        royalties: value_royalties.percentage.toString(),
+                        sellingType: value_sellingStatus.sellingType
                     }
                 })
             }else if(fetchSelling === "FIXED" && value_sellingFixedPrice){
                 callback({
                     value: {
-                        uri: value_uri![0],
-                        currentOwner: value_currentOwner![0].toString(),
-                        owner: value_originalOwner![0].owner.toString(),
-                        royalties: value_royalties!.percentage.toString(),
-                        sellingType: value_sellingStatus!.sellingType,
+                        uri: value_uri[0],
+                        currentOwner: value_currentOwner?.[0].toString() ?? value_originalOwner[0].owner.toString(),
+                        owner: value_originalOwner[0].owner.toString(),
+                        royalties: value_royalties.percentage.toString(),
+                        sellingType: value_sellingStatus.sellingType,
                         fixedPrice: {
                             amount: value_sellingFixedPrice.amount.toString(),
                             currency: value_sellingFixedPrice.currency
@@ -180,11 +180,11 @@ export const Contract_getAllInfoNft: NextPage<Contract_getAllInfoNft_Props> = ({
             }else if(fetchSelling === "AUCTION" && value_sellingAuction){
                 callback({
                     value: {
-                        uri: value_uri![0],
-                        currentOwner: value_currentOwner![0].toString(),
-                        owner: value_originalOwner![0].owner.toString(),
-                        royalties: value_royalties!.percentage.toString(),
-                        sellingType: value_sellingStatus!.sellingType,
+                        uri: value_uri[0],
+                        currentOwner: value_currentOwner?.[0].toString() ?? value_originalOwner[0].owner.toString(),
+                        owner: value_originalOwner[0].owner.toString(),
+                        royalties: value_royalties.percentage.toString(),
+                        sellingType: value_sellingStatus.sellingType,
                         auction: {
                             auctionId: auctionId,
                             currency: value_sellingAuction.currency,
@@ -450,6 +450,7 @@ export const Contract_setRoyalties: NextPage<Contract_setRoyalties_Props> = ({ex
             }
         }
     }, [events])
+
     return (
         <></>
     )
@@ -675,7 +676,7 @@ type Contract_increaseAllowancesErc20_Props = {
 }
 export const Contract_increaseAllowancesErc20: NextPage<Contract_increaseAllowancesErc20_Props> = ({execute, amount, address, onError, callback}) => {
     const {signer} = useWeb3Info()
-    const {send, events, state} = useContractFunction(new ethers.Contract(address, IERC20Interface, HardhatProvider) as IERC20, "approve", signer ? {signer: signer} : undefined)
+    const {send, events, state} = useContractFunction(new ethers.Contract(address, IERC20Interface, jsonRpcProvider) as IERC20, "approve", signer ? {signer: signer} : undefined)
 
     useEffect(() => {
         if(execute){

@@ -1,9 +1,10 @@
 import React, {useEffect} from 'react';
 import {NextPage} from "next";
-import {Hardhat, useEthers} from "@usedapp/core";
+import {Hardhat, Sepolia, useEthers} from "@usedapp/core";
 import {useModal} from "@/contexts/modal";
 import Button from "@/components/login/button";
 import {useRouter} from "next/router";
+import {CHAIN} from "@/globals";
 
 type Props = {
     children: React.ReactNode
@@ -15,16 +16,30 @@ const Web3Account: NextPage<Props> = ({children}) => {
 
     useEffect(() => {
         if(chainId){
-            if(chainId !== Hardhat.chainId){
-                showModal(
-                    <div className="flex flex-col justify-center h-full items-center gap-6">
-                        <h1 className="text-3xl font-bold">This Network is Not Supported</h1>
-                        <p>To continue with the application please switch network</p>
-                        <Button text={"Switch Network"} onClick={() => switchNetwork(Hardhat.chainId)}/>
-                    </div>, false
-                )
-            }else{
-                closeModal()
+            if(CHAIN === "LOCAL"){
+                if(chainId !== Hardhat.chainId){
+                    showModal(
+                        <div className="flex flex-col justify-center h-full items-center gap-6">
+                            <h1 className="text-3xl font-bold">This Network is Not Supported</h1>
+                            <p>To continue with the application please switch network</p>
+                            <Button text={"Switch Network"} onClick={() => switchNetwork(Hardhat.chainId)}/>
+                        </div>, false
+                    )
+                }else{
+                    closeModal()
+                }
+            }else if(CHAIN === "SEPOLIA"){
+                if(chainId !== Sepolia.chainId){
+                    showModal(
+                        <div className="flex flex-col justify-center h-full items-center gap-6">
+                            <h1 className="text-3xl font-bold">This Network is Not Supported</h1>
+                            <p>To continue with the application please switch network</p>
+                            <Button text={"Switch Network"} onClick={() => switchNetwork(Sepolia.chainId)}/>
+                        </div>, false
+                    )
+                }else{
+                    closeModal()
+                }
             }
         }
     }, [chainId, router.asPath])
