@@ -1,6 +1,6 @@
 import {Arg, Ctx, Mutation, Query, Resolver} from "type-graphql";
 import {Context, ContextAuth, ContextWithLocking} from "../../../types";
-import {prisma} from "../../../globals";
+import {FRONT_END_DOMAIN, prisma} from "../../../globals";
 import ErrorCode from "../../enums/ErrorCode";
 import RecoveryToken from "../../models/token/access/RecoveryToken";
 import {DateTime} from "luxon";
@@ -73,7 +73,7 @@ export class AccessResolver {
         })
         const jwt = await recoveryToken.createJwt()
         const requestToken = (await recoveryToken.getRequestToken()).token
-        const url = `http://localhost:3000/verify?token=${requestToken}&new_account=false`
+        const url = `${FRONT_END_DOMAIN}/verify?token=${requestToken}&new_account=false`
         const date = DateTime.now()
 
         const newEmail = new Email()

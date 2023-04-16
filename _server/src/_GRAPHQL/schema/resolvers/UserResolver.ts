@@ -1,5 +1,5 @@
 import {Arg, Ctx, Mutation, Query, Resolver} from "type-graphql";
-import {prisma} from "../../../globals";
+import {FRONT_END_DOMAIN, prisma} from "../../../globals";
 import ErrorCode from "../../enums/ErrorCode";
 import RecoveryToken from "../../models/token/access/RecoveryToken";
 import {Context, ContextAuth, ContextAuthCustom, ContextCustom} from "../../../types";
@@ -17,8 +17,6 @@ import {Input_SearchForUsers} from "../args&inputs/Input_User";
 import {distance} from "fastest-levenshtein";
 import Email from "../../models/email/Email";
 import {DateTime} from "luxon";
-import fs from "fs";
-import * as Path from "path";
 
 @Resolver()
 export class UserResolver {
@@ -64,7 +62,7 @@ export class UserResolver {
         const jwt = await recoveryToken.createJwt()
         const requestToken = (await recoveryToken.getRequestToken()).token
 
-        const url = `http://localhost:3000/verify?token=${requestToken}&new_account=true`
+        const url = `${FRONT_END_DOMAIN}/verify?token=${requestToken}&new_account=true`
         const date = DateTime.now()
 
         const newEmail = new Email()
