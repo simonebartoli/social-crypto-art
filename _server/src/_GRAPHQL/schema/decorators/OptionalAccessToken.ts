@@ -8,7 +8,7 @@ export function OptionalAccessToken() {
         if(token === undefined){
             return next()
         }
-        const ip = context.request.ip
+        const ip = context.request.headers['cf-connecting-ip'] as string || context.request.headers['x-forwarded-for'] as string || context.request.ip
         const ua = context.request.header("User-Agent") || "NOT_DEFINED"
         try{
             const accessToken = await AccessToken.verifyAndLoadJwt(token, ip, ua)

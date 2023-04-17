@@ -10,7 +10,7 @@ export function RequireAccessToken() {
         if(token === undefined){
             throw new AUTH_ERROR("Access Token not provided", ErrorCode.ERR_401_014)
         }
-        const ip = context.request.ip
+        const ip = context.request.headers['cf-connecting-ip'] as string || context.request.headers['x-forwarded-for'] as string || context.request.ip
         const ua = context.request.header("User-Agent") || "NOT_DEFINED"
         try{
             const accessToken = await AccessToken.verifyAndLoadJwt(token, ip, ua)

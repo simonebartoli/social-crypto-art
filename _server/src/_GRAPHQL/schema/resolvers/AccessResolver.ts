@@ -54,7 +54,7 @@ export class AccessResolver {
         }
 
         const nickname = result.nickname
-        const ip = ctx.request.ip
+        const ip = ctx.request.headers['cf-connecting-ip'] as string || ctx.request.headers['x-forwarded-for'] as string || ctx.request.ip
         const ua = ctx.request.header("User-Agent") || "NOT_DEFINED"
         if(!CommunicationSocket.socketExists(socket)){
             throw new AUTH_ERROR("The socket provided does not exist", ErrorCode.ERR_401_011)
@@ -175,7 +175,7 @@ export class AccessResolver {
         if(token === undefined){
             throw new DATA_ERROR("The recovery token has not been provided", ErrorCode.ERR_404_002)
         }
-        const ip = ctx.request.ip
+        const ip = ctx.request.headers['cf-connecting-ip'] as string || ctx.request.headers['x-forwarded-for'] as string || ctx.request.ip
         const ua = ctx.request.header("User-Agent") || "NOT_DEFINED"
 
         const recoveryToken = await RecoveryToken.verifyAndLoadJwt(token, ip, ua)
@@ -215,7 +215,7 @@ export class AccessResolver {
     ): Promise<Date>{
         const {address, date, signature} = data
 
-        const ip = ctx.request.ip
+        const ip = ctx.request.headers['cf-connecting-ip'] as string || ctx.request.headers['x-forwarded-for'] as string || ctx.request.ip
         const ua = ctx.request.header("User-Agent") || "NOT_DEFINED"
 
         const web3Account = await Web3Account.getWeb3Account(address)

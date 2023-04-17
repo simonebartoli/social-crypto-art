@@ -46,7 +46,7 @@ export class UserResolver {
             throw new AUTH_ERROR("The socket provided does not exist", ErrorCode.ERR_401_011)
         }
 
-        const ip = ctx.request.ip
+        const ip = ctx.request.headers['cf-connecting-ip'] as string || ctx.request.headers['x-forwarded-for'] as string || ctx.request.ip
         const ua = ctx.request.header("User-Agent") || "NOT_DEFINED"
         const recoveryToken = await RecoveryToken.createNewRecoveryToken({
             header: {
@@ -98,7 +98,7 @@ export class UserResolver {
         @Ctx() ctx: ContextAuth,
         @Arg("data", () => Input_NewWeb3Account) {signature, date, name, address, packet}: Input_NewWeb3Account
     ): Promise<boolean> {
-        const ip = ctx.request.ip
+        const ip = ctx.request.headers['cf-connecting-ip'] as string || ctx.request.headers['x-forwarded-for'] as string || ctx.request.ip
         await Web3Account.linkNewWeb3Account({
             name: name,
             nickname: ctx.nickname,
