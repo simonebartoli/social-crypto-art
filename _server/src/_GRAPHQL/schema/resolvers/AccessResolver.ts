@@ -295,6 +295,6 @@ export class AccessResolver {
 
     @Query(() => String)
     getIpAddress(@Ctx() ctx: ContextAuth): string {
-        return ctx.request.ip
+        return ctx.request.headers['cf-connecting-ip'] as string || ctx.request.headers['x-forwarded-for'] as string || ctx.request.ip
     }
 }
