@@ -26,7 +26,7 @@ export const Contract_getMessageHash: NextPage<Contract_getMessageHash_Props> = 
     const {value, error} = useCall<VerifySignature, "getMessageHash">({
         contract: VerifySignatureContract,
         method: "getMessageHash",
-        args: [account, VERIFY_SIGNATURE_ADDRESS, DateTime.fromJSDate(date).toISO(), ip]
+        args: [account, VERIFY_SIGNATURE_ADDRESS, String(DateTime.fromJSDate(date).toSeconds()), ip]
     }) ?? {}
 
     useEffect(() => {

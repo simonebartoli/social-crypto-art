@@ -74,7 +74,7 @@ class Web3Account {
             throw new DATA_ERROR("The date provided is not in the maximum range allowed", ErrorCode.ERR_403_005)
         }
 
-        const formattedDate = DateTime.fromJSDate(data.date).toISO()
+        const formattedDate = String(DateTime.fromJSDate(data.date).toSeconds())
         try {
             result = await Web3Account.verifySignatureContract.verifySignature(data.address, Web3Account.verifySignatureContract.address, formattedDate, data.ip, data.signature)
         }catch (e) {
