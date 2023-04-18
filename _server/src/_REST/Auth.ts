@@ -8,7 +8,7 @@ export const requireAccessToken = async (request: Request, response: Response) =
     if(token === undefined){
         throw new AUTH_ERROR("Access Token not provided", ErrorCode.ERR_401_014)
     }
-    const ip = request.ip
+    const ip = request.headers['cf-connecting-ip'] as string || request.headers['x-forwarded-for'] as string || request.ip
     const ua = request.header("User-Agent") || "NOT_DEFINED"
     const accessToken = await AccessToken.verifyAndLoadJwt(token, ip, ua)
     const properties = accessToken.getProperties()
