@@ -25,3 +25,18 @@ body{
 .ql-editor {
     min-height: 200px !important;
 }
+
+.post-content a{
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    color: #60A5FAFF;
+}
+.post-content h1{
+    font-size: 2.5em;
+}
+.post-content h2{
+    font-size: 2em;
+}
+.post-content h3{
+    font-size: 1.5em;
+}

@@ -15,6 +15,14 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
     const [overflowing, setOverflowing] = useState(false)
     const [openContent, setOpenContent] = useState(false)
 
+    const formatText = (data: string) => {
+        const domParser = new DOMParser()
+        const parsed = domParser.parseFromString(data, "text/html")
+        parsed.querySelectorAll("a").forEach(a => {
+            a.setAttribute('target', '_blank');
+        });
+        return parsed.body.innerHTML
+    }
     useEffect(() => {
         if(contentDiv.current !== null){
             if(contentDiv.current.scrollHeight > contentDiv.current.clientHeight || (openContent && contentDiv.current.clientHeight > 250)){
@@ -27,7 +35,7 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
     return (
         <>
             <div ref={contentDiv}
-                 className={`${openContent ? "max-h-auto": "max-h-[250px]"} flex flex-col items-center py-3 justify-start gap-6 overflow-hidden`}>
+                 className={`${openContent ? "max-h-auto": "max-h-[250px]"} flex flex-col items-center py-3 justify-start gap-6 overflow-hidden post-content`}>
                 {
                     post.map((_, index) => {
                         if(_.data !== "") {
@@ -36,13 +44,13 @@ const PostContent: NextPage<Props> = ({post, allNft}) => {
                                     return (
                                         <div key={index} className="p-2 mt-8 border-2 border-custom-green rounded-lg relative w-full">
                                             <span className="-top-[1.5rem] right-0 absolute italic">Nft Content</span>
-                                            <div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(_.data)}}/>
+                                            <div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(formatText(_.data), { ADD_ATTR: ['target'] })}}/>
                                         </div>
                                     )
                                 }else{
                                     return (
                                         <div className="w-full" key={index}>
-                                            <div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(_.data)}}/>
+                                            <div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(formatText(_.data), { ADD_ATTR: ['target'] })}}/>
                                         </div>
                                     )
                                 }
