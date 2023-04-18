@@ -21,7 +21,7 @@ type Props = {
 
 const AddFile: NextPage<Props> = ({type, onClose, id, nftEnabled, onDrop, onDragEnter, onDragStart, onModifyContent}) => {
     const nft = useRef<boolean>(false)
-    const imageTypeAllowed = useRef(["image/jpg", "image/png"])
+    const imageTypeAllowed = useRef(["image/jpg", "image/jpeg", "image/png"])
     const gifTypeAllowed = useRef(["image/gif"])
 
     const inputRef = useRef<HTMLInputElement>(null)
