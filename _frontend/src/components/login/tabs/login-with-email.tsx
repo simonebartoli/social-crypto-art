@@ -10,7 +10,7 @@ import {emailRegex} from "@/filters";
 import {useMutation} from "@apollo/client";
 import {CREATE_NEW_LOGIN_INSTANCE_EMAIL} from "@/graphql/access";
 import {toast} from "react-toastify";
-import {socket} from "@/globals";
+import {reconnectSocket, socket} from "@/globals";
 
 type Props = {
     changeTab: (selected: LoginEnum) => void
@@ -63,7 +63,10 @@ const LoginWithEmail: NextPage<Props> = ({changeTab}) => {
                 }
             })
         }else{
-            window.location.reload()
+            reconnectSocket()
+            socket.on("connect", () => {
+                onProceedClick()
+            })
         }
     }
 

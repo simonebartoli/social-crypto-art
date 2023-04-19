@@ -9,7 +9,7 @@ import {LoginEnum} from "@/enums/local/login-enum";
 import {NextPage} from "next";
 import Errors from "@/components/login/errors";
 import {emailRegex, maxNicknameLength, minNicknameLength} from "@/filters";
-import {socket} from "@/globals";
+import {reconnectSocket, socket} from "@/globals";
 import {useMutation} from "@apollo/client";
 import {CREATE_USER} from "@/graphql/access";
 
@@ -88,7 +88,10 @@ const Register: NextPage<Props> = ({changeTab}) => {
                 }
             })
         }else{
-            window.location.reload()
+            reconnectSocket()
+            socket.on("connect", () => {
+                onProceedClick()
+            })
         }
     }
 

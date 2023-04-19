@@ -4,7 +4,7 @@ import UndoOutlinedIcon from "@mui/icons-material/UndoOutlined";
 import {NextPage} from "next";
 import {useMutation} from "@apollo/client";
 import {GET_ACCESS_TOKEN_RECOVERY_TOKEN} from "@/graphql/access";
-import {socket} from "@/globals";
+import {reconnectSocket, socket} from "@/globals";
 import {toast} from "react-toastify";
 import {useRouter} from "next/router";
 
@@ -30,9 +30,9 @@ const Confirmation: NextPage<Props> = ({changeTab}) => {
                 getAccessToken_RecoveryToken()
             })
         }else{
-            window.location.reload()
+            reconnectSocket()
         }
-    }, [])
+    }, [socket.connected])
     useEffect(() => {
         if(success){
             setTimeout(() => {
