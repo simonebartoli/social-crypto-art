@@ -38,7 +38,7 @@ const PostHeader: NextPage<Props> = ({header, visibility, warningSync, ipfs, ver
             }
             <div className="flex flex-row items-center justify-between w-full">
                 <div className="flex flex-row gap-6 items-center justify-center"> {/*HEADER USER INFO*/}
-                    <div className="relative h-[50px] w-[50px] rounded-xl overflow-hidden">
+                    <div className="relative h-[50px] w-[50px] rounded-xl overflow-hidden border-custom-light-grey border-[1px]">
                         <Image
                             src={TEST}
                             fill={true}
