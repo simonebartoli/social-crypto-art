@@ -23,9 +23,11 @@ https://faucet.social-art.uk
 - Ports 3000, 4000 and 8545 with no services running
 
 ### How to run it
-The application come already with all the dependencies installed. You only need to download a file and execute a single terminal command.
+The application come already with all the dependencies installed. You only need to download a file and execute two terminal commands.
 
 1. First download the `docker-compose.yml` file [here](https://github.com/simonebartoli/social-crypto-art/releases/download/1.0/docker-compose.yml)
-2. Open the terminal where you downloaded the file and execute: <br/>`docker-compose up -d`
+2. Open the terminal where you downloaded the file and execute: <br/> `docker login registry.bartolisimone.com` 
+3. Username: `examinator` | Password: `Exam@2023`
+4. Now execute: <br/>`docker-compose up -d`
 
 You can now access the application at the following address: `http://localhost:3000`
