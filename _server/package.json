@@ -4,11 +4,19 @@
     "author": "Simone Bartoli",
     "license": "MIT",
     "private": true,
+    "bin": "build/src/__bin/www.js",
+    "pkg": {
+        "scripts": [
+            "node-modules/**/*"
+        ],
+        "targets": [
+            "node16-win-x64"
+        ]
+    },
     "scripts": {
         "dev": "cross-env NODE_ENV=development nodemon --exec ts-node src/__bin/www.ts",
         "build": "tsc --project ./",
         "clean": "rimraf build",
-        "prestart": "yarn clean && yarn build",
         "start": "cross-env NODE_ENV=production node ./build/src/__bin/www.js",
         "script": "ts-node src/scripts/main.ts",
         "test": "mocha -r ts-node/register './test/**/**.test.ts'",

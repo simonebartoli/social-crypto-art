@@ -4,10 +4,11 @@ import * as Path from "path";
 import * as dotenv from 'dotenv'
 import {ethers} from "ethers";
 import {SocialNFT} from "./external-types/contracts/SocialNFT";
+
 dotenv.config()
 
 export const VerifySignatureAbi = () => {
-    const PATH = "../artifacts/contracts/VerifySignature.sol/VerifySignature.json"
+    const PATH = "./src/external-artifacts/VerifySignature.json"
     const file = fs.readFileSync(Path.join(process.cwd(), PATH), "utf-8")
 
     const parsedFile = JSON.parse(file)
@@ -15,7 +16,7 @@ export const VerifySignatureAbi = () => {
 }
 
 export const SocialNFTAbi = () => {
-    const PATH = "../artifacts/contracts/SocialNFT.sol/SocialNFT.json"
+    const PATH = "./src/external-artifacts/SocialNFT.json"
     const file = fs.readFileSync(Path.join(process.cwd(), PATH), "utf-8")
 
     const parsedFile = JSON.parse(file)

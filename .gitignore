@@ -14,3 +14,8 @@ gas-report.txt
 _server/build
 yarn-error.log
 
+/contracts/demo/
+/.dockerignore
+/docker-compose.yml
+/Dockerfile
+/start.sh
