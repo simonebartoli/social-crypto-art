@@ -40,3 +40,18 @@ body{
 .post-content h3{
     font-size: 1.5em;
 }
+
+.comp1 {
+    background-image: url("/home.png");
+    background-position: 50% 50%;
+    background-size: cover;
+}
+.comp2 .evidence {
+    @apply p-1 rounded-lg bg-custom-grey text-white mx-1 text-xl shadow-lg
+}
+
+.comp3 {
+    background-image: url("/home2.png");
+    background-position: 50% 50%;
+    background-size: cover;
+}
